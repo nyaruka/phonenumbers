@@ -1,4 +1,4 @@
-gophone
+gophone  [![Build Status](https://travis-ci.org/nyaruka/gophone.svg?branch=master)](https://travis-ci.org/nyaruka/gophone)
 ==============
 
 golang port of Google's libphonenumber, forked from [libphonenumber from ttacon](https://github.com/ttacon/libphonenumber)
