@@ -9,7 +9,7 @@ allow for rebuilding the metadata protocol buffers, country code to region maps 
 API may change in the immediate future as we get this all buttoned up, but we depend on this heavily so we aim to have a fully
 working port of the main library that is performant before too long.
 
-Examples
+Usage
 ========
 
 ```go
