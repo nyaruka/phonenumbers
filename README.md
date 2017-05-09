@@ -27,7 +27,9 @@ The `buildmetadata` command will fetch the latest XML file from the official Goo
 the territory metadata, timezone and region maps. It will rebuild the following files:
 
 `metadata_bin.go` - contains the protocol buffer definitions for all the various formats across countries etc..
+
 `countrycode_to_region.go` - contains a map built from the metadata to ease looking up possible regions for a country code
+
 `prefix_to_timezone.go` - contains a map built from the timezone file within the Google repo mapping number prefixes to possible timezones
 
 ```bash
