@@ -19,3 +19,21 @@ num, err := gophone.Parse("6502530000", "US")
 // format it using national format
 formattedNum := gophone.Format(num, gophone.NATIONAL)
 ```
+
+Rebuilding Metadata and Maps
+===============================
+
+The `buildmetadata` command will fetch the latest XML file from the official Google repo and rebuild the binary files containing all
+the territory definitions.
+
+`metadata_bin.go` - contains the protocol buffer definitions for all the various formats across countries etc..
+
+`countrycode_to_region.go` - contains a map built from the metadata to ease looking up possible regions for a country code
+
+`prefix_to_timezone.go` - contains a map built from the timezone file within the Google repo mapping number prefixes to possible timezones
+
+```shell
+% go get github.com/nyaruka/gophone
+% go install github.com/nyaruka/gophone/cmd/buildmetadata
+% $GOPATH/bin/buildmetadata
+```
