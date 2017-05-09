@@ -32,7 +32,7 @@ the territory definitions.
 
 `prefix_to_timezone.go` - contains a map built from the timezone file within the Google repo mapping number prefixes to possible timezones
 
-```shell
+```bash
 % go get github.com/nyaruka/gophone
 % go install github.com/nyaruka/gophone/cmd/buildmetadata
 % $GOPATH/bin/buildmetadata
