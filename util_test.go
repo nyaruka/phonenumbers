@@ -837,6 +837,34 @@ func TestNewIndianPhones(t *testing.T) {
 	runTestBatch(t, tests)
 }
 
+func TestParsing(t *testing.T) {
+	tests := []struct {
+		number   string
+		country  string
+		expected string
+	}{
+		{"0788383383", "RW", "+250788383383"},
+		{"+250788383383 ", "KE", "+250788383383"},
+		{"+250788383383", "", "+250788383383"},
+		{"(917)992-5253", "US", "+19179925253"},
+		{"+62877747666", "", "+62877747666"},
+		{"0877747666", "ID", "+62877747666"},
+		{"07531669965", "GB", "+447531669965"},
+	}
+
+	for _, tc := range tests {
+		num, err := Parse(tc.number, tc.country)
+		if err != nil {
+			t.Errorf("Error parsing number: %s: %s", tc.number, err)
+		} else {
+			formatted := Format(num, E164)
+			if formatted != tc.expected {
+				t.Errorf("Error parsing number '%s:%s', got %s when expecting %s", tc.number, tc.country, formatted, tc.expected)
+			}
+		}
+	}
+}
+
 func TestGetTimeZonesForPrefix(t *testing.T) {
 	tests := []timeZonesTestCases{
 		{
