@@ -1,6 +1,7 @@
 package gophone
 
 import (
+	"compress/gzip"
 	"errors"
 	"reflect"
 	"regexp"
@@ -10,6 +11,10 @@ import (
 	"unicode"
 
 	"github.com/ttacon/builder"
+
+	"bytes"
+
+	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -677,7 +682,14 @@ func MetadataCollection() (*PhoneMetadataCollection, error) {
 	}
 
 	var metadataCollection = &PhoneMetadataCollection{}
-	err := proto.Unmarshal(MetaData, metadataCollection)
+
+	reader, err := gzip.NewReader(bytes.NewReader(MetaData))
+	if err != nil {
+		return metadataCollection, err
+	}
+	metaBytes, err := ioutil.ReadAll(reader)
+
+	err = proto.Unmarshal(metaBytes, metadataCollection)
 	reloadMetadata = false
 	return metadataCollection, err
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"compress/gzip"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -201,6 +203,13 @@ func buildMetadata() *gophone.PhoneMetadataCollection {
 		log.Fatalf("Error marshalling metadata: %v", err)
 	}
 
+	// zip it
+	var compressed bytes.Buffer
+	w := gzip.NewWriter(&compressed)
+	w.Write(data)
+	w.Close()
+	data = compressed.Bytes()
+
 	// create our output
 	output := bytes.Buffer{}
 
@@ -214,7 +223,7 @@ func buildMetadata() *gophone.PhoneMetadataCollection {
 			output.WriteString("\n        ")
 		}
 		output.WriteString("0x")
-		output.WriteString(strconv.FormatInt(int64(b), 16))
+		output.WriteString(fmt.Sprintf("%02x", b))
 		output.WriteString(", ")
 	}
 
