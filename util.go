@@ -1,4 +1,4 @@
-package gophone
+package phonenumbers
 
 import (
 	"compress/gzip"

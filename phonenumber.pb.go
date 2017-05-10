@@ -2,7 +2,7 @@
 // source: phonenumber.proto
 // DO NOT EDIT!
 
-package gophone
+package phonenumbers
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"

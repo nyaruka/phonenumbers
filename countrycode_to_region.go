@@ -1,4 +1,4 @@
-package gophone
+package phonenumbers
 
 // CountryCodeToRegion maps a country code to a list of possible regions
 var CountryCodeToRegion = map[int][]string{

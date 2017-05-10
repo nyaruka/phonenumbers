@@ -1,4 +1,4 @@
-gophone  [![Build Status](https://travis-ci.org/nyaruka/gophone.svg?branch=master)](https://travis-ci.org/nyaruka/gophone)
+phonenumbers  [![Build Status](https://travis-ci.org/nyaruka/phonenumbers.svg?branch=master)](https://travis-ci.org/nyaruka/phonenumbersa)
 ==============
 
 golang port of Google's libphonenumber, forked from [libphonenumber from ttacon](https://github.com/ttacon/libphonenumber)
@@ -14,10 +14,10 @@ Usage
 
 ```go
 // parse our phone number
-num, err := gophone.Parse("6502530000", "US")
+num, err := phonenumbers.Parse("6502530000", "US")
 
 // format it using national format
-formattedNum := gophone.Format(num, gophone.NATIONAL)
+formattedNum := phonenumbers.Format(num, gophone.NATIONAL)
 ```
 
 Rebuilding Metadata and Maps
@@ -33,7 +33,7 @@ the territory metadata, timezone and region maps. It will rebuild the following 
 `prefix_to_timezone.go` - contains a map built from the timezone file within the Google repo mapping number prefixes to possible timezones
 
 ```bash
-% go get github.com/nyaruka/gophone
-% go install github.com/nyaruka/gophone/cmd/buildmetadata
+% go get github.com/nyaruka/phonenumbers
+% go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
 % $GOPATH/bin/buildmetadata
 ```

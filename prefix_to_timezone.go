@@ -1,4 +1,4 @@
-package gophone
+package phonenumbers
 
 // PrefixToTimezone maps a phone number prefix to a list of possible timezones
 var PrefixToTimezone = map[int][]string{

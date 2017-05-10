@@ -15,17 +15,16 @@ import (
 	"bytes"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/nyaruka/gophone"
 )
 
 const (
 	metadataURL  = `https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/PhoneNumberMetadata.xml`
-	metadataPath = `src/github.com/nyaruka/gophone/metadata_bin.go`
+	metadataPath = `src/github.com/nyaruka/phonenumbers/metadata_bin.go`
 
 	tzURL  = `https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/timezones/map_data.txt`
-	tzPath = `src/github.com/nyaruka/gophone/prefix_to_timezone.go`
+	tzPath = `src/github.com/nyaruka/phonenumbers/prefix_to_timezone.go`
 
-	regionPath = `src/github.com/nyaruka/gophone/countrycode_to_region.go`
+	regionPath = `src/github.com/nyaruka/phonenumbers/countrycode_to_region.go`
 )
 
 func fetchURL(url string) []byte {
@@ -56,12 +55,12 @@ func writeFile(filePath string, data []byte) {
 	}
 }
 
-func buildRegions(metadata *gophone.PhoneMetadataCollection) {
+func buildRegions(metadata *phonenumbers.PhoneMetadataCollection) {
 	log.Println("Building region map")
-	regionMap := gophone.BuildCountryCodeToRegionMap(metadata)
+	regionMap := phonenumbers.BuildCountryCodeToRegionMap(metadata)
 
 	output := bytes.Buffer{}
-	output.WriteString("package gophone\n\n")
+	output.WriteString("package phonenumbers\n\n")
 	output.WriteString("// CountryCodeToRegion maps a country code to a list of possible regions\n")
 	output.WriteString("var CountryCodeToRegion = map[int][]string{\n")
 
@@ -116,7 +115,7 @@ func buildTimezones() {
 
 	// create our output
 	output := bytes.Buffer{}
-	output.WriteString("package gophone\n\n")
+	output.WriteString("package phonenumbers\n\n")
 	output.WriteString("// PrefixToTimezone maps a phone number prefix to a list of possible timezones\n")
 	output.WriteString("var PrefixToTimezone = map[int][]string{\n")
 
@@ -181,12 +180,12 @@ func buildTimezones() {
 	writeFile(tzPath, output.Bytes())
 }
 
-func buildMetadata() *gophone.PhoneMetadataCollection {
+func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 	log.Println("Fetching PhoneNumberMetadata.xml from Github")
 	body := fetchURL(metadataURL)
 
 	log.Println("Building new metadata collection")
-	collection, err := gophone.BuildPhoneMetadataCollection(body, false, false)
+	collection, err := phonenumbers.BuildPhoneMetadataCollection(body, false, false)
 	if err != nil {
 		log.Fatalf("Error converting XML: %s", err)
 	}
@@ -214,7 +213,7 @@ func buildMetadata() *gophone.PhoneMetadataCollection {
 	output := bytes.Buffer{}
 
 	// write our header
-	output.WriteString("package gophone\n\n")
+	output.WriteString("package phonenumbers\n\n")
 	output.WriteString("var MetaData = []byte{\n        ")
 
 	// ok, write each byte of our data in groups of 14

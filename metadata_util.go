@@ -1,4 +1,4 @@
-package gophone
+package phonenumbers
 
 // merge merges two number formats
 func (nf *NumberFormat) merge(other *NumberFormat) {
