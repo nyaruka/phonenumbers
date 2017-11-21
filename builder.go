@@ -130,9 +130,6 @@ func loadTerritoryTagMetadata(regionCode string, territory *TerritoryE, national
 	if territory.MainCountryForCode {
 		metadata.MainCountryForCode = bp(true)
 	}
-	if territory.LeadingZeroPossible {
-		metadata.LeadingZeroPossible = bp(true)
-	}
 	if territory.MobileNumberPortableRegion {
 		metadata.MobileNumberPortableRegion = bp(true)
 	}
@@ -640,9 +637,6 @@ type TerritoryE struct {
 
 	// <!ATTLIST territory nationalPrefixOptionalWhenFormatting (true) #IMPLIED>
 	NationalPrefixOptionalWhenFormatting bool `xml:"nationalPrefixOptionalWhenFormatting,attr"`
-
-	// <!ATTLIST territory leadingZeroPossible (true) #IMPLIED>
-	LeadingZeroPossible bool `xml:"leadingZeroPossible,attr"`
 
 	// <!ATTLIST territory carrierCodeFormattingRule CDATA #IMPLIED>
 	CarrierCodeFormattingRule string `xml:"carrierCodeFormattingRule,attr"`

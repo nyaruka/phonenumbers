@@ -1442,9 +1442,7 @@ func FormatOutOfCountryCallingNumber(
 // modified as a result of formatting.
 func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) string {
 	rawInput := number.GetRawInput()
-	if len(rawInput) == 0 &&
-		(hasUnexpectedItalianLeadingZero(number) ||
-			!hasFormattingPatternForNumber(number)) {
+	if len(rawInput) == 0 && !hasFormattingPatternForNumber(number) {
 		// We check if we have the formatting pattern because without that, we might format the number
 		// as a group without national prefix.
 		return rawInput
@@ -1559,14 +1557,6 @@ func rawInputContainsNationalPrefix(rawInput, nationalPrefix, regionCode string)
 
 	}
 	return false
-}
-
-// Returns true if a number is from a region whose national significant
-// number couldn't contain a leading zero, but has the italian_leading_zero
-// field set to true.
-func hasUnexpectedItalianLeadingZero(number *PhoneNumber) bool {
-	return number.GetItalianLeadingZero() &&
-		!isLeadingZeroPossible(int(number.GetCountryCode()))
 }
 
 func hasFormattingPatternForNumber(number *PhoneNumber) bool {
@@ -1954,14 +1944,20 @@ func GetExampleNumberForNonGeoEntity(countryCallingCode int) *PhoneNumber {
 		return nil
 	}
 
-	var desc *PhoneNumberDesc = metadata.GetGeneralDesc()
-	exNum := desc.GetExampleNumber()
-	if len(exNum) > 0 {
-		num, err := Parse("+"+strconv.Itoa(countryCallingCode)+exNum, "ZZ")
-		if err != nil {
-			return nil
+	// For geographical entities, fixed-line data is always present. However, for non-geographical
+	// entities, this is not the case, so we have to go through different types to find the
+	// example number.
+	descPriority := []*PhoneNumberDesc{metadata.GetMobile(), metadata.GetTollFree(),
+		metadata.GetSharedCost(), metadata.GetVoip(), metadata.GetVoicemail(), metadata.GetUan(), metadata.GetPremiumRate()}
+
+	for _, desc := range descPriority {
+		if desc != nil && desc.GetExampleNumber() != "" {
+			num, err := Parse("+"+strconv.Itoa(countryCallingCode)+desc.GetExampleNumber(), "ZZ")
+			if err != nil {
+				return nil
+			}
+			return num
 		}
-		return num
 	}
 	return nil
 }
@@ -2294,17 +2290,6 @@ func GetNddPrefixForRegion(regionCode string, stripNonDigits bool) string {
 func IsNANPACountry(regionCode string) bool {
 	_, ok := readFromNanpaRegions(regionCode)
 	return ok
-}
-
-// Checks whether the country calling code is from a region whose national
-// significant number could contain a leading zero. An example of such a
-// region is Italy. Returns false if no metadata for the country is found.
-func isLeadingZeroPossible(countryCallingCode int) bool {
-	var mainMetadataForCallingCode *PhoneMetadata = getMetadataForRegionOrCallingCode(
-		countryCallingCode,
-		GetRegionCodeForCountryCode(countryCallingCode),
-	)
-	return mainMetadataForCallingCode.GetLeadingZeroPossible()
 }
 
 // Checks if the number is a valid vanity (alpha) number such as 800

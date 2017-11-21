@@ -605,21 +605,6 @@ func TestGetMetadata(t *testing.T) {
 	}
 }
 
-func TestIsLeadingZeroPossible(t *testing.T) {
-	if !isLeadingZeroPossible(39) {
-		t.Error("Leading 0 should be possible in Italy")
-	}
-	if isLeadingZeroPossible(1) {
-		t.Error("Leading 0 should not be possible in the USA")
-	}
-	if !isLeadingZeroPossible(800) {
-		t.Error("Leading 0 should be possible for International toll free")
-	}
-	if isLeadingZeroPossible(889) {
-		t.Error("Leading 0 should not be possible in non-existent region")
-	}
-}
-
 func TestIsNumberGeographical(t *testing.T) {
 	if !isNumberGeographical(getTestNumber("AU_NUMBER")) {
 		t.Error("Australia should be a geographical number")
@@ -710,7 +695,6 @@ func TestGetExampleNumberForType(t *testing.T) {
 	}
 }
 
-/** TODO: nicp, this test seems invalid
 func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
 	if !reflect.DeepEqual(
 		getTestNumber("INTERNATIONAL_TOLL_FREE"),
@@ -723,7 +707,7 @@ func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
 		t.Error("there should be an example number for 979")
 	}
 }
-*/
+
 func TestNormalizeDigitsOnly(t *testing.T) {
 	if "03456234" != NormalizeDigitsOnly("034-56&+a#234") {
 		t.Errorf("didn't fully normalize digits only")
@@ -737,10 +721,12 @@ func TestNormalizeDiallableCharsOnly(t *testing.T) {
 }
 
 type testCase struct {
-	num          string
-	region       string
-	expectedE164 string
-	valid        bool
+	num           string
+	parseRegion   string
+	expectedE164  string
+	validRegion   string
+	isValid       bool
+	isValidRegion bool
 }
 
 type timeZonesTestCases struct {
@@ -750,13 +736,17 @@ type timeZonesTestCases struct {
 
 func runTestBatch(t *testing.T, tests []testCase) {
 	for _, test := range tests {
-		n, err := Parse(test.num, test.region)
+		n, err := Parse(test.num, test.parseRegion)
 		if err != nil {
 			t.Errorf("Failed to parse number %s: %s", test.num, err)
 		}
 
-		if IsValidNumberForRegion(n, test.region) != test.valid {
-			t.Errorf("Number %s: validity mismatch: expected %t got %t.", test.num, test.valid, !test.valid)
+		if IsValidNumber(n) != test.isValid {
+			t.Errorf("Number %s: validity mismatch: expected %t got %t.", test.num, test.isValid, !test.isValid)
+		}
+
+		if IsValidNumberForRegion(n, test.validRegion) != test.isValidRegion {
+			t.Errorf("Number %s: region validity mismatch: expected %t got %t.", test.num, test.isValidRegion, !test.isValidRegion)
 		}
 
 		s := Format(n, E164)
@@ -770,22 +760,28 @@ func TestItalianLeadingZeroes(t *testing.T) {
 
 	tests := []testCase{
 		{
-			num:          "0491 570 156",
-			region:       "AU",
-			expectedE164: "+61491570156",
-			valid:        true,
+			num:           "0491 570 156",
+			parseRegion:   "AU",
+			expectedE164:  "+61491570156",
+			validRegion:   "AU",
+			isValid:       true,
+			isValidRegion: true,
 		},
 		{
-			num:          "02 5550 1234",
-			region:       "AU",
-			expectedE164: "+61255501234",
-			valid:        true,
+			num:           "02 5550 1234",
+			parseRegion:   "AU",
+			expectedE164:  "+61255501234",
+			validRegion:   "AU",
+			isValid:       true,
+			isValidRegion: true,
 		},
 		{
-			num:          "+39.0399123456",
-			region:       "IT",
-			expectedE164: "+390399123456",
-			valid:        true,
+			num:           "+39.0399123456",
+			parseRegion:   "IT",
+			expectedE164:  "+390399123456",
+			validRegion:   "IT",
+			isValid:       true,
+			isValidRegion: true,
 		},
 	}
 
@@ -795,16 +791,20 @@ func TestItalianLeadingZeroes(t *testing.T) {
 func TestARNumberTransformRule(t *testing.T) {
 	tests := []testCase{
 		{
-			num:          "+541151123456",
-			region:       "AR",
-			expectedE164: "+541151123456",
-			valid:        true,
+			num:           "+541151123456",
+			parseRegion:   "AR",
+			expectedE164:  "+541151123456",
+			validRegion:   "AR",
+			isValid:       true,
+			isValidRegion: true,
 		},
 		{
-			num:          "+540111561234567",
-			region:       "AR",
-			expectedE164: "+5491161234567",
-			valid:        true,
+			num:           "+540111561234567",
+			parseRegion:   "AR",
+			expectedE164:  "+5491161234567",
+			validRegion:   "AR",
+			isValid:       true,
+			isValidRegion: true,
 		},
 	}
 
@@ -814,10 +814,12 @@ func TestARNumberTransformRule(t *testing.T) {
 func TestLeadingOne(t *testing.T) {
 	tests := []testCase{
 		{
-			num:          "15167706076",
-			region:       "US",
-			expectedE164: "+15167706076",
-			valid:        true,
+			num:           "15167706076",
+			parseRegion:   "US",
+			expectedE164:  "+15167706076",
+			validRegion:   "US",
+			isValid:       true,
+			isValidRegion: true,
 		},
 	}
 
@@ -827,10 +829,27 @@ func TestLeadingOne(t *testing.T) {
 func TestNewIndianPhones(t *testing.T) {
 	tests := []testCase{
 		{
-			num:          "7999999543",
-			region:       "IN",
-			expectedE164: "+917999999543",
-			valid:        true,
+			num:           "7999999543",
+			parseRegion:   "IN",
+			expectedE164:  "+917999999543",
+			validRegion:   "IN",
+			isValid:       true,
+			isValidRegion: true,
+		},
+	}
+
+	runTestBatch(t, tests)
+}
+
+func TestBurkinaFaso(t *testing.T) {
+	tests := []testCase{
+		{
+			num:           "+22658125926",
+			parseRegion:   "",
+			expectedE164:  "+22658125926",
+			validRegion:   "BF",
+			isValid:       true,
+			isValidRegion: true,
 		},
 	}
 
@@ -850,6 +869,7 @@ func TestParsing(t *testing.T) {
 		{"+62877747666", "", "+62877747666"},
 		{"0877747666", "ID", "+62877747666"},
 		{"07531669965", "GB", "+447531669965"},
+		{"+22658125926", "", "+22658125926"},
 	}
 
 	for _, tc := range tests {
