@@ -1,13 +1,11 @@
-phonenumbers  [![Build Status](https://travis-ci.org/nyaruka/phonenumbers.svg?branch=master)](https://travis-ci.org/nyaruka/phonenumbersa)
+phonenumbers  [![Build Status](https://travis-ci.org/nyaruka/phonenumbers.svg?branch=master)](https://travis-ci.org/nyaruka/phonenumbers)
 ==============
 
 golang port of Google's libphonenumber, forked from [libphonenumber from ttacon](https://github.com/ttacon/libphonenumber)
 
-This will ultimately be a rewrite of ttacon's library, but for now mostly cleans up a few things and adds the `buildmetadata` cmd to 
-allow for rebuilding the metadata protocol buffers, country code to region maps and timezone prefix maps.
+This will ultimately be a rewrite of ttacon's library, but for now mostly cleans up a few things, fixes some bugs and adds the `buildmetadata` cmd to allow for rebuilding the metadata protocol buffers, country code to region maps and timezone prefix maps.
 
-API may change in the immediate future as we get this all buttoned up, but we depend on this heavily so we aim to have a fully
-working port of the main library that is performant before too long.
+This library is used daily in production for parsing and validation of numbers across the world, so is well maintained.
 
 Usage
 ========
