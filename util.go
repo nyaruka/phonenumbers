@@ -3280,3 +3280,21 @@ func GetTimezonesForPrefix(number string) ([]string, error) {
 	}
 	return []string{UNKNOWN_TIMEZONE}, nil
 }
+
+func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
+	e164 := Format(number, E164)
+	max := MAX_PREFIX_LENGTH + 1
+	if max > len(e164) {
+		max = len(e164)
+	}
+	for i := max; i > 1; i-- {
+		index, err := strconv.Atoi(e164[0:i])
+		if err != nil {
+			return nil, err
+		}
+		if PrefixToTimezone[index] != nil {
+			return PrefixToTimezone[index], nil
+		}
+	}
+	return []string{UNKNOWN_TIMEZONE}, nil
+}
