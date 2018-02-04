@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"compress/gzip"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -28,6 +32,27 @@ const (
 	regionPath = `src/github.com/nyaruka/phonenumbers/countrycode_to_region.go`
 )
 
+type Build struct {
+	svnCmd  string
+	srcGlob string
+	dstFile string
+	varName string
+}
+
+var carrier = Build{
+	svnCmd:  `svn export https://github.com/googlei18n/libphonenumber/trunk/resources/carrier --force`,
+	srcGlob: "./carrier/*/*.txt",
+	dstFile: `src/github.com/nyaruka/phonenumbers/prefix_to_carriers.go`,
+	varName: "CarriersPb",
+}
+
+var geocoding = Build{
+	svnCmd:  `svn export https://github.com/googlei18n/libphonenumber/trunk/resources/geocoding --force`,
+	srcGlob: "./geocoding/*/*.txt",
+	dstFile: `src/github.com/nyaruka/phonenumbers/prefix_to_geocodings.go`,
+	varName: "GeocodingsPb",
+}
+
 func fetchURL(url string) []byte {
 	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode != 200 {
@@ -42,6 +67,42 @@ func fetchURL(url string) []byte {
 	return body
 }
 
+func svnExport(svnCmd string) {
+	cmd := exec.Command("/bin/bash", "-c", svnCmd)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+	data, err := ioutil.ReadAll(stderr)
+	if err != nil {
+		log.Fatal(err, string(data))
+	}
+	outputBuf := bufio.NewReader(stdout)
+
+	for {
+		output, _, err := outputBuf.ReadLine()
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+			break
+		}
+		log.Println(string(output))
+	}
+
+	if err = cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func writeFile(filePath string, data []byte) {
 	gopath, found := os.LookupEnv("GOPATH")
 	if !found {
@@ -50,7 +111,7 @@ func writeFile(filePath string, data []byte) {
 
 	path := filepath.Join(gopath, filePath)
 
-	err := ioutil.WriteFile(path, data, os.FileMode(0774))
+	err := ioutil.WriteFile(path, data, os.FileMode(0664))
 	if err != nil {
 		log.Fatalf("Error writing '%s': %s", path, err)
 	}
@@ -235,8 +296,74 @@ func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 	return collection
 }
 
+func buildData(build *Build) {
+	log.Println("Fetching " + build.srcGlob + " from Github")
+	svnExport(build.svnCmd)
+
+	files, err := filepath.Glob(build.srcGlob)
+	if err != nil {
+		log.Fatal(err)
+	}
+	instance := &phonenumbers.PrefixMap{
+		Values: make(map[uint32]*phonenumbers.Value)}
+	for _, file := range files {
+		body, err := ioutil.ReadFile(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+		items := strings.Split(file, "/")
+		if len(items) != 3 {
+			log.Fatalf("file name %s not correct", file)
+		}
+
+		for _, line := range strings.Split(string(body), "\n") {
+			if strings.HasPrefix(line, "#") {
+				continue
+			}
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			fields := strings.Split(line, "|")
+			if len(fields) != 2 {
+				continue
+			}
+
+			if uint32(len(fields[0])) > instance.MaxPrefixLength {
+				instance.MaxPrefixLength = uint32(len(fields[0]))
+			}
+			intval, err := strconv.Atoi(fields[0])
+			if err != nil {
+				continue
+			}
+			code := uint32(intval)
+			if c, has := instance.Values[code]; has {
+				c.Data[items[1]] = fields[1]
+			} else {
+				instance.Values[code] =
+					&phonenumbers.Value{map[string]string{items[1]: fields[1]}}
+			}
+		}
+	}
+
+	out, _ := proto.Marshal(instance)
+	var compressed bytes.Buffer
+	w := gzip.NewWriter(&compressed)
+	w.Write(out)
+	w.Close() // if not, an unexpected EOF error will occur while calling ioutil.ReadAll
+	c := base64.StdEncoding.EncodeToString(compressed.Bytes())
+
+	var output bytes.Buffer
+	output.WriteString("package phonenumbers\n\n")
+	output.WriteString(fmt.Sprintf("var %s string = %s\n", build.varName, strconv.Quote(c)))
+
+	log.Println("Writing new " + build.dstFile)
+	writeFile(build.dstFile, output.Bytes())
+}
+
 func main() {
 	metadata := buildMetadata()
 	buildRegions(metadata)
 	buildTimezones()
+	buildData(&carrier)
+	buildData(&geocoding)
 }

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package i18n.phonenumbers;
+
+message Value {
+    map<string, string> data = 1; 
+}
+
+message PrefixMap {
+    uint32 max_prefix_length = 1;
+    map<uint32, Value> values = 2;
+}
