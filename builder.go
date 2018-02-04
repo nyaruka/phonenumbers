@@ -525,7 +525,7 @@ func setPossibleLengthsGeneralDesc(generalDesc *PhoneNumberDesc, metadataId stri
 	if !isShortNumberMetadata {
 		// Make a copy here since we want to remove some nodes, but we don't want to do that on our actual data.
 		// We remove no-international dialing
-		trimmedDescs := []*PhoneNumberDescE{data.GeneralDesc, data.AreaCodeOptional, data.FixedLine, data.Mobile, data.Pager,
+		trimmedDescs := []*PhoneNumberDescE{data.GeneralDesc, data.FixedLine, data.Mobile, data.Pager,
 			data.TollFree, data.PremiumRate, data.SharedCost, data.PersonalNumber, data.VOIP, data.UAN, data.VoiceMail, data.StandardRate,
 			data.ShortCode, data.Emergency, data.CarrierSpecific}
 		populatePossibleLengthSets(trimmedDescs, lengths, localOnlyLengths)
@@ -596,7 +596,7 @@ type PhoneNumberMetadataE struct {
 }
 
 // <!ELEMENT territory (references?, availableFormats?, generalDesc, noInternationalDialling?,
-//        areaCodeOptional?, fixedLine?, mobile?, pager?, tollFree?, premiumRate?,
+//        fixedLine?, mobile?, pager?, tollFree?, premiumRate?,
 //        sharedCost?, personalNumber?, voip?, uan?, voicemail?)>
 type TerritoryE struct {
 	// <!ATTLIST territory id CDATA #REQUIRED>
@@ -653,9 +653,6 @@ type TerritoryE struct {
 
 	// <!ELEMENT noInternationalDialling (nationalNumberPattern, possibleLengths, exampleNumber)>
 	NoInternationalDialing *PhoneNumberDescE `xml:"noInternationalDialing"`
-
-	// <!ELEMENT areaCodeOptional (nationalNumberPattern, possibleLengths, exampleNumber)>
-	AreaCodeOptional *PhoneNumberDescE `xml:"areaCodeOptional"`
 
 	// <!ELEMENT fixedLine (nationalNumberPattern, possibleLengths, exampleNumber)>
 	FixedLine *PhoneNumberDescE `xml:"fixedLine"`
