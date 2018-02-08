@@ -151,6 +151,7 @@ var CountryCodeToRegion = map[int][]string{
 	380: []string{"UA"},
 	381: []string{"RS"},
 	382: []string{"ME"},
+	383: []string{"XK"},
 	385: []string{"HR"},
 	386: []string{"SI"},
 	387: []string{"BA"},
