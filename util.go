@@ -304,7 +304,7 @@ var (
 	// We use this pattern to check if the phone number has at least three
 	// letters in it - if so, then we treat it as a number where some
 	// phone-number digits are represented by letters.
-	VALID_ALPHA_PHONE_PATTERN = regexp.MustCompile("(?:.*?[A-Za-z]){3}.*")
+	VALID_ALPHA_PHONE_PATTERN = regexp.MustCompile("^(?:.*?[A-Za-z]){3}.*$")
 
 	// Regular expression of viable phone numbers. This is location
 	// independent. Checks we have at least three leading digits, and
@@ -377,7 +377,7 @@ var (
 	// valid phone number may have an extension prefix appended,
 	// followed by 1 or more digits.
 	VALID_PHONE_NUMBER_PATTERN = regexp.MustCompile(
-		VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?")
+		"^(" + VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?)$")
 
 	NON_DIGITS_PATTERN = regexp.MustCompile("(\\D+)")
 	DIGITS_PATTERN     = regexp.MustCompile("(\\d+)")
@@ -732,6 +732,7 @@ func isViablePhoneNumber(number string) bool {
 	if len(number) < MIN_LENGTH_FOR_NSN {
 		return false
 	}
+
 	return VALID_PHONE_NUMBER_PATTERN.MatchString(number)
 }
 
@@ -2843,7 +2844,7 @@ func setItalianLeadingZerosForPhoneNumber(
 
 var (
 	ErrInvalidCountryCode = errors.New("invalid country code")
-	ErrNotANumber         = errors.New("The phone number supplied was empty.")
+	ErrNotANumber         = errors.New("The phone number supplied is not a number.")
 	ErrTooShortNSN        = errors.New("The string supplied is too short to be a phone number.")
 )
 
