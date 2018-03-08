@@ -7,6 +7,11 @@ This will ultimately be a rewrite of ttacon's library, but for now mostly cleans
 
 This library is used daily in production for parsing and validation of numbers across the world, so is well maintained.
 
+Version Numbers
+=======
+
+As we don't want to bump our major semantic version number in step with the upstream library (especially in light of vgo), we use independent version numbers than the Google libphonenumber repo.
+
 Usage
 ========
 
