@@ -20,7 +20,7 @@ Usage
 num, err := phonenumbers.Parse("6502530000", "US")
 
 // format it using national format
-formattedNum := phonenumbers.Format(num, gophone.NATIONAL)
+formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 ```
 
 Rebuilding Metadata and Maps
