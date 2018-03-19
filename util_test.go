@@ -60,6 +60,11 @@ func TestParse(t *testing.T) {
 			err:         ErrNotANumber,
 			expectedNum: 0,
 			region:      "US",
+		}, {
+			input:       "967717105526",
+			err:         nil,
+			expectedNum: 717105526,
+			region:      "YE",
 		},
 	}
 
