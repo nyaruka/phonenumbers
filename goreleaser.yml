@@ -15,7 +15,7 @@ archive:
 
 dockers:
   -
-    dockerfile: cmd/phoneserver/Dockerfile
+    dockerfile: Dockerfile
     image: nyaruka/phoneserver
     binary: phoneserver
     tag_templates:
