@@ -1,4 +1,15 @@
 language: go
+
 go:
-  - 1.7
-  - 1.8
+  - "1.10"
+
+services:
+  - docker
+
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: curl -sL http://git.io/goreleaser | bash
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux
