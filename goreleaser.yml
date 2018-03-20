@@ -17,6 +17,8 @@ dockers:
   -
     dockerfile: Dockerfile
     image: nyaruka/phoneserver
+    goos: linux
+    goarch: amd64
     binary: phoneserver
     tag_templates:
       - "{{ .Tag }}"
