@@ -6,12 +6,13 @@ go:
 services:
   - docker
 
+before_deploy:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+
 deploy:
   provider: script
   skip_cleanup: true
-  script: 
-    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-    - curl -sL http://git.io/goreleaser | bash
+  script: curl -sL http://git.io/goreleaser | bash
   on:
     tags: true
     condition: $TRAVIS_OS_NAME = linux
