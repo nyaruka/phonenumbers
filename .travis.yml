@@ -9,7 +9,9 @@ services:
 deploy:
   provider: script
   skip_cleanup: true
-  script: curl -sL http://git.io/goreleaser | bash
+  script: 
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+    - curl -sL http://git.io/goreleaser | bash
   on:
     tags: true
     condition: $TRAVIS_OS_NAME = linux
