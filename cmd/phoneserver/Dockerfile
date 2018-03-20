@@ -1,9 +1,7 @@
 FROM alpine
 
-WORKDIR /app
+COPY phoneserver /phoneserver
 
-ADD phoneserver phoneserver
-
-ENTRYPOINT ["./phoneserver"]
+ENTRYPOINT ["/phoneserver"]
 
 EXPOSE 8080
