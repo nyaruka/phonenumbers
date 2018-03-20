@@ -22,8 +22,14 @@ const indexBody = `
 		color: white;
 		background-color: #9b4dca;
 	}
+	#results div.error {
+		background-color: #c21807;
+	}
 	pre {
 		margin-top: 0px;
+	}
+	pre.error {
+		border-left: .3rem solid #c21807;
 	}
 	body {
 		padding: 15px;
@@ -37,7 +43,7 @@ const indexBody = `
 		<input id="phone" type="text" name="phone" value="12067799192" />
 		<label for="country">Country Code</label>
 	    <input id="country" type="text" name="country" value="US" />
-		<input type="submit" value="Submit" class="button"/>
+		<input type="submit" value="Parse" class="button"/>
 	  </fieldset>
 	</form>
 	<div id="results">
@@ -46,14 +52,23 @@ const indexBody = `
   <script>
     $("form").submit(function(e){
 		event.preventDefault();
-		$.get("/parse?" + $("form").serialize(), function(data, status, xhr){
-			$("#results").prepend("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
-			$("#results").prepend("<div>" + $("#phone").val() + " " + $("#country").val() + "</div>");
+		$.ajax({
+			"url": "/parse?" + $("form").serialize(), 
+			"success": function(data, status, xhr){
+				$("#results").prepend("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
+				$("#results").prepend("<div>" + $("#phone").val() + " " + $("#country").val() + "</div>");
+			},
+			"error": function(request, status, error){
+				$("#results").prepend("<pre class='error'>" + JSON.stringify(JSON.parse(request.responseText), null, 4) + "</pre>");
+				$("#results").prepend("<div class='error'>" + $("#phone").val() + " " + $("#country").val() + "</div>");
+			}
 		});
 	})
   </script>
 </html>
 `
+
+var version = "dev"
 
 type errorResponse struct {
 	Message string `json:"message"`
@@ -67,6 +82,7 @@ type successResponse struct {
 	IsValid                bool   `json:"is_valid"`
 	InternationalFormatted string `json:"international_formatted"`
 	NationalFormatted      string `json:"national_formatted"`
+	Version                string `json:"version"`
 }
 
 func writeResponse(w http.ResponseWriter, status int, body interface{}) {
@@ -88,7 +104,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 
 	// required phone number
 	if phone == "" {
-		writeResponse(w, http.StatusOK, errorResponse{"missing body", "missing 'phone' parameter"})
+		writeResponse(w, http.StatusBadRequest, errorResponse{"missing body", "missing 'phone' parameter"})
 		return
 	}
 
@@ -97,7 +113,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 
 	metadata, err := phonenumbers.Parse(phone, country)
 	if err != nil {
-		writeResponse(w, http.StatusOK, errorResponse{"error parsing phone", err.Error()})
+		writeResponse(w, http.StatusBadRequest, errorResponse{"error parsing phone", err.Error()})
 		return
 	}
 
@@ -108,6 +124,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 		IsValid:                phonenumbers.IsValidNumber(metadata),
 		NationalFormatted:      phonenumbers.Format(metadata, phonenumbers.NATIONAL),
 		InternationalFormatted: phonenumbers.Format(metadata, phonenumbers.INTERNATIONAL),
+		Version:                version,
 	})
 }
 
