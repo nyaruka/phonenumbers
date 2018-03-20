@@ -17,7 +17,7 @@ archive:
 
 dockers:
   -
-    dockerfile: Dockerfile
+    dockerfile: ./cmd/phoneserver/Dockerfile
     image: nyaruka/phoneserver
     goos: linux
     goarch: amd64
