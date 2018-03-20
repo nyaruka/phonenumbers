@@ -8,9 +8,56 @@ import (
 	"github.com/nyaruka/phonenumbers"
 )
 
+const indexBody = `
+<html>
+  <head>
+	<title>PhoneServer</title>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+	<link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
+	<link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
+	<style>
+	#results div {
+		padding: 10px;
+		color: white;
+		background-color: #9b4dca;
+	}
+	pre {
+		margin-top: 0px;
+	}
+	body {
+		padding: 15px;
+	}
+	</style>
+  </head>
+  <body>
+	<form>
+	  <fieldset>
+	    <label for="phone">Phone Number</label>
+		<input id="phone" type="text" name="phone" value="12067799192" />
+		<label for="country">Country Code</label>
+	    <input id="country" type="text" name="country" value="US" />
+		<input type="submit" value="Submit" class="button"/>
+	  </fieldset>
+	</form>
+	<div id="results">
+	</div>
+  </body>
+  <script>
+    $("form").submit(function(e){
+		event.preventDefault();
+		$.get("/parse?" + $("form").serialize(), function(data, status, xhr){
+			$("#results").prepend("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
+			$("#results").prepend("<div>" + $("#phone").val() + " " + $("#country").val() + "</div>");
+		});
+	})
+  </script>
+</html>
+`
+
 type errorResponse struct {
-	Message string
-	Error   string
+	Message string `json:"message"`
+	Error   string `json:"error"`
 }
 
 type successResponse struct {
@@ -23,7 +70,6 @@ type successResponse struct {
 }
 
 func writeResponse(w http.ResponseWriter, status int, body interface{}) {
-	w.WriteHeader(status)
 	js, err := json.MarshalIndent(body, "", "    ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -31,17 +77,18 @@ func writeResponse(w http.ResponseWriter, status int, body interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	w.Write(js)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func parse(w http.ResponseWriter, r *http.Request) {
 	// get our phone number parameter
 	r.ParseForm()
 	phone := r.Form.Get("phone")
 
 	// required phone number
 	if phone == "" {
-		writeResponse(w, http.StatusBadRequest, errorResponse{"missing body", "missing 'phone' parameter"})
+		writeResponse(w, http.StatusOK, errorResponse{"missing body", "missing 'phone' parameter"})
 		return
 	}
 
@@ -50,7 +97,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	metadata, err := phonenumbers.Parse(phone, country)
 	if err != nil {
-		writeResponse(w, http.StatusBadRequest, errorResponse{"error parsing phone", err.Error()})
+		writeResponse(w, http.StatusOK, errorResponse{"error parsing phone", err.Error()})
 		return
 	}
 
@@ -64,7 +111,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func index(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(indexBody))
+}
+
 func main() {
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/parse", parse)
+	http.HandleFunc("/", index)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
