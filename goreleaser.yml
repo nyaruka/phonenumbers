@@ -1,6 +1,8 @@
 build:
   main: ./cmd/phoneserver/
   binary: phoneserver
+  env:
+    - CGO_ENABLED=0
   goos:
     - windows
     - darwin
