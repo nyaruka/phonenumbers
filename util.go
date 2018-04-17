@@ -1314,8 +1314,7 @@ func FormatNumberForMobileDialing(
 			// is true for mobile numbers. As a result, we output them in
 			// the international format to make it work.
 			if regionCode == REGION_CODE_FOR_NON_GEO_ENTITY ||
-				((regionCode == "MX" ||
-					regionCode == "CL") &&
+				((regionCode == "MX" || regionCode == "CL" || regionCode == "UZ") &&
 					isFixedLineOrMobile) &&
 					canBeInternationallyDialled(numberNoExt) {
 				formattedNumber = Format(numberNoExt, INTERNATIONAL)

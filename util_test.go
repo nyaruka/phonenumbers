@@ -392,6 +392,32 @@ func TestFormat(t *testing.T) {
 	}
 }
 
+func TestFormatForMobileDialing(t *testing.T) {
+	var tests = []struct {
+		in     string
+		exp    string
+		region string
+		frmt   PhoneNumberFormat
+	}{
+		{
+			in:     "950123456",
+			region: "UZ",
+			exp:    "+998950123456",
+		},
+	}
+
+	for i, test := range tests {
+		num, err := Parse(test.in, test.region)
+		if err != nil {
+			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
+		}
+		got := FormatNumberForMobileDialing(num, test.region, false)
+		if got != test.exp {
+			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
+		}
+	}
+}
+
 func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 	var tests = []struct {
 		num          string
