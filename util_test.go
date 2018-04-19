@@ -1002,3 +1002,45 @@ func TestGetTimeZonesForPrefix(t *testing.T) {
 		}
 	}
 }
+
+func TestMaybeStripExtension(t *testing.T) {
+	var tests = []struct {
+		input     string
+		number    uint64
+		extension string
+		region    string
+	}{
+		{
+			input:     "1234576 ext. 1234",
+			number:    1234576,
+			extension: "1234",
+			region:    "US",
+		}, {
+			input:     "1234-576",
+			number:    1234576,
+			extension: "",
+			region:    "US",
+		}, {
+			input:     "1234576-123#",
+			number:    1234576,
+			extension: "123",
+			region:    "US",
+		}, {
+			input:     "1234576 ext.123#",
+			number:    1234576,
+			extension: "123",
+			region:    "US",
+		},
+	}
+
+	for i, test := range tests {
+		num, _ := Parse(test.input, test.region)
+		if num.GetNationalNumber() != test.number {
+			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetNationalNumber(), test.number)
+		}
+
+		if num.GetExtension() != test.extension {
+			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetExtension(), test.extension)
+		}
+	}
+}
