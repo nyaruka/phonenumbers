@@ -360,7 +360,7 @@ var (
 	// the unicode decomposed form with the combining acute accent.
 	EXTN_PATTERNS_FOR_PARSING = RFC3966_EXTN_PREFIX + CAPTURING_EXTN_DIGITS + "|" + "[ \u00A0\\t,]*" +
 		"(?:e?xt(?:ensi(?:o\u0301?|\u00F3))?n?|\uFF45?\uFF58\uFF54\uFF4E?|" +
-		"[,x\uFF58#\uFF03~\uFF5E]|int|anexo|\uFF49\uFF4E\uFF54)" +
+		"[;,x\uFF58#\uFF03~\uFF5E]|int|anexo|\uFF49\uFF4E\uFF54)" +
 		"[:\\.\uFF0E]?[ \u00A0\\t,-]*" + CAPTURING_EXTN_DIGITS + "#?|" +
 		"[- ]+(" + DIGITS + "{1,5})#"
 	EXTN_PATTERNS_FOR_MATCHING = RFC3966_EXTN_PREFIX + CAPTURING_EXTN_DIGITS + "|" + "[ \u00A0\\t,]*" +
@@ -2734,14 +2734,14 @@ func maybeStripExtension(number *Builder) string {
 	ind := EXTN_PATTERN.FindStringIndex(numStr)
 	if len(ind) > 0 && isViablePhoneNumber(numStr[0:ind[0]]) {
 		// The numbers are captured into groups in the regular expression.
-		for _, extensionGroup := range EXTN_PATTERN.FindAllStringIndex(numStr, -1) {
-			if len(extensionGroup) == 0 {
+		for _, extension := range EXTN_PATTERN.FindStringSubmatch(numStr)[1:] {
+			if len(extension) == 0 {
 				continue
 			}
+
 			// We go through the capturing groups until we find one
 			// that captured some digits. If none did, then we will
 			// return the empty string.
-			extension := numStr[extensionGroup[0]:extensionGroup[1]]
 			number.ResetWithString(numStr[0:ind[0]])
 			return extension
 		}
