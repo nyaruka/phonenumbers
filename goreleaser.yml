@@ -1,0 +1,27 @@
+build:
+  main: ./cmd/phoneserver/
+  binary: phoneserver
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - windows
+    - darwin
+    - linux
+  goarch:
+    - amd64
+
+archive:
+  files:
+    - LICENSE
+    - README.md
+
+dockers:
+  -
+    dockerfile: ./cmd/phoneserver/Dockerfile
+    image: nyaruka/phoneserver
+    goos: linux
+    goarch: amd64
+    binary: phoneserver
+    tag_templates:
+      - "{{ .Tag }}"
+      - latest

@@ -306,7 +306,7 @@ var (
 	// We use this pattern to check if the phone number has at least three
 	// letters in it - if so, then we treat it as a number where some
 	// phone-number digits are represented by letters.
-	VALID_ALPHA_PHONE_PATTERN = regexp.MustCompile("(?:.*?[A-Za-z]){3}.*")
+	VALID_ALPHA_PHONE_PATTERN = regexp.MustCompile("^(?:.*?[A-Za-z]){3}.*$")
 
 	// Regular expression of viable phone numbers. This is location
 	// independent. Checks we have at least three leading digits, and
@@ -362,7 +362,7 @@ var (
 	// the unicode decomposed form with the combining acute accent.
 	EXTN_PATTERNS_FOR_PARSING = RFC3966_EXTN_PREFIX + CAPTURING_EXTN_DIGITS + "|" + "[ \u00A0\\t,]*" +
 		"(?:e?xt(?:ensi(?:o\u0301?|\u00F3))?n?|\uFF45?\uFF58\uFF54\uFF4E?|" +
-		"[,x\uFF58#\uFF03~\uFF5E]|int|anexo|\uFF49\uFF4E\uFF54)" +
+		"[;,x\uFF58#\uFF03~\uFF5E]|int|anexo|\uFF49\uFF4E\uFF54)" +
 		"[:\\.\uFF0E]?[ \u00A0\\t,-]*" + CAPTURING_EXTN_DIGITS + "#?|" +
 		"[- ]+(" + DIGITS + "{1,5})#"
 	EXTN_PATTERNS_FOR_MATCHING = RFC3966_EXTN_PREFIX + CAPTURING_EXTN_DIGITS + "|" + "[ \u00A0\\t,]*" +
@@ -379,7 +379,7 @@ var (
 	// valid phone number may have an extension prefix appended,
 	// followed by 1 or more digits.
 	VALID_PHONE_NUMBER_PATTERN = regexp.MustCompile(
-		VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?")
+		"^(" + VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?)$")
 
 	NON_DIGITS_PATTERN = regexp.MustCompile("(\\D+)")
 	DIGITS_PATTERN     = regexp.MustCompile("(\\d+)")
@@ -734,6 +734,7 @@ func isViablePhoneNumber(number string) bool {
 	if len(number) < MIN_LENGTH_FOR_NSN {
 		return false
 	}
+
 	return VALID_PHONE_NUMBER_PATTERN.MatchString(number)
 }
 
@@ -1315,8 +1316,7 @@ func FormatNumberForMobileDialing(
 			// is true for mobile numbers. As a result, we output them in
 			// the international format to make it work.
 			if regionCode == REGION_CODE_FOR_NON_GEO_ENTITY ||
-				((regionCode == "MX" ||
-					regionCode == "CL") &&
+				((regionCode == "MX" || regionCode == "CL" || regionCode == "UZ") &&
 					isFixedLineOrMobile) &&
 					canBeInternationallyDialled(numberNoExt) {
 				formattedNumber = Format(numberNoExt, INTERNATIONAL)
@@ -2736,14 +2736,14 @@ func maybeStripExtension(number *Builder) string {
 	ind := EXTN_PATTERN.FindStringIndex(numStr)
 	if len(ind) > 0 && isViablePhoneNumber(numStr[0:ind[0]]) {
 		// The numbers are captured into groups in the regular expression.
-		for _, extensionGroup := range EXTN_PATTERN.FindAllStringIndex(numStr, -1) {
-			if len(extensionGroup) == 0 {
+		for _, extension := range EXTN_PATTERN.FindStringSubmatch(numStr)[1:] {
+			if len(extension) == 0 {
 				continue
 			}
+
 			// We go through the capturing groups until we find one
 			// that captured some digits. If none did, then we will
 			// return the empty string.
-			extension := numStr[extensionGroup[0]:extensionGroup[1]]
 			number.ResetWithString(numStr[0:ind[0]])
 			return extension
 		}
@@ -2845,7 +2845,7 @@ func setItalianLeadingZerosForPhoneNumber(
 
 var (
 	ErrInvalidCountryCode = errors.New("invalid country code")
-	ErrNotANumber         = errors.New("The phone number supplied was empty.")
+	ErrNotANumber         = errors.New("The phone number supplied is not a number.")
 	ErrTooShortNSN        = errors.New("The string supplied is too short to be a phone number.")
 )
 

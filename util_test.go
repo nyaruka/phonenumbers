@@ -55,6 +55,16 @@ func TestParse(t *testing.T) {
 			err:         nil,
 			expectedNum: 7856952,
 			region:      "",
+		}, {
+			input:       "190022+22222",
+			err:         ErrNotANumber,
+			expectedNum: 0,
+			region:      "US",
+		}, {
+			input:       "967717105526",
+			err:         nil,
+			expectedNum: 717105526,
+			region:      "YE",
 		},
 	}
 
@@ -376,6 +386,32 @@ func TestFormat(t *testing.T) {
 			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
 		}
 		got := Format(num, test.frmt)
+		if got != test.exp {
+			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
+		}
+	}
+}
+
+func TestFormatForMobileDialing(t *testing.T) {
+	var tests = []struct {
+		in     string
+		exp    string
+		region string
+		frmt   PhoneNumberFormat
+	}{
+		{
+			in:     "950123456",
+			region: "UZ",
+			exp:    "+998950123456",
+		},
+	}
+
+	for i, test := range tests {
+		num, err := Parse(test.in, test.region)
+		if err != nil {
+			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
+		}
+		got := FormatNumberForMobileDialing(num, test.region, false)
 		if got != test.exp {
 			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
 		}
@@ -1019,6 +1055,47 @@ func TestGetGeocodingForNumber(t *testing.T) {
 		}
 		if test.expected != geocoding {
 			t.Errorf("Expected '%s', got '%s' for '%s'", test.expected, geocoding, test.num)
+		}
+	}
+}
+func TestMaybeStripExtension(t *testing.T) {
+	var tests = []struct {
+		input     string
+		number    uint64
+		extension string
+		region    string
+	}{
+		{
+			input:     "1234576 ext. 1234",
+			number:    1234576,
+			extension: "1234",
+			region:    "US",
+		}, {
+			input:     "1234-576",
+			number:    1234576,
+			extension: "",
+			region:    "US",
+		}, {
+			input:     "1234576-123#",
+			number:    1234576,
+			extension: "123",
+			region:    "US",
+		}, {
+			input:     "1234576 ext.123#",
+			number:    1234576,
+			extension: "123",
+			region:    "US",
+		},
+	}
+
+	for i, test := range tests {
+		num, _ := Parse(test.input, test.region)
+		if num.GetNationalNumber() != test.number {
+			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetNationalNumber(), test.number)
+		}
+
+		if num.GetExtension() != test.extension {
+			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetExtension(), test.extension)
 		}
 	}
 }
