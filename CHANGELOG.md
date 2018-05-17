@@ -1,3 +1,7 @@
+v1.0.19
+----------
+ * update metadata for v8.9.6
+
 v1.0.18
 ----------
  * update metadata for v8.9.5
