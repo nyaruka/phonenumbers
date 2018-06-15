@@ -2,7 +2,9 @@ package phonenumbers
 
 import (
 	"compress/gzip"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -3279,4 +3281,102 @@ func GetTimezonesForPrefix(number string) ([]string, error) {
 		}
 	}
 	return []string{UNKNOWN_TIMEZONE}, nil
+}
+
+func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
+	e164 := Format(number, E164)
+	max := MAX_PREFIX_LENGTH + 1
+	if max > len(e164) {
+		max = len(e164)
+	}
+	for i := max; i > 1; i-- {
+		index, err := strconv.Atoi(e164[0:i])
+		if err != nil {
+			return nil, err
+		}
+		if PrefixToTimezone[index] != nil {
+			return PrefixToTimezone[index], nil
+		}
+	}
+	return []string{UNKNOWN_TIMEZONE}, nil
+}
+
+var carrierInstance, geocodingInstance *PrefixMap
+var carrierOnce, geocodingOnce sync.Once
+
+func loadPrefixMap(pbStr string) (*PrefixMap, error) {
+	data, err := base64.StdEncoding.DecodeString(pbStr)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("base64.StdEncoding.DecodeString, %+v", err))
+	}
+	reader, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("gzip.NewReader, %+v", err))
+	}
+	pbBytes, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("ioutil.ReadAll, %+v", err))
+	}
+	var prefixMap = &PrefixMap{}
+	err = proto.Unmarshal(pbBytes, prefixMap)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("proto.Unmarshal, %+v", err))
+	}
+	return prefixMap, nil
+}
+
+func getPrefixMap(src string) (*PrefixMap, error) {
+	var err error
+	switch src {
+	case "carrier":
+		carrierOnce.Do(func() {
+			carrierInstance, err = loadPrefixMap(CarriersPb)
+		})
+		return carrierInstance, err
+	case "geocoding":
+		geocodingOnce.Do(func() {
+			geocodingInstance, err = loadPrefixMap(GeocodingsPb)
+		})
+		return geocodingInstance, err
+	}
+	return nil, err
+}
+
+func getValueForNumber(src string, number *PhoneNumber, lang string) (string, error) {
+	e164 := Format(number, E164)
+	instance, err := getPrefixMap(src)
+	if err != nil {
+		return "", err
+	}
+
+	if instance == nil {
+		return "", errors.New(fmt.Sprintf("PrefixMap of %s doesn't exist", src))
+	}
+	max := instance.MaxPrefixLength + 1
+	l := uint32(len(e164))
+	if max > l {
+		max = l
+	}
+	for i := max; i > 1; i-- {
+		index, err := strconv.Atoi(e164[0:i])
+		if err != nil {
+			return "", err
+		}
+		if c, has := instance.Values[uint32(index)]; has {
+			if c.Data[lang] != "" {
+				return c.Data[lang], nil
+			}
+			// fall back to English
+			return c.Data["en"], nil
+		}
+	}
+	return "", nil
+}
+
+func GetCarrierForNumber(number *PhoneNumber, lang string) (string, error) {
+	return getValueForNumber("carrier", number, lang)
+}
+
+func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
+	return getValueForNumber("geocoding", number, lang)
 }
