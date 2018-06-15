@@ -1,3 +1,7 @@
+v1.0.21
+----------
+ * Update for libphonenumber v8.9.8
+
 v1.0.20
 ----------
  * updated metadata for v8.9.7
