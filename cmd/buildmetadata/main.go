@@ -161,7 +161,7 @@ func buildTimezones() {
 		// parse our prefix
 		prefix, err := strconv.Atoi(fields[0])
 		if err != nil {
-			log.Fatal("Invalid prefix in line: %s", line)
+			log.Fatalf("Invalid prefix in line: %s", line)
 		}
 		prefixMap[prefix] = zones
 	}
