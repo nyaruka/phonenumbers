@@ -1,18 +1,14 @@
 package phonenumbers
 
 import (
-	"compress/gzip"
 	"errors"
+	fmt "fmt"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"unicode"
-
-	"bytes"
-
-	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -679,15 +675,13 @@ func MetadataCollection() (*PhoneMetadataCollection, error) {
 		return currMetadataColl, nil
 	}
 
-	var metadataCollection = &PhoneMetadataCollection{}
-
-	reader, err := gzip.NewReader(bytes.NewReader(MetaData))
+	rawBytes, err := decodeUnzipString(metadataData)
 	if err != nil {
-		return metadataCollection, err
+		return nil, err
 	}
-	metaBytes, err := ioutil.ReadAll(reader)
 
-	err = proto.Unmarshal(metaBytes, metadataCollection)
+	var metadataCollection = &PhoneMetadataCollection{}
+	err = proto.Unmarshal(rawBytes, metadataCollection)
 	reloadMetadata = false
 	return metadataCollection, err
 }
@@ -3230,9 +3224,16 @@ func IsMobileNumberPortableRegion(regionCode string) bool {
 }
 
 func init() {
-	err := loadMetadataFromFile("US", 1)
+	// load our regions
+	regionMap, err := loadIntStringArrayMap(regionMapData)
 	if err != nil {
-		// better to die on start up
+		panic(err)
+	}
+	CountryCodeToRegion = regionMap.Map
+
+	// then our metadata
+	err = loadMetadataFromFile("US", 1)
+	if err != nil {
 		panic(err)
 	}
 
@@ -3262,21 +3263,128 @@ func init() {
 	for _, val := range CountryCodeToRegion[NANPA_COUNTRY_CODE] {
 		writeToNanpaRegions(val, struct{}{})
 	}
+
+	// Create our sync.Onces for each of our languages for carriers
+	carrierOnces = make(map[string]*sync.Once)
+	carrierPrefixMap = make(map[string]*intStringMap)
+	for lang, _ := range carrierMapData {
+		carrierOnces[lang] = &sync.Once{}
+	}
+
+	geocodingOnces = make(map[string]*sync.Once)
+	geocodingPrefixMap = make(map[string]*intStringMap)
+	for lang, _ := range geocodingMapData {
+		geocodingOnces[lang] = &sync.Once{}
+	}
 }
 
-// Returns a slice of Timezones corresponding to the number passed
+var CountryCodeToRegion map[int][]string
+
+var timezoneOnce sync.Once
+var timezoneMap *intStringArrayMap
+
+// GetTimezonesForPrefix returns a slice of Timezones corresponding to the number passed
 // or error when it is impossible to convert the string to int
 // The algorythm tries to match the timezones starting from the maximum
 // number of phone number digits and decreasing until it finds one or reaches 0
 func GetTimezonesForPrefix(number string) ([]string, error) {
-	for i := MAX_PREFIX_LENGTH; i > 0; i-- {
+	var err error
+	timezoneOnce.Do(func() {
+		timezoneMap, err = loadIntStringArrayMap(timezoneMapData)
+	})
+
+	if timezoneMap == nil {
+		return nil, fmt.Errorf("error loading timezone map: %v", err)
+	}
+
+	// strip any leading +
+	number = strings.TrimLeft(number, "+")
+
+	for i := timezoneMap.MaxLength; i > 0; i-- {
 		index, err := strconv.Atoi(number[0:i])
 		if err != nil {
 			return nil, err
 		}
-		if PrefixToTimezone[index] != nil {
-			return PrefixToTimezone[index], nil
+		tzs, found := timezoneMap.Map[index]
+		if found {
+			return tzs, nil
 		}
 	}
 	return []string{UNKNOWN_TIMEZONE}, nil
+}
+
+func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
+	e164 := Format(number, E164)
+	return GetTimezonesForPrefix(e164)
+}
+
+var carrierOnces map[string]*sync.Once
+var carrierPrefixMap map[string]*intStringMap
+
+var geocodingOnces map[string]*sync.Once
+var geocodingPrefixMap map[string]*intStringMap
+
+func getValueForNumber(onceMap map[string]*sync.Once, langMap map[string]*intStringMap, binMap map[string]string, language string, maxLength int, number *PhoneNumber) (string, error) {
+	// do we have data for this language
+	_, existing := binMap[language]
+	if !existing {
+		return "", nil
+	}
+
+	// load it into our map
+	onceMap[language].Do(func() {
+		prefixMap, err := loadPrefixMap(binMap[language])
+		if err == nil {
+			langMap[language] = prefixMap
+		}
+	})
+
+	// do we have a map for this language?
+	prefixMap, ok := langMap[language]
+	if !ok {
+		return "", fmt.Errorf("error loading language map for %s", language)
+	}
+
+	e164 := Format(number, E164)
+
+	l := len(e164)
+	if maxLength > l {
+		maxLength = l
+	}
+	for i := maxLength; i > 1; i-- {
+		index, err := strconv.Atoi(e164[0:i])
+		if err != nil {
+			return "", err
+		}
+		if value, has := prefixMap.Map[index]; has {
+			return value, nil
+		}
+	}
+	return "", nil
+}
+
+func GetCarrierForNumber(number *PhoneNumber, lang string) (string, error) {
+	carrier, err := getValueForNumber(carrierOnces, carrierPrefixMap, carrierMapData, lang, 10, number)
+	if err != nil {
+		return "", err
+	}
+	if carrier != "" {
+		return carrier, nil
+	}
+
+	// fallback to english
+	return getValueForNumber(carrierOnces, carrierPrefixMap, carrierMapData, "en", 10, number)
+}
+
+func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
+	geocoding, err := getValueForNumber(geocodingOnces, geocodingPrefixMap, geocodingMapData, lang, 10, number)
+	if err != nil {
+		return "", err
+	}
+	if geocoding != "" {
+		return geocoding, nil
+	}
+
+	// fallback to english
+	return getValueForNumber(geocodingOnces, geocodingPrefixMap, geocodingMapData, "en", 10, number)
 }

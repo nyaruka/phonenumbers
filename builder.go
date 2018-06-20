@@ -57,11 +57,11 @@ func buildPhoneMetadataFromElement(document *PhoneNumberMetadataE, liteBuild boo
 // represented by that country code. In the case of multiple countries sharing a calling code,
 // such as the NANPA countries, the one indicated with "isMainCountryForCode" in the metadata
 // should be first.
-func BuildCountryCodeToRegionMap(metadataCollection *PhoneMetadataCollection) map[int32][]string {
-	countryCodeToRegionCodeMap := make(map[int32][]string)
+func BuildCountryCodeToRegionMap(metadataCollection *PhoneMetadataCollection) map[int][]string {
+	countryCodeToRegionCodeMap := make(map[int][]string)
 	for _, metadata := range metadataCollection.Metadata {
 		regionCode := metadata.GetId()
-		countryCode := metadata.GetCountryCode()
+		countryCode := int(metadata.GetCountryCode())
 		_, present := countryCodeToRegionCodeMap[countryCode]
 		if present {
 			phoneList := countryCodeToRegionCodeMap[countryCode]

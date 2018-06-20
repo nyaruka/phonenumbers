@@ -5,3 +5,5 @@ fabfile.py
 fabfile.pyc
 fabconfig.py
 fabconfig.pyc
+carrier
+geocoding

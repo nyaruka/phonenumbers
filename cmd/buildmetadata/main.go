@@ -1,12 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"compress/gzip"
+	"encoding/base64"
+	"encoding/binary"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -18,15 +24,38 @@ import (
 	"github.com/nyaruka/phonenumbers"
 )
 
+type prefixBuild struct {
+	url     string
+	dir     string
+	srcPath string
+	varName string
+}
+
 const (
-	metadataURL  = `https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/PhoneNumberMetadata.xml`
-	metadataPath = `src/github.com/nyaruka/phonenumbers/metadata_bin.go`
+	metadataURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/PhoneNumberMetadata.xml"
+	metadataPath = "src/github.com/nyaruka/phonenumbers/metadata_bin.go"
 
-	tzURL  = `https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/timezones/map_data.txt`
-	tzPath = `src/github.com/nyaruka/phonenumbers/prefix_to_timezone.go`
+	tzURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/timezones/map_data.txt"
+	tzPath = "src/github.com/nyaruka/phonenumbers/prefix_to_timezone_bin.go"
+	tzVar  = "timezoneMapData"
 
-	regionPath = `src/github.com/nyaruka/phonenumbers/countrycode_to_region.go`
+	regionPath = "src/github.com/nyaruka/phonenumbers/countrycode_to_region_bin.go"
+	regionVar  = "regionMapData"
 )
+
+var carrier = prefixBuild{
+	url:     "https://github.com/googlei18n/libphonenumber/trunk/resources/carrier",
+	dir:     "carrier",
+	srcPath: "src/github.com/nyaruka/phonenumbers/prefix_to_carriers_bin.go",
+	varName: "carrierMapData",
+}
+
+var geocoding = prefixBuild{
+	url:     "https://github.com/googlei18n/libphonenumber/trunk/resources/geocoding",
+	dir:     "geocoding",
+	srcPath: "src/github.com/nyaruka/phonenumbers/prefix_to_geocodings_bin.go",
+	varName: "geocodingMapData",
+}
 
 func fetchURL(url string) []byte {
 	resp, err := http.Get(url)
@@ -42,7 +71,49 @@ func fetchURL(url string) []byte {
 	return body
 }
 
+func svnExport(dir string, url string) {
+	os.RemoveAll(dir)
+	cmd := exec.Command(
+		"/bin/bash",
+		"-c",
+		fmt.Sprintf("svn export %s --force", url),
+	)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+	data, err := ioutil.ReadAll(stderr)
+	if err != nil {
+		log.Fatal(err, string(data))
+	}
+	outputBuf := bufio.NewReader(stdout)
+
+	for {
+		output, _, err := outputBuf.ReadLine()
+		if err != nil {
+			if err != io.EOF {
+				log.Fatal(err)
+			}
+			break
+		}
+		log.Println(string(output))
+	}
+
+	if err = cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func writeFile(filePath string, data []byte) {
+	log.Printf("Writing new %s", filePath)
 	gopath, found := os.LookupEnv("GOPATH")
 	if !found {
 		log.Fatal("Missing $GOPATH environment variable")
@@ -50,7 +121,7 @@ func writeFile(filePath string, data []byte) {
 
 	path := filepath.Join(gopath, filePath)
 
-	err := ioutil.WriteFile(path, data, os.FileMode(0774))
+	err := ioutil.WriteFile(path, data, os.FileMode(0664))
 	if err != nil {
 		log.Fatalf("Error writing '%s': %s", path, err)
 	}
@@ -59,71 +130,15 @@ func writeFile(filePath string, data []byte) {
 func buildRegions(metadata *phonenumbers.PhoneMetadataCollection) {
 	log.Println("Building region map")
 	regionMap := phonenumbers.BuildCountryCodeToRegionMap(metadata)
-
-	output := bytes.Buffer{}
-	output.WriteString("package phonenumbers\n\n")
-	output.WriteString("// CountryCodeToRegion maps a country code to a list of possible regions\n")
-	output.WriteString("var CountryCodeToRegion = map[int][]string{\n")
-
-	ccs := make([]int, 0, len(regionMap))
-	for cc := range regionMap {
-		ccs = append(ccs, int(cc))
-	}
-	sort.Ints(ccs)
-
-	for _, cc := range ccs {
-		regions := regionMap[int32(cc)]
-
-		// write our map entry
-		output.WriteString("\t")
-		output.WriteString(strconv.FormatInt(int64(cc), 10))
-		output.WriteString(":")
-		if cc < 10 {
-			output.WriteString("  ")
-		} else if cc < 100 {
-			output.WriteString(" ")
-		}
-		output.WriteString(" []string{")
-
-		if len(regions) == 1 {
-			output.WriteString("\"")
-			output.WriteString(regions[0])
-			output.WriteString("\"},\n")
-		} else {
-			sort.Strings(regions[1:])
-			for i, region := range regions {
-				if i%10 == 0 {
-					output.WriteString("\n\t\t")
-				}
-				output.WriteString("\"")
-				output.WriteString(region)
-				output.WriteString("\", ")
-			}
-
-			output.WriteString("\n\t},\n")
-		}
-	}
-
-	output.WriteString("\n}\n")
-
-	log.Println("Writing new countrycode_to_region.go")
-	writeFile(regionPath, output.Bytes())
+	writeIntStringArrayMap(regionPath, regionVar, regionMap)
 }
 
 func buildTimezones() {
-	log.Println("Fetching map_data.txt from Github")
+	log.Println("Building timezone map")
 	body := fetchURL(tzURL)
 
-	// create our output
-	output := bytes.Buffer{}
-	output.WriteString("package phonenumbers\n\n")
-	output.WriteString("// PrefixToTimezone maps a phone number prefix to a list of possible timezones\n")
-	output.WriteString("var PrefixToTimezone = map[int][]string{\n")
-
-	// we keep track of the max prefix length we have so we can write it afterwards
-	maxPrefixLength := 0
-
-	// read through our body
+	// build our map of prefix to timezones
+	prefixMap := make(map[int][]string)
 	for _, line := range strings.Split(string(body), "\n") {
 		if strings.HasPrefix(line, "#") {
 			continue
@@ -143,42 +158,91 @@ func buildTimezones() {
 			log.Fatalf("Invalid format in timezone file: %s", line)
 		}
 
-		// write our map entry
-		output.WriteString("\t")
-		output.WriteString(fields[0])
-		output.WriteString(": []string{")
-
-		if len(fields[0]) > maxPrefixLength {
-			maxPrefixLength = len(fields[0])
+		// parse our prefix
+		prefix, err := strconv.Atoi(fields[0])
+		if err != nil {
+			log.Fatalf("Invalid prefix in line: %s", line)
 		}
+		prefixMap[prefix] = zones
+	}
 
-		if len(zones) == 1 {
-			output.WriteString("\"")
-			output.WriteString(zones[0])
-			output.WriteString("\"},\n")
-		} else {
-			sort.Strings(zones)
-			for i, zone := range zones {
-				if i%5 == 0 {
-					output.WriteString("\n\t\t")
-				}
-				output.WriteString("\"")
-				output.WriteString(zone)
-				output.WriteString("\", ")
+	// then write our file
+	writeIntStringArrayMap(tzPath, tzVar, prefixMap)
+}
+
+func writeIntStringArrayMap(path string, varName string, prefixMap map[int][]string) {
+	// build lists of our keys and values
+	keys := make([]int, 0, len(prefixMap))
+	values := make([]string, 0, 255)
+	seenValues := make(map[string]bool, 255)
+
+	for k, vs := range prefixMap {
+		keys = append(keys, k)
+		for _, v := range vs {
+			_, seen := seenValues[v]
+			if !seen {
+				seenValues[v] = true
+				values = append(values, v)
 			}
-
-			output.WriteString("\n\t},\n")
 		}
 	}
-	output.WriteString("\n}\n")
+	sort.Strings(values)
+	sort.Ints(keys)
 
-	output.WriteString("// MAX_PREFIX_LENGTH helps us optimize for prefixes that can't be contained in our table\n")
-	output.WriteString("var MAX_PREFIX_LENGTH = ")
-	output.WriteString(strconv.FormatInt(int64(maxPrefixLength), 10))
-	output.WriteString("\n")
+	internMap := make(map[string]int, len(values))
+	for i, v := range values {
+		internMap[v] = i
+	}
 
-	log.Println("Writing new prefix_to_timezone.go")
-	writeFile(tzPath, output.Bytes())
+	data := &bytes.Buffer{}
+
+	// first write our values, as length of string and raw bytes
+	joinedValues := strings.Join(values, "\n")
+	if err := binary.Write(data, binary.LittleEndian, uint32(len(joinedValues))); err != nil {
+		log.Fatal(err)
+	}
+	if err := binary.Write(data, binary.LittleEndian, []byte(joinedValues)); err != nil {
+		log.Fatal(err)
+	}
+
+	// then the number of keys
+	if err := binary.Write(data, binary.LittleEndian, uint32(len(keys))); err != nil {
+		log.Fatal(err)
+	}
+
+	// we write our key / value pairs as a varint of the difference of the previous prefix
+	// and a uint16 of the value index
+	last := 0
+	intBuf := make([]byte, 6, 6)
+	for _, key := range keys {
+		// first write our prefix
+		diff := key - last
+		l := binary.PutUvarint(intBuf, uint64(diff))
+		if err := binary.Write(data, binary.LittleEndian, intBuf[:l]); err != nil {
+			log.Fatal(err)
+		}
+
+		// then our values
+		values := prefixMap[key]
+
+		// write our number of values
+		if err := binary.Write(data, binary.LittleEndian, uint8(len(values))); err != nil {
+			log.Fatal(err)
+		}
+
+		// then each value as the interned index
+		for _, v := range values {
+			valueIntern := internMap[v]
+			if err := binary.Write(data, binary.LittleEndian, uint16(valueIntern)); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		last = key
+	}
+
+	// then write our file
+	writeFile(path, generateBinFile(varName, data.Bytes()))
 }
 
 func buildMetadata() *phonenumbers.PhoneMetadataCollection {
@@ -197,46 +261,209 @@ func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 	}
 
 	// write it out as a protobuf
-	log.Println("Writing new metadata_bin.go")
 	data, err := proto.Marshal(collection)
 	if err != nil {
 		log.Fatalf("Error marshalling metadata: %v", err)
 	}
 
-	// zip it
+	log.Println("Writing new metadata_bin.go")
+	writeFile(metadataPath, generateBinFile("metadataData", data))
+	return collection
+}
+
+// generates the file contents for a data file
+func generateBinFile(variableName string, data []byte) []byte {
 	var compressed bytes.Buffer
 	w := gzip.NewWriter(&compressed)
 	w.Write(data)
 	w.Close()
-	data = compressed.Bytes()
+	encoded := base64.StdEncoding.EncodeToString(compressed.Bytes())
 
 	// create our output
-	output := bytes.Buffer{}
+	output := &bytes.Buffer{}
 
 	// write our header
-	output.WriteString("package phonenumbers\n\n")
-	output.WriteString("var MetaData = []byte{\n        ")
+	output.WriteString("package phonenumbers\n\nvar ")
+	output.WriteString(variableName)
+	output.WriteString(" = ")
+	output.WriteString(strconv.Quote(string(encoded)))
+	output.WriteString("\n")
+	return output.Bytes()
+}
 
-	// ok, write each byte of our data in groups of 14
-	for i, b := range data {
-		if i > 0 && i%14 == 0 {
-			output.WriteString("\n        ")
-		}
-		output.WriteString("0x")
-		output.WriteString(fmt.Sprintf("%02x", b))
-		output.WriteString(", ")
+func buildPrefixData(build *prefixBuild) {
+	log.Println("Fetching " + build.url + " from Github")
+	svnExport(build.dir, build.url)
+
+	// get our top level language directories
+	dirs, err := filepath.Glob(fmt.Sprintf("%s/*", build.dir))
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	output.WriteString("\n}\n")
+	// for each directory
+	languageMappings := make(map[string]map[int]string)
+	for _, dir := range dirs {
+		// only look at directories
+		fi, _ := os.Stat(dir)
+		if !fi.IsDir() {
+			log.Printf("Ignoring directory: %s\n", dir)
+			continue
+		}
 
-	log.Println("Writing new metadata_bin.go")
-	writeFile(metadataPath, output.Bytes())
+		// get our language code
+		parts := strings.Split(dir, "/")
 
-	return collection
+		// build a map for that directory
+		mappings := readMappingsForDir(dir)
+
+		// save it for our language
+		languageMappings[parts[1]] = mappings
+	}
+
+	output := bytes.Buffer{}
+	output.WriteString("package phonenumbers\n\n")
+	output.WriteString(fmt.Sprintf("var %s = map[string]string {\n", build.varName))
+
+	for lang, mappings := range languageMappings {
+		// iterate through our map, creating our full set of values and prefixes
+		prefixes := make([]int, 0, len(mappings))
+		seenValues := make(map[string]bool)
+		values := make([]string, 0, 255)
+		for prefix, value := range mappings {
+			prefixes = append(prefixes, prefix)
+			_, seen := seenValues[value]
+			if !seen {
+				values = append(values, value)
+				seenValues[value] = true
+			}
+		}
+
+		// make sure we won't overrun uint16s
+		if len(values) > math.MaxUint16 {
+			log.Fatal("too many values to represent in uint16")
+		}
+
+		// need sorted prefixes for our diff writing to work
+		sort.Ints(prefixes)
+
+		// sorted values compress better
+		sort.Strings(values)
+
+		// build our reverse mapping from value to offset
+		internMappings := make(map[string]uint16)
+		for i, value := range values {
+			internMappings[value] = uint16(i)
+		}
+
+		// write our map
+		data := &bytes.Buffer{}
+
+		// first write our values, as length of string and raw bytes
+		joinedValues := strings.Join(values, "\n")
+		if err = binary.Write(data, binary.LittleEndian, uint32(len(joinedValues))); err != nil {
+			log.Fatal(err)
+		}
+		if err = binary.Write(data, binary.LittleEndian, []byte(joinedValues)); err != nil {
+			log.Fatal(err)
+		}
+
+		// then then number of prefix / value pairs
+		if err = binary.Write(data, binary.LittleEndian, uint32(len(prefixes))); err != nil {
+			log.Fatal(err)
+		}
+
+		// we write our prefix / value pairs as a varint of the difference of the previous prefix
+		// and a uint16 of the value index
+		last := 0
+		intBuf := make([]byte, 6, 6)
+		for _, prefix := range prefixes {
+			value := mappings[prefix]
+			valueIntern := internMappings[value]
+			diff := prefix - last
+			l := binary.PutUvarint(intBuf, uint64(diff))
+			if err = binary.Write(data, binary.LittleEndian, intBuf[:l]); err != nil {
+				log.Fatal(err)
+			}
+			if err = binary.Write(data, binary.LittleEndian, uint16(valueIntern)); err != nil {
+				log.Fatal(err)
+			}
+
+			last = prefix
+		}
+
+		var compressed bytes.Buffer
+		w := gzip.NewWriter(&compressed)
+		w.Write(data.Bytes())
+		w.Close()
+		c := base64.StdEncoding.EncodeToString(compressed.Bytes())
+		output.WriteString("\t")
+		output.WriteString(strconv.Quote(lang))
+		output.WriteString(": ")
+		output.WriteString(strconv.Quote(c))
+		output.WriteString(",\n")
+	}
+
+	output.WriteString("}")
+	writeFile(build.srcPath, output.Bytes())
+}
+
+func readMappingsForDir(dir string) map[int]string {
+	log.Printf("Building map for: %s\n", dir)
+	mappings := make(map[int]string)
+
+	files, err := filepath.Glob(dir + "/*.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		body, err := ioutil.ReadFile(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+		items := strings.Split(file, "/")
+		if len(items) != 3 {
+			log.Fatalf("file name %s not correct", file)
+		}
+
+		for _, line := range strings.Split(string(body), "\n") {
+			if strings.HasPrefix(line, "#") {
+				continue
+			}
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			fields := strings.Split(line, "|")
+			if len(fields) != 2 {
+				continue
+			}
+			prefix := fields[0]
+			prefixInt, err := strconv.Atoi(prefix)
+			if err != nil || prefixInt < 0 {
+				log.Fatalf("Unable to parse line: %s", line)
+			}
+
+			value := strings.TrimSpace(fields[1])
+			if value == "" {
+				log.Printf("Ignoring empty value: %s", line)
+			}
+
+			_, repeat := mappings[prefixInt]
+			if repeat {
+				log.Fatalf("Repeated prefix for line: %s", line)
+			}
+			mappings[prefixInt] = fields[1]
+		}
+	}
+
+	log.Printf("Read %d mappings in %s\n", len(mappings), dir)
+	return mappings
 }
 
 func main() {
 	metadata := buildMetadata()
 	buildRegions(metadata)
 	buildTimezones()
+	buildPrefixData(&carrier)
+	buildPrefixData(&geocoding)
 }
