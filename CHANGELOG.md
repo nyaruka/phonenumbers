@@ -1,3 +1,7 @@
+v1.0.22
+----------
+* add GetCarrierForNumber and GetGeocodingForNumber
+
 v1.0.21
 ----------
  * Update for libphonenumber v8.9.8
