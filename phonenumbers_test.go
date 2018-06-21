@@ -65,6 +65,11 @@ func TestParse(t *testing.T) {
 			err:         nil,
 			expectedNum: 717105526,
 			region:      "YE",
+		}, {
+			input:       "+68672098006",
+			err:         nil,
+			expectedNum: 72098006,
+			region:      "",
 		},
 	}
 
@@ -1116,6 +1121,37 @@ func TestMaybeStripExtension(t *testing.T) {
 
 		if num.GetExtension() != test.extension {
 			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetExtension(), test.extension)
+		}
+	}
+}
+
+func TestGetSupportedCallingCodes(t *testing.T) {
+	var tests = []struct {
+		code    int
+		present bool
+	}{
+		{
+			1,
+			true,
+		}, {
+			800,
+			true,
+		}, {
+			593,
+			true,
+		}, {
+			44,
+			true,
+		}, {
+			999,
+			false,
+		},
+	}
+
+	supported := GetSupportedCallingCodes()
+	for i, tc := range tests {
+		if supported[tc.code] != tc.present {
+			t.Errorf("[test %d:num] failed for code %d: %v != %v\n", i, tc.code, tc.present, supported[tc.code])
 		}
 	}
 }
