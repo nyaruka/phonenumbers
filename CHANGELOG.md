@@ -1,3 +1,8 @@
+v1.0.23
+----------
+ * add GetSupportedCallingCodes
+ * return sets as map[int]bool instead of map[int]struct{}
+
 v1.0.22
 ----------
 * add GetCarrierForNumber and GetGeocodingForNumber
