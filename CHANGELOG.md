@@ -1,3 +1,7 @@
+v1.0.24
+----------
+ * update to metadata for v8.9.10
+
 v1.0.23
 ----------
  * add GetSupportedCallingCodes
