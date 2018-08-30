@@ -1465,7 +1465,7 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 		nationalPrefix := GetNddPrefixForRegion(
 			regionCode, true /* strip non-digits */)
 		nationalFormat := Format(number, NATIONAL)
-		if len(nationalPrefix) == 0 || len(nationalPrefix) == 0 {
+		if len(nationalPrefix) == 0 {
 			// If the region doesn't have a national prefix at all,
 			// we can safely return the national format without worrying
 			// about a national prefix being added.
