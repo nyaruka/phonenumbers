@@ -380,6 +380,11 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 			region: "US",
 			err:    nil,
 			valid:  TOO_LONG,
+		}, {
+			input:  "+1456723456",
+			region: "US",
+			err:    nil,
+			valid:  TOO_SHORT,
 		},
 	}
 
