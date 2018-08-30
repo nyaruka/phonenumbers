@@ -3,8 +3,8 @@ package phonenumbers
 import (
 	"encoding/xml"
 	"fmt"
-	"math"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -405,11 +405,6 @@ func processPhoneNumberDescElement(parentDesc *PhoneNumberDesc, element *PhoneNu
 	numberDesc := PhoneNumberDesc{}
 	if element == nil {
 		numberDesc.NationalNumberPattern = sp("NA")
-		numberDesc.PossibleNumberPattern = sp("NA")
-		// -1 will never match a possible phone number length, so is safe to use to ensure this never
-		// matches. We don't leave it empty, since for compression reasons, we use the empty list to
-		// mean that the generalDesc possible lengths apply.
-		//numberDesc.PossibleLength = append(numberDesc.PossibleLength, -1)  [golang doesnt use possible length numbers]
 		return &numberDesc
 	}
 	if parentDesc != nil {
@@ -452,19 +447,19 @@ func setPossibleLengths(lengths map[int32]bool, localOnlyLengths map[int32]bool,
 
 	// Only add the lengths to this sub-type if they aren't exactly the same as the possible
 	// lengths in the general desc (for metadata size reasons).
-	// if parentDesc == nil || !arePossibleLengthsEqual(lengths, parentDesc) { [TODO: nicp: golang doesn't optimize?]
-	for length := range lengths {
-		if parentDesc == nil || parentDesc.hasPossibleLength(length) {
-			desc.PossibleLength = append(desc.PossibleLength, length)
-		} else {
-			// We shouldn't have possible lengths defined in a child element that are not covered by
-			// the general description. We check this here even though the general description is
-			// derived from child elements because it is only derived from a subset, and we need to
-			// ensure *all* child elements have a valid possible length.
-			panic(fmt.Sprintf("Out-of-range possible length found (%d), parent lengths %v.", length, parentDesc.PossibleLength))
+	if parentDesc == nil || !arePossibleLengthsEqual(lengths, parentDesc) {
+		for length := range lengths {
+			if parentDesc == nil || parentDesc.hasPossibleLength(length) {
+				desc.PossibleLength = append(desc.PossibleLength, length)
+			} else {
+				// We shouldn't have possible lengths defined in a child element that are not covered by
+				// the general description. We check this here even though the general description is
+				// derived from child elements because it is only derived from a subset, and we need to
+				// ensure *all* child elements have a valid possible length.
+				panic(fmt.Sprintf("Out-of-range possible length found (%d), parent lengths %v.", length, parentDesc.PossibleLength))
+			}
 		}
 	}
-	//}
 	// We check that the local-only length isn't also a normal possible length (only relevant for
 	// the general-desc, since within elements such as fixed-line we would throw an exception if we
 	// saw this) before adding it to the collection of possible local-only lengths.
@@ -475,31 +470,16 @@ func setPossibleLengths(lengths map[int32]bool, localOnlyLengths map[int32]bool,
 			// a valid national length for fixedLine, so the generalDesc would have the 7 removed from
 			// localOnly.
 			if parentDesc == nil || parentDesc.hasPossibleLength(length) || parentDesc.hasPossibleLengthLocalOnly(length) {
-				desc.PossibleLength = append(desc.PossibleLength, length)
+				desc.PossibleLengthLocalOnly = append(desc.PossibleLengthLocalOnly, length)
 			} else {
 				panic(fmt.Sprintf("Out-of-range local-only possible length found (%d), parent length %v.", length, parentDesc.PossibleLengthLocalOnly))
 			}
 		}
 	}
 
-	// generate our possible pattern from our min and max
-	if len(desc.PossibleLength) > 0 {
-		min := int32(math.MaxInt32)
-		max := int32(math.MinInt32)
-		for _, l := range desc.PossibleLength {
-			if l < min {
-				min = l
-			}
-			if l > max {
-				max = l
-			}
-		}
-		if min == max {
-			desc.PossibleNumberPattern = sp(fmt.Sprintf("\\d{%d}", min))
-		} else {
-			desc.PossibleNumberPattern = sp(fmt.Sprintf("\\d{%d,%d}", min, max))
-		}
-	}
+	// Need to sort both lists, possible lengths need to be ordered
+	sort.Slice(desc.PossibleLength, func(i, j int) bool { return desc.PossibleLength[i] < desc.PossibleLength[j] })
+	sort.Slice(desc.PossibleLengthLocalOnly, func(i, j int) bool { return desc.PossibleLengthLocalOnly[i] < desc.PossibleLengthLocalOnly[j] })
 }
 
 /**

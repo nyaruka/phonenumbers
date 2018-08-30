@@ -2,7 +2,6 @@ package phonenumbers
 
 import (
 	"reflect"
-	"regexp"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -48,7 +47,7 @@ func TestParse(t *testing.T) {
 		}, {
 			input:       "+1 1951178619",
 			err:         nil,
-			expectedNum: 951178619,
+			expectedNum: 1951178619,
 			region:      "US",
 		}, {
 			input:       "+33 07856952",
@@ -339,6 +338,67 @@ func TestIsValidNumberForRegion(t *testing.T) {
 	}
 }
 
+func TestIsPossibleNumberWithReason(t *testing.T) {
+	var tests = []struct {
+		input  string
+		region string
+		err    error
+		valid  ValidationResult
+	}{
+		{
+			input:  "16502530000",
+			region: "US",
+			err:    nil,
+			valid:  IS_POSSIBLE,
+		}, {
+			input:  "2530000",
+			region: "US",
+			err:    nil,
+			valid:  IS_POSSIBLE_LOCAL_ONLY,
+		}, {
+			input:  "65025300001",
+			region: "US",
+			err:    nil,
+			valid:  TOO_LONG,
+		}, {
+			input:  "2530000",
+			region: "",
+			err:    ErrInvalidCountryCode,
+			valid:  IS_POSSIBLE_LOCAL_ONLY,
+		}, {
+			input:  "253000",
+			region: "US",
+			err:    nil,
+			valid:  TOO_SHORT,
+		}, {
+			input:  "1234567890",
+			region: "SG",
+			err:    nil,
+			valid:  IS_POSSIBLE,
+		}, {
+			input:  "800123456789",
+			region: "US",
+			err:    nil,
+			valid:  TOO_LONG,
+		},
+	}
+
+	for i, test := range tests {
+		num, err := Parse(test.input, test.region)
+		if err != nil {
+			if test.err == err {
+				continue
+			}
+			t.Errorf("[test %d:err] failed: %v\n", i, err)
+		}
+
+		valid := IsPossibleNumberWithReason(num)
+		if valid != test.valid {
+			t.Errorf("[test %d:possible] %s failed: %v != %v\n", i, test.input, valid, test.valid)
+		}
+	}
+}
+
 func TestFormat(t *testing.T) {
 	var tests = []struct {
 		in     string
@@ -380,7 +440,7 @@ func TestFormat(t *testing.T) {
 		{
 			in:     "+1 100-083-0033",
 			region: "US",
-			exp:    "+1 000830033",
+			exp:    "+1 100-083-0033",
 			frmt:   INTERNATIONAL,
 		},
 	}
@@ -463,48 +523,6 @@ func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 				i, pNum.GetNumberOfLeadingZeros(), test.numLeadZeros)
 		}
 
-	}
-}
-
-func TestTestNumberLengthAgainstPattern(t *testing.T) {
-	var tests = []struct {
-		pattern  string
-		num      string
-		expected ValidationResult
-	}{
-		{
-			"\\d{7}(?:\\d{3})?",
-			"1234567",
-			IS_POSSIBLE,
-		},
-		{
-			"\\d{7}(?:\\d{3})?",
-			"1234567890",
-			IS_POSSIBLE,
-		},
-		{
-			"\\d{7}(?:\\d{3})?",
-			"12345678",
-			TOO_LONG,
-		},
-		{
-			"\\d{7}(?:\\d{3})?",
-			"123456",
-			TOO_SHORT,
-		},
-		{
-			"\\d{7}(?:\\d{3})?",
-			"abc1234567",
-			TOO_SHORT,
-		},
-	}
-
-	for i, test := range tests {
-		pat := regexp.MustCompile(test.pattern)
-		res := testNumberLengthAgainstPattern(pat, test.num)
-		if res != test.expected {
-			t.Errorf("[test %d] failed: should be %v, got %v", i, test.expected, res)
-		}
 	}
 }
 
@@ -1152,6 +1170,37 @@ func TestGetSupportedCallingCodes(t *testing.T) {
 	for i, tc := range tests {
 		if supported[tc.code] != tc.present {
 			t.Errorf("[test %d:num] failed for code %d: %v != %v\n", i, tc.code, tc.present, supported[tc.code])
+		}
+	}
+}
+
+func TestMergeLengths(t *testing.T) {
+	var tests = []struct {
+		l1     []int32
+		l2     []int32
+		merged []int32
+	}{
+		{
+			[]int32{1, 5},
+			[]int32{2, 3, 4},
+			[]int32{1, 2, 3, 4, 5},
+		},
+		{
+			[]int32{1},
+			[]int32{3, 4},
+			[]int32{1, 3, 4},
+		},
+		{
+			[]int32{1, 2, 5},
+			[]int32{4},
+			[]int32{1, 2, 4, 5},
+		},
+	}
+
+	for i, tc := range tests {
+		merged := mergeLengths(tc.l1, tc.l2)
+		if !reflect.DeepEqual(merged, tc.merged) {
+			t.Errorf("[test %d:num] failed for l1: %v and l2: %v: %v != %v\n", i, tc.l1, tc.l2, tc.merged, merged)
 		}
 	}
 }
