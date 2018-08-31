@@ -1,3 +1,8 @@
+v1.0.25
+----------
+ * save possible lengths to metadata, change implementation to use, add IS_POSSIBLE_LOCAL_ONLY and INVALID_LENGTH as possible return values to IsPossibleNumberWithReason
+ * update metadata to version v8.9.12
+
 v1.0.24
 ----------
  * update to metadata for v8.9.10
