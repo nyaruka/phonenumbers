@@ -255,11 +255,6 @@ func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 		log.Fatalf("Error converting XML: %s", err)
 	}
 
-	// now that we've generated our possible patterns we can get rid of possible lengths in our proto buffers
-	for _, md := range collection.Metadata {
-		md.ClearPossibleLengths()
-	}
-
 	// write it out as a protobuf
 	data, err := proto.Marshal(collection)
 	if err != nil {

@@ -480,6 +480,8 @@ const (
 	INVALID_COUNTRY_CODE
 	TOO_SHORT
 	TOO_LONG
+	IS_POSSIBLE_LOCAL_ONLY
+	INVALID_LENGTH
 )
 
 // TODO(ttacon): leniency comments?
@@ -1286,9 +1288,7 @@ func FormatNumberForMobileDialing(
 			// always works, except for numbers which might potentially be
 			// short numbers, which are always dialled in national format.
 			regionMetadata := getMetadataForRegion(regionCallingFrom)
-			if canBeInternationallyDialled(numberNoExt) &&
-				!isShorterThanPossibleNormalNumber(regionMetadata,
-					GetNationalSignificantNumber(numberNoExt)) {
+			if canBeInternationallyDialled(numberNoExt) && testNumberLength(GetNationalSignificantNumber(numberNoExt), regionMetadata, UNKNOWN) != TOO_SHORT {
 				formattedNumber = Format(numberNoExt, INTERNATIONAL)
 			} else {
 				formattedNumber = Format(numberNoExt, NATIONAL)
@@ -1465,7 +1465,7 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 		nationalPrefix := GetNddPrefixForRegion(
 			regionCode, true /* strip non-digits */)
 		nationalFormat := Format(number, NATIONAL)
-		if len(nationalPrefix) == 0 || len(nationalPrefix) == 0 {
+		if len(nationalPrefix) == 0 {
 			// If the region doesn't have a national prefix at all,
 			// we can safely return the national format without worrying
 			// about a national prefix being added.
@@ -2027,14 +2027,8 @@ func GetNumberType(number *PhoneNumber) PhoneNumberType {
 	return getNumberTypeHelper(nationalSignificantNumber, metadata)
 }
 
-func getNumberTypeHelper(
-	nationalNumber string,
-	metadata *PhoneMetadata) PhoneNumberType {
-
-	var generalNumberDesc *PhoneNumberDesc = metadata.GetGeneralDesc()
-	var natNumPat = generalNumberDesc.GetNationalNumberPattern()
-	if len(natNumPat) == 0 ||
-		!isNumberMatchingDesc(nationalNumber, generalNumberDesc) {
+func getNumberTypeHelper(nationalNumber string, metadata *PhoneMetadata) PhoneNumberType {
+	if !isNumberMatchingDesc(nationalNumber, metadata.GetGeneralDesc()) {
 		return UNKNOWN
 	}
 
@@ -2102,10 +2096,24 @@ func getMetadataForNonGeographicalRegion(countryCallingCode int) *PhoneMetadata 
 	return val
 }
 
-func isNumberPossibleForDesc(
-	nationalNumber string, numberDesc *PhoneNumberDesc) bool {
-
-	possiblePattern := "^(?:" + numberDesc.GetPossibleNumberPattern() + ")$" // Strictly match
+func isNumberPossibleForDesc(nationalNumber string, numberDesc *PhoneNumberDesc) bool {
+	// Check if any possible number lengths are present; if so, we use them to avoid checking the
+	// validation pattern if they don't match. If they are absent, this means they match the general
+	// description, which we have already checked before checking a specific number type.
+	actualLength := int32(len(nationalNumber))
+	if len(numberDesc.PossibleLength) > 0 {
+		found := false
+		for _, l := range numberDesc.PossibleLength {
+			if actualLength == l {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	possiblePattern := "^(?:" + numberDesc.GetNationalNumberPattern() + ")$" // Strictly match
 	pat, ok := readFromRegexCache(possiblePattern)
 	if !ok {
 		pat = regexp.MustCompile(possiblePattern)
@@ -2148,26 +2156,13 @@ func IsValidNumber(number *PhoneNumber) bool {
 // since it has its own region code, "IM", which may be undesirable.
 func IsValidNumberForRegion(number *PhoneNumber, regionCode string) bool {
 	var countryCode int = int(number.GetCountryCode())
-	var metadata *PhoneMetadata = getMetadataForRegionOrCallingCode(
-		countryCode, regionCode)
-	if metadata == nil ||
-		(REGION_CODE_FOR_NON_GEO_ENTITY != regionCode &&
-			countryCode != getCountryCodeForValidRegion(regionCode)) {
+	var metadata *PhoneMetadata = getMetadataForRegionOrCallingCode(countryCode, regionCode)
+	if metadata == nil || (REGION_CODE_FOR_NON_GEO_ENTITY != regionCode && countryCode != getCountryCodeForValidRegion(regionCode)) {
 		// Either the region code was invalid, or the country calling
 		// code for this number does not match that of the region code.
 		return false
 	}
-	var generalNumDesc *PhoneNumberDesc = metadata.GetGeneralDesc()
-	var nationalSignificantNumber string = GetNationalSignificantNumber(number)
-	// For regions where we don't have metadata for PhoneNumberDesc, we
-	// treat any number passed in as a valid number if its national
-	// significant number is between the minimum and maximum lengths
-	// defined by ITU for a national significant number.
-	if len(generalNumDesc.GetNationalNumberPattern()) == 0 {
-		var numberLength int = len(nationalSignificantNumber)
-		return numberLength > MIN_LENGTH_FOR_NSN &&
-			numberLength <= MAX_LENGTH_FOR_NSN
-	}
+	nationalSignificantNumber := GetNationalSignificantNumber(number)
 	return getNumberTypeHelper(nationalSignificantNumber, metadata) != UNKNOWN
 }
 
@@ -2309,42 +2304,116 @@ func IsAlphaNumber(number string) bool {
 // Convenience wrapper around IsPossibleNumberWithReason(). Instead of
 // returning the reason for failure, this method returns a boolean value.
 func IsPossibleNumber(number *PhoneNumber) bool {
-	return IsPossibleNumberWithReason(number) == IS_POSSIBLE
+	possible := IsPossibleNumberWithReason(number)
+	return possible == IS_POSSIBLE || possible == IS_POSSIBLE_LOCAL_ONLY
 }
 
-// Helper method to check a number against a particular pattern and
-// determine whether it matches, or is too short or too long. Currently,
-// if a number pattern suggests that numbers of length 7 and 10 are
-// possible, and a number in between these possible lengths is entered,
-// such as of length 8, this will return TOO_LONG.
-func testNumberLengthAgainstPattern(
-	numberPattern *regexp.Regexp,
-	number string) ValidationResult {
+func descHasPossibleNumberData(desc *PhoneNumberDesc) bool {
+	return len(desc.PossibleLength) > 0 && desc.PossibleLength[0] != -1
+}
 
-	inds := numberPattern.FindStringIndex(number)
-	if len(inds) > 0 && inds[0] == 0 { // Match from the start
-		if inds[1] == len(number) { // Exact match
+func mergeLengths(l1 []int32, l2 []int32) []int32 {
+	merged := make([]int32, len(l1)+len(l2))
+	l1i, l2i := 0, 0
+
+	for i := 0; i < len(merged); i++ {
+		if l1i < len(l1) {
+			if l2i < len(l2) {
+				if l1[l1i] <= l2[l2i] {
+					merged[i] = l1[l1i]
+					l1i++
+				} else {
+					merged[i] = l2[l2i]
+					l2i++
+				}
+			} else {
+				merged[i] = l1[l1i]
+				l1i++
+			}
+		} else {
+			merged[i] = l2[l2i]
+			l2i++
+		}
+	}
+
+	return merged
+}
+
+// Helper method to check a number against possible lengths for this number type, and determine
+// whether it matches, or is too short or too long.
+func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNumberType) ValidationResult {
+	desc := getNumberDescByType(metadata, numberType)
+
+	// There should always be "possibleLengths" set for every element. This is declared in the XML
+	// schema which is verified by PhoneNumberMetadataSchemaTest.
+	// For size efficiency, where a sub-description (e.g. fixed-line) has the same possibleLengths
+	// as the parent, this is missing, so we fall back to the general desc (where no numbers of the
+	// type exist at all, there is one possible length (-1) which is guaranteed not to match the
+	// length of any real phone number).
+	possibleLengths := desc.PossibleLength
+	if len(possibleLengths) == 0 {
+		possibleLengths = metadata.GeneralDesc.PossibleLength
+	}
+	localLengths := desc.PossibleLengthLocalOnly
+
+	if numberType == FIXED_LINE_OR_MOBILE {
+		if !descHasPossibleNumberData(getNumberDescByType(metadata, FIXED_LINE)) {
+			// The rare case has been encountered where no fixedLine data is available (true for some
+			// non-geographical entities), so we just check mobile.
+			return testNumberLength(number, metadata, MOBILE)
+		} else {
+			mobileDesc := getNumberDescByType(metadata, MOBILE)
+			if descHasPossibleNumberData(mobileDesc) {
+				// Note that when adding the possible lengths from mobile, we have to again check they
+				// aren't empty since if they are this indicates they are the same as the general desc and
+				// should be obtained from there.
+				mobileLengths := mobileDesc.PossibleLength
+				if len(mobileLengths) == 0 {
+					mobileLengths = metadata.GeneralDesc.PossibleLength
+				}
+				possibleLengths = mergeLengths(possibleLengths, mobileLengths)
+
+				if len(localLengths) == 0 {
+					localLengths = mobileDesc.PossibleLengthLocalOnly
+				} else {
+					localLengths = mergeLengths(localLengths, mobileDesc.PossibleLengthLocalOnly)
+				}
+			}
+		}
+	}
+
+	// If the type is not supported at all (indicated by the possible lengths containing -1 at this
+	// point) we return invalid length.
+	if possibleLengths[0] == -1 {
+		return INVALID_LENGTH
+	}
+
+	actualLength := int32(len(number))
+
+	// This is safe because there is never an overlap beween the possible lengths and the local-only
+	// lengths; this is checked at build time.
+	for _, l := range localLengths {
+		if l == actualLength {
+			return IS_POSSIBLE_LOCAL_ONLY
+		}
+	}
+
+	minimumLength := possibleLengths[0]
+	if minimumLength == actualLength {
+		return IS_POSSIBLE
+	} else if minimumLength > actualLength {
+		return TOO_SHORT
+	} else if possibleLengths[len(possibleLengths)-1] < actualLength {
+		return TOO_LONG
+	}
+
+	// We skip the first element; we've already checked it.
+	for _, l := range possibleLengths[1:len(possibleLengths)] {
+		if l == actualLength {
 			return IS_POSSIBLE
 		}
-		return TOO_LONG // Matches input start but not end
 	}
-
-	return TOO_SHORT // Does not match input start
-}
-
-// Helper method to check whether a number is too short to be a regular
-// length phone number in a region.
-func isShorterThanPossibleNormalNumber(
-	regionMetadata *PhoneMetadata,
-	number string) bool {
-
-	pat, ok := readFromRegexCache(regionMetadata.GetGeneralDesc().GetPossibleNumberPattern())
-	if !ok {
-		patP := regionMetadata.GetGeneralDesc().GetPossibleNumberPattern()
-		pat = regexp.MustCompile(patP)
-		writeToRegexCache(patP, pat)
-	}
-	return testNumberLengthAgainstPattern(pat, number) == TOO_SHORT
+	return INVALID_LENGTH
 }
 
 // Check whether a phone number is a possible number. It provides a more
@@ -2379,8 +2448,7 @@ func IsPossibleNumberWithReason(number *PhoneNumber) ValidationResult {
 	}
 	regionCode := GetRegionCodeForCountryCode(countryCode)
 	// Metadata cannot be null because the country calling code is valid.
-	var metadata *PhoneMetadata = getMetadataForRegionOrCallingCode(
-		countryCode, regionCode)
+	var metadata *PhoneMetadata = getMetadataForRegionOrCallingCode(countryCode, regionCode)
 	var generalNumDesc *PhoneNumberDesc = metadata.GetGeneralDesc()
 	// Handling case of numbers with no metadata.
 	if len(generalNumDesc.GetNationalNumberPattern()) == 0 {
@@ -2393,13 +2461,7 @@ func IsPossibleNumberWithReason(number *PhoneNumber) ValidationResult {
 			return IS_POSSIBLE
 		}
 	}
-	pat, ok := readFromRegexCache(generalNumDesc.GetPossibleNumberPattern())
-	if !ok {
-		patP := generalNumDesc.GetPossibleNumberPattern()
-		pat = regexp.MustCompile(patP)
-		writeToRegexCache(patP, pat)
-	}
-	return testNumberLengthAgainstPattern(pat, nationalNumber)
+	return testNumberLength(nationalNumber, metadata, UNKNOWN)
 }
 
 // Check whether a phone number is a possible number given a number in the
@@ -2558,11 +2620,11 @@ func maybeExtractCountryCode(
 				potentialNationalNumber,
 				defaultRegionMetadata,
 				NewBuilder(nil) /* Don't need the carrier code */)
-			possibleNumberPattern, ok := readFromRegexCache(generalDesc.GetPossibleNumberPattern())
+			nationalNumberPattern, ok := readFromRegexCache(generalDesc.GetNationalNumberPattern())
 			if !ok {
-				pat := generalDesc.GetPossibleNumberPattern()
-				possibleNumberPattern = regexp.MustCompile(pat)
-				writeToRegexCache(pat, possibleNumberPattern)
+				pat := generalDesc.GetNationalNumberPattern()
+				nationalNumberPattern = regexp.MustCompile(pat)
+				writeToRegexCache(pat, nationalNumberPattern)
 			}
 			// If the number was not valid before but is valid now, or
 			// if it was too long before, we consider the number with
@@ -2570,8 +2632,7 @@ func maybeExtractCountryCode(
 			// keep that instead.
 			if (!validNumberPattern.MatchString(fullNumber.String()) &&
 				validNumberPattern.MatchString(potentialNationalNumber.String())) ||
-				testNumberLengthAgainstPattern(
-					possibleNumberPattern, fullNumber.String()) == TOO_LONG {
+				testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN) == TOO_LONG {
 				nationalNumber.Write(potentialNationalNumber.Bytes())
 				if keepRawInput {
 					val := PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN
@@ -2945,8 +3006,8 @@ func parseHelper(
 		// prefix and carrier code be of a possible length for the region.
 		// Otherwise, we don't do the stripping, since the original number
 		// could be a valid short number.
-		if !isShorterThanPossibleNormalNumber(
-			regionMetadata, potentialNationalNumber.String()) {
+		validationResult := testNumberLength(potentialNationalNumber.String(), regionMetadata, UNKNOWN)
+		if validationResult != TOO_SHORT && validationResult != IS_POSSIBLE_LOCAL_ONLY && validationResult != INVALID_LENGTH {
 			normalizedNationalNumber = potentialNationalNumber
 			if keepRawInput {
 				phoneNumber.PreferredDomesticCarrierCode =

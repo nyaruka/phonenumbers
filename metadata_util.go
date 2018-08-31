@@ -40,34 +40,3 @@ func (pd *PhoneNumberDesc) hasPossibleLengthLocalOnly(length int32) bool {
 	}
 	return false
 }
-
-// utility function called by the builder to remove possible lengths from our protobufs since
-// we don't want to write them
-func (pd *PhoneNumberDesc) clearPossibleLengths() {
-	if pd == nil {
-		return
-	}
-	pd.PossibleLength = nil
-	pd.PossibleLengthLocalOnly = nil
-}
-
-// ClearPossibleLengths is called by the builder to remove possible lengths from our protobufs since
-// we don't want to write them
-func (md *PhoneMetadata) ClearPossibleLengths() {
-	md.GeneralDesc.clearPossibleLengths()
-	md.NoInternationalDialling.clearPossibleLengths()
-	md.FixedLine.clearPossibleLengths()
-	md.Mobile.clearPossibleLengths()
-	md.Pager.clearPossibleLengths()
-	md.TollFree.clearPossibleLengths()
-	md.PremiumRate.clearPossibleLengths()
-	md.SharedCost.clearPossibleLengths()
-	md.PersonalNumber.clearPossibleLengths()
-	md.Voip.clearPossibleLengths()
-	md.Uan.clearPossibleLengths()
-	md.Voicemail.clearPossibleLengths()
-	md.StandardRate.clearPossibleLengths()
-	md.ShortCode.clearPossibleLengths()
-	md.Emergency.clearPossibleLengths()
-	md.CarrierSpecific.clearPossibleLengths()
-}
