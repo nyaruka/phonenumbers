@@ -1,3 +1,7 @@
+v1.0.26
+----------
+ * Fix cache strict look up bug and unify cache management, thanks @eugene-gurevich
+
 v1.0.25
 ----------
  * save possible lengths to metadata, change implementation to use, add IS_POSSIBLE_LOCAL_ONLY and INVALID_LENGTH as possible return values to IsPossibleNumberWithReason
