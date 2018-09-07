@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/theothertomelliott/go-must"
 )
 
 func TestParse(t *testing.T) {
@@ -1261,7 +1260,9 @@ func TestRegexCacheStrict(t *testing.T) {
 		NationalNumber: proto.Uint64(4130203445),
 	}
 	firstRunResult := Format(phoneToTest, NATIONAL)
-	must.BeEqual(t, expectedResult, firstRunResult, "phone number formatting not as expected")
+	if expectedResult != firstRunResult {
+		t.Errorf("phone number formatting not as expected")
+	}
 	// This adds value to the regex cache that would break the following lookup if the regex-s
 	// in cache were not strict.
 	Format(&PhoneNumber{
@@ -1269,5 +1270,8 @@ func TestRegexCacheStrict(t *testing.T) {
 		NationalNumber: proto.Uint64(17112724),
 	}, NATIONAL)
 	secondRunResult := Format(phoneToTest, NATIONAL)
-	must.BeEqual(t, expectedResult, secondRunResult, "phone number formatting not as expected")
+
+	if expectedResult != secondRunResult {
+		t.Errorf("phone number formatting not as expected")
+	}
 }
