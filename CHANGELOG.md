@@ -1,3 +1,7 @@
+v1.0.27
+----------
+ * update to metadata v8.9.13, remove must dependency
+
 v1.0.26
 ----------
  * Fix cache strict look up bug and unify cache management, thanks @eugene-gurevich
