@@ -1,3 +1,7 @@
+v1.0.28
+----------
+ * update metadata to v8.9.14, fix go.mod dependency
+
 v1.0.27
 ----------
  * update to metadata v8.9.13, remove must dependency
