@@ -20,7 +20,7 @@ import (
 
 	"bytes"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/nyaruka/phonenumbers"
 )
 
@@ -33,27 +33,27 @@ type prefixBuild struct {
 
 const (
 	metadataURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/PhoneNumberMetadata.xml"
-	metadataPath = "src/github.com/nyaruka/phonenumbers/metadata_bin.go"
+	metadataPath = "metadata_bin.go"
 
 	tzURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/timezones/map_data.txt"
-	tzPath = "src/github.com/nyaruka/phonenumbers/prefix_to_timezone_bin.go"
+	tzPath = "prefix_to_timezone_bin.go"
 	tzVar  = "timezoneMapData"
 
-	regionPath = "src/github.com/nyaruka/phonenumbers/countrycode_to_region_bin.go"
+	regionPath = "countrycode_to_region_bin.go"
 	regionVar  = "regionMapData"
 )
 
 var carrier = prefixBuild{
 	url:     "https://github.com/googlei18n/libphonenumber/trunk/resources/carrier",
 	dir:     "carrier",
-	srcPath: "src/github.com/nyaruka/phonenumbers/prefix_to_carriers_bin.go",
+	srcPath: "prefix_to_carriers_bin.go",
 	varName: "carrierMapData",
 }
 
 var geocoding = prefixBuild{
 	url:     "https://github.com/googlei18n/libphonenumber/trunk/resources/geocoding",
 	dir:     "geocoding",
-	srcPath: "src/github.com/nyaruka/phonenumbers/prefix_to_geocodings_bin.go",
+	srcPath: "prefix_to_geocodings_bin.go",
 	varName: "geocodingMapData",
 }
 
@@ -113,17 +113,15 @@ func svnExport(dir string, url string) {
 }
 
 func writeFile(filePath string, data []byte) {
-	log.Printf("Writing new %s", filePath)
-	gopath, found := os.LookupEnv("GOPATH")
-	if !found {
-		log.Fatal("Missing $GOPATH environment variable")
+	// file should already exist (likely running from wrong directory)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Fatalf("no such file: %s make sure you are running from the root of the repo directory", filePath)
 	}
 
-	path := filepath.Join(gopath, filePath)
-
-	err := ioutil.WriteFile(path, data, os.FileMode(0664))
+	fmt.Printf("Writing new %s\n", filePath)
+	err := ioutil.WriteFile(filePath, data, os.FileMode(0664))
 	if err != nil {
-		log.Fatalf("Error writing '%s': %s", path, err)
+		log.Fatalf("Error writing '%s': %s", filePath, err)
 	}
 }
 
