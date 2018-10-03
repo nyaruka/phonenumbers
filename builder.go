@@ -156,13 +156,13 @@ func loadInternationalFormat(metadata *PhoneMetadata, numberFormatElement *Numbe
 	intlFormatPattern := numberFormatElement.InternationalFormat
 	hasExplicitIntlFormatDefined := false
 
-	if len(intlFormatPattern) > 1 {
+	switch {
+	case len(intlFormatPattern) > 1:
 		panic("Invalid number of intlFormat patterns for country: " + metadata.GetId())
-
-	} else if len(intlFormatPattern) == 0 {
+	case len(intlFormatPattern) == 0:
 		// Default to use the same as the national pattern if none is defined.
 		intlFormat.merge(nationalFormat)
-	} else {
+	default:
 		intlFormat.Pattern = sp(numberFormatElement.Pattern)
 		setLeadingDigitsPatterns(numberFormatElement, intlFormat)
 		intlFormatPatternValue := intlFormatPattern[0]
