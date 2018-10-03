@@ -651,7 +651,8 @@ func loadMetadataFromFile(
 	metadataCollection, err := MetadataCollection()
 	if err != nil {
 		return err
-	} else if currMetadataColl == nil {
+	}
+	if currMetadataColl == nil {
 		currMetadataColl = metadataCollection
 	}
 
