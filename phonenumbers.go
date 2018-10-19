@@ -1109,7 +1109,7 @@ func FormatWithBuf(number *PhoneNumber, numberFormat PhoneNumberFormat, formatte
 	prefixNumberWithCountryCallingCode(countryCallingCode, numberFormat, formattedNumber)
 }
 
-// Formats a phone number in the specified format using client-defined
+// FormatByPattern formats a phone number in the specified format using client-defined
 // formatting rules. Note that if the phone number has a country calling
 // code of zero or an otherwise invalid country calling code, we cannot
 // work out things like whether there should be a national prefix applied,
@@ -1140,7 +1140,7 @@ func FormatByPattern(number *PhoneNumber,
 		// If no pattern above is matched, we format the number as a whole.
 		formattedNumber.WriteString(nationalSignificantNumber)
 	} else {
-		var numFormatCopy *NumberFormat
+		numFormatCopy := &NumberFormat{}
 		// Before we do a replacement of the national prefix pattern
 		// $NP with the national prefix, we need to copy the rule so
 		// that subsequent replacements for different numbers have the

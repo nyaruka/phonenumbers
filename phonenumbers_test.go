@@ -489,6 +489,51 @@ func TestFormatForMobileDialing(t *testing.T) {
 	}
 }
 
+func TestFormatByPattern(t *testing.T) {
+	var tcs = []struct {
+		in          string
+		region      string
+		format      PhoneNumberFormat
+		userFormats []*NumberFormat
+		exp         string
+	}{
+		{
+			in:     "+33122334455",
+			region: "FR",
+			format: E164,
+			userFormats: []*NumberFormat{
+				&NumberFormat{
+					Pattern: s(`(\d+)`),
+					Format:  s(`$1`),
+				},
+			},
+			exp: "+33122334455",
+		}, {
+			in:     "+442070313000",
+			region: "UK",
+			format: NATIONAL,
+			userFormats: []*NumberFormat{
+				&NumberFormat{
+					Pattern: s(`(20)(\d{4})(\d{4})`),
+					Format:  s(`$1 $2 $3`),
+				},
+			},
+			exp: "20 7031 3000",
+		},
+	}
+
+	for i, tc := range tcs {
+		num, err := Parse(tc.in, tc.region)
+		if err != nil {
+			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
+		}
+		got := FormatByPattern(num, tc.format, tc.userFormats)
+		if got != tc.exp {
+			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, tc.exp)
+		}
+	}
+}
+
 func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 	var tests = []struct {
 		num          string
@@ -1274,4 +1319,8 @@ func TestRegexCacheStrict(t *testing.T) {
 	if expectedResult != secondRunResult {
 		t.Errorf("phone number formatting not as expected")
 	}
+}
+
+func s(str string) *string {
+	return &str
 }
