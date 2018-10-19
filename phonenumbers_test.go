@@ -406,6 +406,9 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 }
 
 func TestFormat(t *testing.T) {
+	// useful link for validating against official lib:
+	// http://libphonenumber.appspot.com/phonenumberparser?number=019+3286+9755&country=GB
+
 	var tests = []struct {
 		in     string
 		exp    string
