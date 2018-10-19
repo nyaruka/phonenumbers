@@ -446,7 +446,7 @@ func TestFormat(t *testing.T) {
 		{
 			in:     "+1 100-083-0033",
 			region: "US",
-			exp:    "+1 100-083-0033",
+			exp:    "+1 1000830033",
 			frmt:   INTERNATIONAL,
 		},
 	}
