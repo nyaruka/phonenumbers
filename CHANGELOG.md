@@ -1,3 +1,8 @@
+v1.0.32
+----------
+ * add /functions to gitignore
+ * update to latest google metadata
+
 v1.0.31
 ----------
  * update to latest metadata v8.10.1, test case changes validated against google lib
