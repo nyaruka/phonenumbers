@@ -38,7 +38,7 @@ func writeResponse(status int, body interface{}) (events.APIGatewayProxyResponse
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       string(js),
-		Headers:    map[string]string{"Content-Type": "application/javascript"},
+		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }
 
@@ -51,7 +51,7 @@ func parse(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 	}
 
 	// optional country code
-	country := request.QueryStringParameters["phone"]
+	country := request.QueryStringParameters["country"]
 
 	metadata, err := phonenumbers.Parse(phone, country)
 	if err != nil {
