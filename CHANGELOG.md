@@ -1,3 +1,7 @@
+v1.0.34
+----------
+ * update travis file
+
 v1.0.33
 ----------
  * remove goreleaser since we no longer use docker for test deploys
