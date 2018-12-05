@@ -1012,7 +1012,7 @@ func TestGetTimeZonesForPrefix(t *testing.T) {
 		},
 		{
 			num:              "+61491570156",
-			expectedTimeZone: "Antarctica/Macquarie",
+			expectedTimeZone: "Australia/Adelaide",
 		},
 		{
 			num:              "+61255501234",
