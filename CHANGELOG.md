@@ -1,3 +1,8 @@
+v1.0.33
+----------
+ * remove goreleaser since we no longer use docker for test deploys
+ * latest google metadata
+
 v1.0.32
 ----------
  * add /functions to gitignore
