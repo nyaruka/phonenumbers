@@ -1,3 +1,8 @@
+v1.0.31
+----------
+ * update to latest metadata v8.10.1, test case changes validated against google lib
+ * add link in readme to test function
+
 v1.0.30
 ----------
  * fix FormatByPattern with user defined pattern. Fixes: #16
