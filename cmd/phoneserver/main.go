@@ -2,71 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/nyaruka/phonenumbers"
 )
-
-const indexBody = `
-<html>
-  <head>
-	<title>PhoneServer</title>
-	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-	<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-	<link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
-	<link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
-	<style>
-	#results div {
-		padding: 10px;
-		color: white;
-		background-color: #9b4dca;
-	}
-	#results div.error {
-		background-color: #c21807;
-	}
-	pre {
-		margin-top: 0px;
-	}
-	pre.error {
-		border-left: .3rem solid #c21807;
-	}
-	body {
-		padding: 15px;
-	}
-	</style>
-  </head>
-  <body>
-	<form>
-	  <fieldset>
-	    <label for="phone">Phone Number</label>
-		<input id="phone" type="text" name="phone" value="12067799192" />
-		<label for="country">Country Code</label>
-	    <input id="country" type="text" name="country" value="US" />
-		<input type="submit" value="Parse" class="button"/>
-	  </fieldset>
-	</form>
-	<div id="results">
-	</div>
-  </body>
-  <script>
-    $("form").submit(function(e){
-		event.preventDefault();
-		$.ajax({
-			"url": "/parse?" + $("form").serialize(), 
-			"success": function(data, status, xhr){
-				$("#results").prepend("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
-				$("#results").prepend("<div>" + $("#phone").val() + " " + $("#country").val() + "</div>");
-			},
-			"error": function(request, status, error){
-				$("#results").prepend("<pre class='error'>" + JSON.stringify(JSON.parse(request.responseText), null, 4) + "</pre>");
-				$("#results").prepend("<div class='error'>" + $("#phone").val() + " " + $("#country").val() + "</div>");
-			}
-		});
-	})
-  </script>
-</html>
-`
 
 var version = "dev"
 
@@ -85,39 +26,39 @@ type successResponse struct {
 	Version                string `json:"version"`
 }
 
-func writeResponse(w http.ResponseWriter, status int, body interface{}) {
+func writeResponse(status int, body interface{}) (events.APIGatewayProxyResponse, error) {
 	js, err := json.MarshalIndent(body, "", "    ")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       err.Error(),
+		}, nil
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(js)
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Body:       string(js),
+		Headers:    map[string]string{"Content-Type": "application/javascript"},
+	}, nil
 }
 
-func parse(w http.ResponseWriter, r *http.Request) {
-	// get our phone number parameter
-	r.ParseForm()
-	phone := r.Form.Get("phone")
+func parse(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	phone := request.QueryStringParameters["phone"]
 
 	// required phone number
 	if phone == "" {
-		writeResponse(w, http.StatusBadRequest, errorResponse{"missing body", "missing 'phone' parameter"})
-		return
+		return writeResponse(http.StatusBadRequest, errorResponse{"missing body", "missing 'phone' parameter"})
 	}
 
 	// optional country code
-	country := r.Form.Get("country")
+	country := request.QueryStringParameters["phone"]
 
 	metadata, err := phonenumbers.Parse(phone, country)
 	if err != nil {
-		writeResponse(w, http.StatusBadRequest, errorResponse{"error parsing phone", err.Error()})
-		return
+		return writeResponse(http.StatusBadRequest, errorResponse{"error parsing phone", err.Error()})
 	}
 
-	writeResponse(w, http.StatusOK, successResponse{
+	return writeResponse(http.StatusOK, successResponse{
 		NationalNumber:         *metadata.NationalNumber,
 		CountryCode:            *metadata.CountryCode,
 		IsPossible:             phonenumbers.IsPossibleNumber(metadata),
@@ -128,13 +69,6 @@ func parse(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(indexBody))
-}
-
 func main() {
-	http.HandleFunc("/parse", parse)
-	http.HandleFunc("/", index)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	lambda.Start(parse)
 }
