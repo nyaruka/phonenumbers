@@ -597,7 +597,7 @@ var testPhoneNumbers = map[string]*PhoneNumber{
 	"ALPHA_NUMERIC_NUMBER": newPhoneNumber(1, 80074935247),
 	"AE_UAN":               newPhoneNumber(971, 600123456),
 	"AR_MOBILE":            newPhoneNumber(54, 91187654321),
-	"AR_NUMBER":            newPhoneNumber(54, 1187654321),
+	"AR_NUMBER":            newPhoneNumber(54, 1157774533),
 	"AU_NUMBER":            newPhoneNumber(61, 236618300),
 	"BS_MOBILE":            newPhoneNumber(1, 2423570000),
 	"BS_NUMBER":            newPhoneNumber(1, 2423651234),
