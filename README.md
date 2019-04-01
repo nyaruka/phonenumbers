@@ -29,8 +29,7 @@ formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 Rebuilding Metadata and Maps
 ===============================
 
-The `buildmetadata` command will fetch the latest XML file from the official Google repo and rebuild the go source files containing all
-the territory metadata, timezone and region maps.
+The `buildmetadata` command will fetch the latest XML file from the official Google repo and rebuild the go source files containing all the territory metadata, timezone and region maps. (you will need `svn` installed on your path)
 
 It will rebuild the following files:
 
