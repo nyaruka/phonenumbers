@@ -1,3 +1,7 @@
+v1.0.38
+----------
+ * update travis env to always enable modules
+
 v1.0.37
 ----------
  * plug in goreleaser and add it to travis
