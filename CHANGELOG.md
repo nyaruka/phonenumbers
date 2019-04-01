@@ -1,3 +1,8 @@
+v1.0.39
+----------
+ * add dist to gitignore
+ * tweak goreleaser
+
 v1.0.38
 ----------
  * update travis env to always enable modules
