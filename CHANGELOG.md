@@ -1,3 +1,7 @@
+v1.0.37
+----------
+ * plug in goreleaser and add it to travis
+
 v1.0.36
 ----------
  * Update for upstream metadata v8.10.7
