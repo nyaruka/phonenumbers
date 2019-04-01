@@ -9,3 +9,4 @@ carrier
 geocoding
 buildmetadata
 functions/*
+dist/
