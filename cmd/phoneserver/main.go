@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/nyaruka/phonenumbers"
 )
 
-var version = "dev"
+var Version = "dev"
 
 type errorResponse struct {
 	Message string `json:"message"`
@@ -66,16 +65,10 @@ func parse(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 		IsValid:                phonenumbers.IsValidNumber(metadata),
 		NationalFormatted:      phonenumbers.Format(metadata, phonenumbers.NATIONAL),
 		InternationalFormatted: phonenumbers.Format(metadata, phonenumbers.INTERNATIONAL),
-		Version:                version,
+		Version:                Version,
 	})
 }
 
 func main() {
-	// use commit ref as our version if set
-	commit := os.Getenv("COMMIT_REF")
-	if commit != "" {
-		version = commit
-	}
-
 	lambda.Start(parse)
 }
