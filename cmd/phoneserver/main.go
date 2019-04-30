@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -70,5 +71,11 @@ func parse(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 }
 
 func main() {
+	// use commit ref as our version if set
+	commit = os.GetEnv("COMMIT_REF")
+	if commit != "" {
+		version = commit
+	}
+
 	lambda.Start(parse)
 }

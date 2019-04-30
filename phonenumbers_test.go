@@ -241,6 +241,11 @@ func TestIsValidNumber(t *testing.T) {
 			err:     nil,
 			isValid: true,
 			region:  "BS",
+		}, {
+			input:   "6041234567",
+			err:     nil,
+			isValid: false,
+			region:  "US",
 		},
 	}
 
@@ -321,6 +326,12 @@ func TestIsValidNumberForRegion(t *testing.T) {
 			err:              nil,
 			isValid:          true,
 			validationRegion: "GB",
+		}, {
+			input:            "6041234567",
+			region:           "US",
+			err:              nil,
+			isValid:          false,
+			validationRegion: "US",
 		},
 	}
 
@@ -386,6 +397,11 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 			region: "US",
 			err:    nil,
 			valid:  TOO_SHORT,
+		}, {
+			input:  "6041234567",
+			region: "US",
+			err:    nil,
+			valid:  IS_POSSIBLE,
 		},
 	}
 
