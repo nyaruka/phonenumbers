@@ -1,3 +1,8 @@
+v1.0.40
+----------
+ * add unit test for valid/possible US/CA number, include commit in netlify version, lastest metadata
+ * update readme to add svn dependency
+
 v1.0.39
 ----------
  * add dist to gitignore
