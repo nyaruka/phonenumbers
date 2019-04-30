@@ -72,7 +72,7 @@ func parse(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 
 func main() {
 	// use commit ref as our version if set
-	commit = os.GetEnv("COMMIT_REF")
+	commit := os.Getenv("COMMIT_REF")
 	if commit != "" {
 		version = commit
 	}
