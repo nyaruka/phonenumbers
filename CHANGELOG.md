@@ -1,3 +1,7 @@
+v1.0.41
+----------
+ * update metadata for v8.10.12
+
 v1.0.40
 ----------
  * add unit test for valid/possible US/CA number, include commit in netlify version, lastest metadata
