@@ -32,7 +32,7 @@ func loadPrefixMap(data string) (*intStringMap, error) {
 	}
 
 	// then our values
-	valueBytes := make([]byte, valueSize, valueSize)
+	valueBytes := make([]byte, valueSize)
 	n, err := reader.Read(valueBytes)
 	if uint32(n) < valueSize {
 		return nil, fmt.Errorf("unable to read all values: %v", err)
@@ -103,7 +103,7 @@ func loadIntStringArrayMap(data string) (*intStringArrayMap, error) {
 	}
 
 	// then our values
-	valueBytes := make([]byte, valueSize, valueSize)
+	valueBytes := make([]byte, valueSize)
 	n, err := reader.Read(valueBytes)
 	if uint32(n) < valueSize {
 		return nil, fmt.Errorf("unable to read all values: %v", err)
@@ -136,7 +136,7 @@ func loadIntStringArrayMap(data string) (*intStringArrayMap, error) {
 			return nil, err
 		}
 
-		keyValues := make([]string, valueCount, valueCount)
+		keyValues := make([]string, valueCount)
 		for i := 0; i < int(valueCount); i++ {
 			var valueIntern uint16
 			err = binary.Read(reader, binary.LittleEndian, &valueIntern)

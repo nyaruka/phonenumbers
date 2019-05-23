@@ -211,7 +211,7 @@ func writeIntStringArrayMap(path string, varName string, prefixMap map[int][]str
 	// we write our key / value pairs as a varint of the difference of the previous prefix
 	// and a uint16 of the value index
 	last := 0
-	intBuf := make([]byte, 6, 6)
+	intBuf := make([]byte, 6)
 	for _, key := range keys {
 		// first write our prefix
 		diff := key - last
@@ -369,7 +369,7 @@ func buildPrefixData(build *prefixBuild) {
 		// we write our prefix / value pairs as a varint of the difference of the previous prefix
 		// and a uint16 of the value index
 		last := 0
-		intBuf := make([]byte, 6, 6)
+		intBuf := make([]byte, 6)
 		for _, prefix := range prefixes {
 			value := mappings[prefix]
 			valueIntern := internMappings[value]
