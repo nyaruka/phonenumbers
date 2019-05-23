@@ -1528,7 +1528,6 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 		numFormatCopy.NationalPrefixFormattingRule = nil
 		var numberFormats = []*NumberFormat{numFormatCopy}
 		formattedNumber = FormatByPattern(number, NATIONAL, numberFormats)
-		break
 	}
 	rawInput = number.GetRawInput()
 	// If no digit is inserted/removed/modified as a result of our
