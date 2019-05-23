@@ -768,10 +768,10 @@ func TestGetLengthOfGeographicalAreaCode(t *testing.T) {
 }
 
 func TestGetCountryMobileToken(t *testing.T) {
-	if "1" != GetCountryMobileToken(GetCountryCodeForRegion("MX")) {
+	if GetCountryMobileToken(GetCountryCodeForRegion("MX")) != "1" {
 		t.Error("Mexico should have a mobile token == \"1\"")
 	}
-	if "" != GetCountryMobileToken(GetCountryCodeForRegion("SE")) {
+	if GetCountryMobileToken(GetCountryCodeForRegion("SE")) != "" {
 		t.Error("Sweden should have a mobile token")
 	}
 }
@@ -838,13 +838,13 @@ func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
 }
 
 func TestNormalizeDigitsOnly(t *testing.T) {
-	if "03456234" != NormalizeDigitsOnly("034-56&+a#234") {
+	if NormalizeDigitsOnly("034-56&+a#234") != "03456234" {
 		t.Errorf("didn't fully normalize digits only")
 	}
 }
 
 func TestNormalizeDiallableCharsOnly(t *testing.T) {
-	if "03*456+234" != normalizeDiallableCharsOnly("03*4-56&+a#234") {
+	if normalizeDiallableCharsOnly("03*4-56&+a#234") != "03*456+234" {
 		t.Error("did not correctly remove non-diallable characters")
 	}
 }
