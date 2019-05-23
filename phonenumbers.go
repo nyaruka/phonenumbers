@@ -2522,8 +2522,8 @@ func extractCountryCode(fullNumber, nationalNumber *Builder) int {
 	return 0
 }
 
-var ErrTooShortAfterIDD = errors.New("Phone number had an IDD, but " +
-	"after this was not long enough to be a viable phone number.")
+var ErrTooShortAfterIDD = errors.New("phone number had an IDD, but " +
+	"after this was not long enough to be a viable phone number")
 
 // Tries to extract a country calling code from a number. This method will
 // return zero if no country calling code is considered to be present.
@@ -2860,8 +2860,8 @@ func setItalianLeadingZerosForPhoneNumber(
 
 var (
 	ErrInvalidCountryCode = errors.New("invalid country code")
-	ErrNotANumber         = errors.New("The phone number supplied is not a number.")
-	ErrTooShortNSN        = errors.New("The string supplied is too short to be a phone number.")
+	ErrNotANumber         = errors.New("the phone number supplied is not a number")
+	ErrTooShortNSN        = errors.New("the string supplied is too short to be a phone number")
 )
 
 // Parses a string and fills up the phoneNumber. This method is the same
@@ -2988,7 +2988,7 @@ func parseHelper(
 	return nil
 }
 
-var ErrNumTooLong = errors.New("The string supplied is too long to be a phone number.")
+var ErrNumTooLong = errors.New("the string supplied is too long to be a phone number")
 
 // Converts numberToParse to a form that we can parse and write it to
 // nationalNumber if it is written in RFC3966; otherwise extract a possible
