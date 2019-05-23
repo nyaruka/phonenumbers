@@ -375,24 +375,24 @@ var (
 	VALID_PHONE_NUMBER_PATTERN = regexp.MustCompile(
 		"^(" + VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?)$")
 
-	NON_DIGITS_PATTERN = regexp.MustCompile("(\\D+)")
-	DIGITS_PATTERN     = regexp.MustCompile("(\\d+)")
+	NON_DIGITS_PATTERN = regexp.MustCompile(`(\D+)`)
+	DIGITS_PATTERN     = regexp.MustCompile(`(\d+)`)
 
 	// The FIRST_GROUP_PATTERN was originally set to $1 but there are some
 	// countries for which the first group is not used in the national
 	// pattern (e.g. Argentina) so the $1 group does not match correctly.
 	// Therefore, we use \d, so that the first group actually used in the
 	// pattern will be matched.
-	FIRST_GROUP_PATTERN = regexp.MustCompile("(\\$\\d)")
-	NP_PATTERN          = regexp.MustCompile("\\$NP")
-	FG_PATTERN          = regexp.MustCompile("\\$FG")
-	CC_PATTERN          = regexp.MustCompile("\\$CC")
+	FIRST_GROUP_PATTERN = regexp.MustCompile(`(\$\d)`)
+	NP_PATTERN          = regexp.MustCompile(`\$NP`)
+	FG_PATTERN          = regexp.MustCompile(`\$FG`)
+	CC_PATTERN          = regexp.MustCompile(`\$CC`)
 
 	// A pattern that is used to determine if the national prefix
 	// formatting rule has the first group only, i.e., does not start
 	// with the national prefix. Note that the pattern explicitly allows
 	// for unbalanced parentheses.
-	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile("\\(?\\$1\\)?")
+	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile(`\(?\$1\)?`)
 
 	REGION_CODE_FOR_NON_GEO_ENTITY = "001"
 )
@@ -1528,7 +1528,6 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 		numFormatCopy.NationalPrefixFormattingRule = nil
 		var numberFormats = []*NumberFormat{numFormatCopy}
 		formattedNumber = FormatByPattern(number, NATIONAL, numberFormats)
-		break
 	}
 	rawInput = number.GetRawInput()
 	// If no digit is inserted/removed/modified as a result of our
@@ -2391,7 +2390,7 @@ func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNu
 	}
 
 	// We skip the first element; we've already checked it.
-	for _, l := range possibleLengths[1:len(possibleLengths)] {
+	for _, l := range possibleLengths[1:] {
 		if l == actualLength {
 			return IS_POSSIBLE
 		}
@@ -2522,8 +2521,8 @@ func extractCountryCode(fullNumber, nationalNumber *Builder) int {
 	return 0
 }
 
-var ErrTooShortAfterIDD = errors.New("Phone number had an IDD, but " +
-	"after this was not long enough to be a viable phone number.")
+var ErrTooShortAfterIDD = errors.New("phone number had an IDD, but " +
+	"after this was not long enough to be a viable phone number")
 
 // Tries to extract a country calling code from a number. This method will
 // return zero if no country calling code is considered to be present.
@@ -2860,8 +2859,8 @@ func setItalianLeadingZerosForPhoneNumber(
 
 var (
 	ErrInvalidCountryCode = errors.New("invalid country code")
-	ErrNotANumber         = errors.New("The phone number supplied is not a number.")
-	ErrTooShortNSN        = errors.New("The string supplied is too short to be a phone number.")
+	ErrNotANumber         = errors.New("the phone number supplied is not a number")
+	ErrTooShortNSN        = errors.New("the string supplied is too short to be a phone number")
 )
 
 // Parses a string and fills up the phoneNumber. This method is the same
@@ -2988,7 +2987,7 @@ func parseHelper(
 	return nil
 }
 
-var ErrNumTooLong = errors.New("The string supplied is too long to be a phone number.")
+var ErrNumTooLong = errors.New("the string supplied is too long to be a phone number")
 
 // Converts numberToParse to a form that we can parse and write it to
 // nationalNumber if it is written in RFC3966; otherwise extract a possible
@@ -3290,10 +3289,10 @@ func init() {
 	}
 
 	// Create our sync.Onces for each of our languages for carriers
-	for lang, _ := range carrierMapData {
+	for lang := range carrierMapData {
 		carrierOnces[lang] = &sync.Once{}
 	}
-	for lang, _ := range geocodingMapData {
+	for lang := range geocodingMapData {
 		geocodingOnces[lang] = &sync.Once{}
 	}
 }
