@@ -375,24 +375,24 @@ var (
 	VALID_PHONE_NUMBER_PATTERN = regexp.MustCompile(
 		"^(" + VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?)$")
 
-	NON_DIGITS_PATTERN = regexp.MustCompile("(\\D+)")
-	DIGITS_PATTERN     = regexp.MustCompile("(\\d+)")
+	NON_DIGITS_PATTERN = regexp.MustCompile(`(\D+)`)
+	DIGITS_PATTERN     = regexp.MustCompile(`(\d+)`)
 
 	// The FIRST_GROUP_PATTERN was originally set to $1 but there are some
 	// countries for which the first group is not used in the national
 	// pattern (e.g. Argentina) so the $1 group does not match correctly.
 	// Therefore, we use \d, so that the first group actually used in the
 	// pattern will be matched.
-	FIRST_GROUP_PATTERN = regexp.MustCompile("(\\$\\d)")
-	NP_PATTERN          = regexp.MustCompile("\\$NP")
-	FG_PATTERN          = regexp.MustCompile("\\$FG")
-	CC_PATTERN          = regexp.MustCompile("\\$CC")
+	FIRST_GROUP_PATTERN = regexp.MustCompile(`(\$\d)`)
+	NP_PATTERN          = regexp.MustCompile(`\$NP`)
+	FG_PATTERN          = regexp.MustCompile(`\$FG`)
+	CC_PATTERN          = regexp.MustCompile(`\$CC`)
 
 	// A pattern that is used to determine if the national prefix
 	// formatting rule has the first group only, i.e., does not start
 	// with the national prefix. Note that the pattern explicitly allows
 	// for unbalanced parentheses.
-	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile("\\(?\\$1\\)?")
+	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile(`\(?\$1\)?`)
 
 	REGION_CODE_FOR_NON_GEO_ENTITY = "001"
 )
