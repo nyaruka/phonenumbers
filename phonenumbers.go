@@ -2390,7 +2390,7 @@ func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNu
 	}
 
 	// We skip the first element; we've already checked it.
-	for _, l := range possibleLengths[1:len(possibleLengths)] {
+	for _, l := range possibleLengths[1:] {
 		if l == actualLength {
 			return IS_POSSIBLE
 		}
@@ -3289,10 +3289,10 @@ func init() {
 	}
 
 	// Create our sync.Onces for each of our languages for carriers
-	for lang, _ := range carrierMapData {
+	for lang := range carrierMapData {
 		carrierOnces[lang] = &sync.Once{}
 	}
-	for lang, _ := range geocodingMapData {
+	for lang := range geocodingMapData {
 		geocodingOnces[lang] = &sync.Once{}
 	}
 }
