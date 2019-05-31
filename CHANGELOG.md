@@ -1,3 +1,12 @@
+v1.0.42
+----------
+ * Update for metadata changes in v8.10.13
+ * fix yoda expressions
+ * fix slice operations
+ * fix regex escaping
+ * fix make calls
+ * fix error strings
+
 v1.0.41
 ----------
  * update metadata for v8.10.12
