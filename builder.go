@@ -512,7 +512,7 @@ func setPossibleLengthsGeneralDesc(generalDesc *PhoneNumberDesc, metadataId stri
 	} else {
 		populatePossibleLengthSets([]*PhoneNumberDescE{data.ShortCode}, lengths, localOnlyLengths)
 		if len(localOnlyLengths) > 0 {
-			panic(fmt.Errorf("Found local-only lengths in short-number metadata"))
+			panic(fmt.Errorf("found local-only lengths in short-number metadata"))
 		}
 	}
 	setPossibleLengths(lengths, localOnlyLengths, nil, generalDesc)
