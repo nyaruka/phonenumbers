@@ -1,3 +1,7 @@
+v1.0.43
+----------
+ * Update metadata for v8.10.14
+
 v1.0.42
 ----------
  * Update for metadata changes in v8.10.13
