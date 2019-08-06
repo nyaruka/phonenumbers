@@ -1,3 +1,8 @@
+v1.0.44
+----------
+ * update metadata for v8.10.16
+ * upgrade to the latest release of protobuf
+
 v1.0.43
 ----------
  * Update metadata for v8.10.14
