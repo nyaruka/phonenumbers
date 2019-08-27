@@ -991,6 +991,46 @@ func TestBurkinaFaso(t *testing.T) {
 	runTestBatch(t, tests)
 }
 
+// see https://groups.google.com/forum/#!topic/libphonenumber-discuss/pecTIo_HpVE
+func TestMexico(t *testing.T) {
+	tests := []testCase{
+		{
+			num:           "044 664 899 1010",
+			parseRegion:   "MX",
+			expectedE164:  "+526648991010",
+			validRegion:   "MX",
+			isValid:       true,
+			isValidRegion: true,
+		},
+		{
+			num:           "01 800 123 2222",
+			parseRegion:   "MX",
+			expectedE164:  "+528001232222",
+			validRegion:   "MX",
+			isValid:       true,
+			isValidRegion: true,
+		},
+		{
+			num:           "+52 664 899 1010 ",
+			parseRegion:   "",
+			expectedE164:  "+526648991010",
+			validRegion:   "MX",
+			isValid:       true,
+			isValidRegion: true,
+		},
+		{
+			num:           "+52 1 664 899 1010 ",
+			parseRegion:   "",
+			expectedE164:  "+526648991010",
+			validRegion:   "MX",
+			isValid:       true,
+			isValidRegion: true,
+		},
+	}
+
+	runTestBatch(t, tests)
+}
+
 func TestParsing(t *testing.T) {
 	tests := []struct {
 		number   string
