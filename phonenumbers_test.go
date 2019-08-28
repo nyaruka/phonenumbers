@@ -1011,7 +1011,7 @@ func TestMexico(t *testing.T) {
 			isValidRegion: true,
 		},
 		{
-			num:           "+52 664 899 1010 ",
+			num:           "+52 664 899 1010",
 			parseRegion:   "",
 			expectedE164:  "+526648991010",
 			validRegion:   "MX",
@@ -1019,7 +1019,7 @@ func TestMexico(t *testing.T) {
 			isValidRegion: true,
 		},
 		{
-			num:           "+52 1 664 899 1010 ",
+			num:           "+52 1 664 899 1010",
 			parseRegion:   "",
 			expectedE164:  "+526648991010",
 			validRegion:   "MX",
