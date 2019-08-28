@@ -1,4 +1,4 @@
-module github.com/wheniwork/phonenumbers
+module github.com/nyaruka/phonenumbers
 
 require (
 	github.com/aws/aws-lambda-go v1.8.1
