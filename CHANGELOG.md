@@ -1,3 +1,8 @@
+v1.0.45
+----------
+ * Update metadata to fix Mexican formatting (thanks @bvisness)
+ * Add tests specifically for Mexico (thanks @bvisness)
+
 v1.0.44
 ----------
  * update metadata for v8.10.16
