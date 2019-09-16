@@ -194,6 +194,32 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
+func TestNumberType(t *testing.T) {
+	var tcs = []struct {
+		input      string
+		region     string
+		numberType PhoneNumberType
+	}{
+		{
+			input:      "2065432100",
+			region:     "US",
+			numberType: FIXED_LINE_OR_MOBILE,
+		},
+	}
+
+	for i, tc := range tcs {
+		num, err := Parse(tc.input, tc.region)
+		if err != nil {
+			t.Errorf("[test %d:err] failed parsing: %s\n", i, tc.input)
+		}
+
+		typ := GetNumberType(num)
+		if typ != tc.numberType {
+			t.Errorf("[test %d: err] %s: unexpected number type: %d  Expected %d", i, tc.input, typ, tc.numberType)
+		}
+	}
+}
+
 func TestIsValidNumber(t *testing.T) {
 	var tests = []struct {
 		input   string
