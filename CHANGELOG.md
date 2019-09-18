@@ -1,3 +1,8 @@
+v1.0.46
+----------
+ * update metadata for v8.10.19
+ * remove aws-lambda-go as dependency (thanks @shaxbee)
+
 v1.0.45
 ----------
  * Update metadata to fix Mexican formatting (thanks @bvisness)
