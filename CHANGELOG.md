@@ -1,3 +1,7 @@
+v1.0.49
+----------
+ * fix Makefile for phoneserver
+
 v1.0.48
 ----------
  * another test travis rev, ignore
