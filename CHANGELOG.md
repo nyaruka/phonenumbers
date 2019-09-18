@@ -1,3 +1,7 @@
+v1.0.47
+----------
+ * test tag for travis deploy
+
 v1.0.46
 ----------
  * update metadata for v8.10.19
