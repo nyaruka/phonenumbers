@@ -5,7 +5,7 @@ env:
     - GO111MODULE=on
 
 go:
-  - "1.11"
+  - "1.13"
 
 deploy:
 - provider: script
