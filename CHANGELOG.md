@@ -1,3 +1,7 @@
+v1.0.48
+----------
+ * another test travis rev, ignore
+
 v1.0.47
 ----------
  * test tag for travis deploy
