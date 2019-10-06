@@ -1486,6 +1486,7 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 		if rawInputContainsNationalPrefix(rawInput, nationalPrefix, regionCode) {
 			// If so, we can safely return the national format.
 			formattedNumber = nationalFormat
+			break
 		}
 		// Metadata cannot be null here because GetNddPrefixForRegion()
 		// (above) returns null if there is no metadata for the region.
