@@ -447,6 +447,45 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 	}
 }
 
+func TestTruncateTooLongNumber(t *testing.T) {
+	var tests = []struct {
+		country int
+		in      uint64
+		out     uint64
+		res     bool
+	}{
+		{
+			country: 1,
+			in:      80055501234,
+			out:     8005550123,
+			res:     true,
+		}, {
+			country: 1,
+			in:      8005550123,
+			out:     8005550123,
+			res:     true,
+		}, {
+			country: 1,
+			in:      800555012,
+			out:     800555012,
+			res:     false,
+		},
+	}
+
+	for i, test := range tests {
+		num := &PhoneNumber{}
+		num.CountryCode = proto.Int(test.country)
+		num.NationalNumber = proto.Uint64(test.in)
+		res := TruncateTooLongNumber(num)
+		if res != test.res {
+			t.Errorf("[test %d:res] failed %t != %t\n", i, res, test.res)
+		}
+		if *num.NationalNumber != test.out {
+			t.Errorf("[test %d:num] failed % d!= %d\n", i, *num.NationalNumber, test.out)
+		}
+	}
+}
+
 func TestFormat(t *testing.T) {
 	// useful link for validating against official lib:
 	// http://libphonenumber.appspot.com/phonenumberparser?number=019+3286+9755&country=GB
