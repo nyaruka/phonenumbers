@@ -1415,20 +1415,8 @@ func FormatOutOfCountryCallingNumber(
 	maybeAppendFormattedExtension(number, metadataForRegion, INTERNATIONAL,
 		formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
-		formattedBytes := formattedNumber.Bytes()
-		formattedBytes = append([]byte(" "), formattedBytes...)
-		// we know countryCallingCode is really an int32
-		intBuf := []byte{
-			byte(countryCallingCode >> 24),
-			byte(countryCallingCode >> 16),
-			byte(countryCallingCode >> 8),
-			byte(countryCallingCode),
-		}
-		formattedBytes = append(intBuf, formattedBytes...)
-		formattedBytes = append([]byte(" "), formattedBytes...)
-		formattedBytes = append(
-			[]byte(internationalPrefixForFormatting), formattedBytes...)
-		return string(formattedBytes)
+		formattedNumber.InsertString(0, internationalPrefixForFormatting + " " +
+			strconv.Itoa(countryCallingCode) + " ")
 	} else {
 		prefixNumberWithCountryCallingCode(
 			countryCallingCode, INTERNATIONAL, formattedNumber)
@@ -1486,6 +1474,7 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 		if rawInputContainsNationalPrefix(rawInput, nationalPrefix, regionCode) {
 			// If so, we can safely return the national format.
 			formattedNumber = nationalFormat
+			break
 		}
 		// Metadata cannot be null here because GetNddPrefixForRegion()
 		// (above) returns null if there is no metadata for the region.
@@ -1523,7 +1512,7 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 			break
 		}
 		// Otherwise, we need to remove the national prefix from our output.
-		var numFormatCopy *NumberFormat
+		numFormatCopy := &NumberFormat{}
 		proto.Merge(numFormatCopy, formatRule)
 		numFormatCopy.NationalPrefixFormattingRule = nil
 		var numberFormats = []*NumberFormat{numFormatCopy}
@@ -1645,7 +1634,7 @@ func FormatOutOfCountryKeepingAlphaChars(
 			// If no pattern above is matched, we format the original input.
 			return rawInput
 		}
-		var newFormat *NumberFormat
+		newFormat := &NumberFormat{}
 		proto.Merge(newFormat, formattingPattern)
 		// The first group is the first group of digits that the user
 		// wrote together.
@@ -1681,20 +1670,8 @@ func FormatOutOfCountryKeepingAlphaChars(
 	maybeAppendFormattedExtension(number, metadataForRegion,
 		INTERNATIONAL, formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
-		formattedBytes := append([]byte(" "), formattedNumber.Bytes()...)
-		// we know countryCode is really an int32
-		intBuf := []byte{
-			byte(countryCode >> 24),
-			byte(countryCode >> 16),
-			byte(countryCode >> 8),
-			byte(countryCode),
-		}
-		formattedBytes = append(intBuf, formattedBytes...)
-		formattedBytes = append([]byte(" "), formattedBytes...)
-		formattedBytes = append(
-			[]byte(internationalPrefixForFormatting), formattedBytes...)
-
-		formattedNumber = NewBuilder(formattedBytes)
+		formattedNumber.InsertString(0, internationalPrefixForFormatting + " " +
+			strconv.Itoa(countryCode) + " ")
 	} else {
 		// Invalid region entered as country-calling-from (so no metadata
 		// was found for it) or the region chosen has multiple international
@@ -2469,7 +2446,7 @@ func TruncateTooLongNumber(number *PhoneNumber) bool {
 	if IsValidNumber(number) {
 		return true
 	}
-	var numberCopy *PhoneNumber
+	numberCopy := &PhoneNumber{}
 	proto.Merge(numberCopy, number)
 	nationalNumber := number.GetNationalNumber()
 	nationalNumber /= 10
