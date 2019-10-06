@@ -1415,20 +1415,8 @@ func FormatOutOfCountryCallingNumber(
 	maybeAppendFormattedExtension(number, metadataForRegion, INTERNATIONAL,
 		formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
-		formattedBytes := formattedNumber.Bytes()
-		formattedBytes = append([]byte(" "), formattedBytes...)
-		// we know countryCallingCode is really an int32
-		intBuf := []byte{
-			byte(countryCallingCode >> 24),
-			byte(countryCallingCode >> 16),
-			byte(countryCallingCode >> 8),
-			byte(countryCallingCode),
-		}
-		formattedBytes = append(intBuf, formattedBytes...)
-		formattedBytes = append([]byte(" "), formattedBytes...)
-		formattedBytes = append(
-			[]byte(internationalPrefixForFormatting), formattedBytes...)
-		return string(formattedBytes)
+		formattedNumber.InsertString(0, internationalPrefixForFormatting + " " +
+			strconv.Itoa(countryCallingCode) + " ")
 	} else {
 		prefixNumberWithCountryCallingCode(
 			countryCallingCode, INTERNATIONAL, formattedNumber)
@@ -1682,20 +1670,8 @@ func FormatOutOfCountryKeepingAlphaChars(
 	maybeAppendFormattedExtension(number, metadataForRegion,
 		INTERNATIONAL, formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
-		formattedBytes := append([]byte(" "), formattedNumber.Bytes()...)
-		// we know countryCode is really an int32
-		intBuf := []byte{
-			byte(countryCode >> 24),
-			byte(countryCode >> 16),
-			byte(countryCode >> 8),
-			byte(countryCode),
-		}
-		formattedBytes = append(intBuf, formattedBytes...)
-		formattedBytes = append([]byte(" "), formattedBytes...)
-		formattedBytes = append(
-			[]byte(internationalPrefixForFormatting), formattedBytes...)
-
-		formattedNumber = NewBuilder(formattedBytes)
+		formattedNumber.InsertString(0, internationalPrefixForFormatting + " " +
+			strconv.Itoa(countryCode) + " ")
 	} else {
 		// Invalid region entered as country-calling-from (so no metadata
 		// was found for it) or the region chosen has multiple international
