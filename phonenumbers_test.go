@@ -714,6 +714,36 @@ func TestFormatOutOfCountryCallingNumber(t *testing.T) {
 	}
 }
 
+func TestFormatOutOfCountryKeepingAlphaChars(t *testing.T) {
+	var tests = []struct {
+		in     string
+		exp    string
+		region string
+		frmt   PhoneNumberFormat
+	}{
+		{
+			in:     "+1 800 six-flag",
+			region: "US",
+			exp:    "1 800 SIX-FLAG",
+		}, {
+			in:     "+1 800 six-flag",
+			region: "CH",
+			exp:    "00 1 800 SIX-FLAG",
+		},
+	}
+
+	for i, test := range tests {
+		num, err := ParseAndKeepRawInput(test.in, test.region)
+		if err != nil {
+			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
+		}
+		got := FormatOutOfCountryKeepingAlphaChars(num, test.region)
+		if got != test.exp {
+			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
+		}
+	}
+}
+
 func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 	var tests = []struct {
 		num          string
