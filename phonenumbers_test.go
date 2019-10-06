@@ -668,6 +668,52 @@ func TestFormatInOriginalFormat(t *testing.T) {
 	}
 }
 
+func TestFormatOutOfCountryCallingNumber(t *testing.T) {
+	var tests = []struct {
+		in     string
+		exp    string
+		region string
+		frmt   PhoneNumberFormat
+	}{
+		{
+			in:     "+16505551234",
+			region: "US",
+			exp:    "1 (650) 555-1234",
+		}, {
+			in:     "+16505551234",
+			region: "CA",
+			exp:    "1 (650) 555-1234",
+		}, {
+			in:     "+16505551234",
+			region: "CH",
+			exp:    "00 1 650-555-1234",
+		}, {
+			in:     "+16505551234",
+			region: "ZZ",
+			exp:    "+1 650-555-1234",
+		}, {
+			in:	"+4911234",
+			region:	"US",
+			exp:	"011 49 11234",
+		}, {
+			in:	"+4911234",
+			region:	"DE",
+			exp:	"11234",
+		},
+	}
+
+	for i, test := range tests {
+		num, err := Parse(test.in, test.region)
+		if err != nil {
+			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
+		}
+		got := FormatOutOfCountryCallingNumber(num, test.region)
+		if got != test.exp {
+			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
+		}
+	}
+}
+
 func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 	var tests = []struct {
 		num          string
