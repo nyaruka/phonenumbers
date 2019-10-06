@@ -1523,7 +1523,7 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 			break
 		}
 		// Otherwise, we need to remove the national prefix from our output.
-		var numFormatCopy *NumberFormat
+		numFormatCopy := &NumberFormat{}
 		proto.Merge(numFormatCopy, formatRule)
 		numFormatCopy.NationalPrefixFormattingRule = nil
 		var numberFormats = []*NumberFormat{numFormatCopy}
@@ -1645,7 +1645,7 @@ func FormatOutOfCountryKeepingAlphaChars(
 			// If no pattern above is matched, we format the original input.
 			return rawInput
 		}
-		var newFormat *NumberFormat
+		newFormat := &NumberFormat{}
 		proto.Merge(newFormat, formattingPattern)
 		// The first group is the first group of digits that the user
 		// wrote together.
@@ -2469,7 +2469,7 @@ func TruncateTooLongNumber(number *PhoneNumber) bool {
 	if IsValidNumber(number) {
 		return true
 	}
-	var numberCopy *PhoneNumber
+	numberCopy := &PhoneNumber{}
 	proto.Merge(numberCopy, number)
 	nationalNumber := number.GetNationalNumber()
 	nationalNumber /= 10
