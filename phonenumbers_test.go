@@ -579,6 +579,56 @@ func TestFormatByPattern(t *testing.T) {
 	}
 }
 
+func TestFormatInOriginalFormat(t *testing.T) {
+	var tests = []struct {
+		in     string
+		exp    string
+		region string
+		frmt   PhoneNumberFormat
+	}{
+		{
+			in:     "0987654321",
+			region: "DE",
+			exp:    "09876 54321",
+		}, {
+			in:     "0049987654321",
+			region: "CH",
+			exp:    "00 49 9876 54321",
+		}, {
+			in:     "+49987654321",
+			region: "DE",
+			exp:    "+49 9876 54321",
+		}, {
+			in:     "49987654321",
+			region: "DE",
+			exp:    "49 9876 54321",
+		}, {
+			in:     "6463752545",
+			region: "US",
+			exp:    "(646) 375-2545",
+		}, {
+			in:     "3752545",
+			region: "US",
+			exp:    "375-2545",
+		}, {
+			in:	"011420245646734",
+			region:	"US",
+			exp:	"011 420 245 646 734",
+		},
+	}
+
+	for i, test := range tests {
+		num, err := ParseAndKeepRawInput(test.in, test.region)
+		if err != nil {
+			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
+		}
+		got := FormatInOriginalFormat(num, test.region)
+		if got != test.exp {
+			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
+		}
+	}
+}
+
 func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 	var tests = []struct {
 		num          string
