@@ -1,3 +1,9 @@
+v1.0.50
+----------
+ * Fix formatting of country code in out-of-country format (thanks @janh)
+ * Fix FormatInOriginalFormat for numbers with national prefix (thanks @janh)
+ * Fix panic due to calling proto.Merge on nil destination (thanks @janh)
+
 v1.0.49
 ----------
  * fix Makefile for phoneserver
