@@ -1,3 +1,7 @@
+v1.0.51
+----------
+ * Update metadata to upstream 8.10.21
+
 v1.0.50
 ----------
  * Fix formatting of country code in out-of-country format (thanks @janh)
