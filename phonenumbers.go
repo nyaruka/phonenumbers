@@ -1415,8 +1415,8 @@ func FormatOutOfCountryCallingNumber(
 	maybeAppendFormattedExtension(number, metadataForRegion, INTERNATIONAL,
 		formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
-		formattedNumber.InsertString(0, internationalPrefixForFormatting + " " +
-			strconv.Itoa(countryCallingCode) + " ")
+		formattedNumber.InsertString(0, internationalPrefixForFormatting+" "+
+			strconv.Itoa(countryCallingCode)+" ")
 	} else {
 		prefixNumberWithCountryCallingCode(
 			countryCallingCode, INTERNATIONAL, formattedNumber)
@@ -1670,8 +1670,8 @@ func FormatOutOfCountryKeepingAlphaChars(
 	maybeAppendFormattedExtension(number, metadataForRegion,
 		INTERNATIONAL, formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
-		formattedNumber.InsertString(0, internationalPrefixForFormatting + " " +
-			strconv.Itoa(countryCode) + " ")
+		formattedNumber.InsertString(0, internationalPrefixForFormatting+" "+
+			strconv.Itoa(countryCode)+" ")
 	} else {
 		// Invalid region entered as country-calling-from (so no metadata
 		// was found for it) or the region chosen has multiple international
@@ -2819,6 +2819,7 @@ func ParseAndKeepRawInputToNumber(
 func setItalianLeadingZerosForPhoneNumber(
 	nationalNum string, phoneNumber *PhoneNumber) {
 	if len(nationalNum) < 2 || nationalNum[0] != '0' {
+		phoneNumber.ItalianLeadingZero = nil
 		return
 	}
 
