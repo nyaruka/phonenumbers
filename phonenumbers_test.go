@@ -1,6 +1,7 @@
 package phonenumbers
 
 import (
+	"fmt"
 	"reflect"
 	"regexp"
 	"testing"
@@ -216,6 +217,37 @@ func TestNumberType(t *testing.T) {
 		typ := GetNumberType(num)
 		if typ != tc.numberType {
 			t.Errorf("[test %d: err] %s: unexpected number type: %d  Expected %d", i, tc.input, typ, tc.numberType)
+		}
+	}
+}
+
+func TestRepeatedParsing(t *testing.T) {
+	phoneNumbers := []string{
+		"+917827202781",
+		"+910000000000",
+		"+910800125778",
+		"+917503257232",
+		"+917566482842",
+	}
+
+	number := &PhoneNumber{}
+	for _, n := range phoneNumbers {
+		num, err := Parse(n, "IN")
+		if err != nil {
+			t.Errorf("Error Parse failed parsing phone number: %s, error: %s\n", n, err)
+			continue
+		}
+
+		if err := ParseToNumber(n, "IN", number); err != nil {
+			t.Errorf("Error ParseToNumber parsing phone number: %s, error: %s\n", n, err)
+			continue
+		}
+
+		parse := IsValidNumber(num)
+		parseToNumber := IsValidNumber(number)
+		fmt.Printf("phone number: %s, parse: %t, parseToNumber: %t\n", n, parse, parseToNumber)
+		if parse != parseToNumber {
+			t.Errorf("Numbers do not match")
 		}
 	}
 }
@@ -650,9 +682,9 @@ func TestFormatInOriginalFormat(t *testing.T) {
 			region: "US",
 			exp:    "375-2545",
 		}, {
-			in:	"011420245646734",
-			region:	"US",
-			exp:	"011 420 245 646 734",
+			in:     "011420245646734",
+			region: "US",
+			exp:    "011 420 245 646 734",
 		},
 	}
 
@@ -692,13 +724,13 @@ func TestFormatOutOfCountryCallingNumber(t *testing.T) {
 			region: "ZZ",
 			exp:    "+1 650-555-1234",
 		}, {
-			in:	"+4911234",
-			region:	"US",
-			exp:	"011 49 11234",
+			in:     "+4911234",
+			region: "US",
+			exp:    "011 49 11234",
 		}, {
-			in:	"+4911234",
-			region:	"DE",
-			exp:	"11234",
+			in:     "+4911234",
+			region: "DE",
+			exp:    "11234",
 		},
 	}
 
