@@ -1,3 +1,7 @@
+v1.0.53
+----------
+ * Metadata update for upstream v8.10.23
+
 v1.0.52
 ----------
  * Reset italian leading zero when false, fixed bug when phonenumber struct is reused
