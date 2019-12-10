@@ -1,3 +1,7 @@
+v1.0.54
+----------
+ * update metadata for v8.11.0
+
 v1.0.53
 ----------
  * Metadata update for upstream v8.10.23
