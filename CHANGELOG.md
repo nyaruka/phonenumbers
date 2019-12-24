@@ -1,3 +1,7 @@
+v1.0.55
+----------
+ * update metadata for v8.11.1
+
 v1.0.54
 ----------
  * update metadata for v8.11.0
