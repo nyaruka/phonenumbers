@@ -1,2 +1,4 @@
 github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/nyaruka/phonenumbers v1.0.54 h1:vU9IUfiHrpu+lZcCkjEzDsCIdurQV8lxjrAdqW2osAU=
+github.com/nyaruka/phonenumbers v1.0.54/go.mod h1:sDaTZ/KPX5f8qyV9qN+hIm+4ZBARJrupC6LuhshJq1U=
