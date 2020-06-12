@@ -1,3 +1,8 @@
+v1.0.56
+----------
+ * Update to metadata v8.12.5
+ * Update test for Sydney tz (validated against source data)
+
 v1.0.55
 ----------
  * Update metadata to v8.12.1 for upstream project
