@@ -3138,16 +3138,16 @@ func IsNumberMatch(firstNumber, secondNumber string) MatchType {
 		return NOT_A_NUMBER
 	}
 
-	var firstNumberProto, secondNumberProto *PhoneNumber
-	err = parseHelper(firstNumber, "", false, false, firstNumberProto)
+	var firstNumberProto, secondNumberProto PhoneNumber
+	err = parseHelper(firstNumber, "", false, false, &firstNumberProto)
 	if err != nil {
 		return NOT_A_NUMBER
 	}
-	err = parseHelper(secondNumber, "", false, false, secondNumberProto)
+	err = parseHelper(secondNumber, "", false, false, &secondNumberProto)
 	if err != nil {
 		return NOT_A_NUMBER
 	}
-	return isNumberMatchWithNumbers(firstNumberProto, secondNumberProto)
+	return isNumberMatchWithNumbers(&firstNumberProto, &secondNumberProto)
 }
 
 // Takes two phone numbers and compares them for equality. This is a

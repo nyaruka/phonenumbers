@@ -79,6 +79,7 @@ func TestParse(t *testing.T) {
 		if err != test.err {
 			t.Errorf("[test %d:err] failed: %v != %v\n", i, err, test.err)
 		}
+		fmt.Println(GetRegionCodeForNumber(num))
 		if num.GetNationalNumber() != test.expectedNum {
 			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetNationalNumber(), test.expectedNum)
 		}
@@ -953,6 +954,41 @@ func TestGetMetadata(t *testing.T) {
 		if len(meta.GetNumberFormat()) != test.numFmtSize {
 			t.Errorf("[test %d:numFmt] %d != %d\n",
 				i, len(meta.GetNumberFormat()), test.numFmtSize)
+		}
+	}
+}
+
+func TestIsNumberMatch(t *testing.T) {
+	tcs := []struct {
+		First  string
+		Second string
+		Match  MatchType
+	}{
+		{
+			"07598765432", "07598765432", NSN_MATCH,
+		},
+		{
+			"+12065551212", "+1 206 555 1212", EXACT_MATCH,
+		},
+		{
+			"+12065551212", "+12065551213", NO_MATCH,
+		},
+		{
+			"+12065551212", "12065551212", NSN_MATCH,
+		},
+		{
+			"5551212", "555-1212", NSN_MATCH,
+		},
+
+		{
+			"arst", "+12065551213", NOT_A_NUMBER,
+		},
+	}
+
+	for _, tc := range tcs {
+		match := IsNumberMatch(tc.First, tc.Second)
+		if match != tc.Match {
+			t.Errorf("%s = %s == %d when expecting %d", tc.First, tc.Second, match, tc.Match)
 		}
 	}
 }
