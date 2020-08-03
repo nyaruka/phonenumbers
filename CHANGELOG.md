@@ -1,3 +1,7 @@
+v1.0.57
+----------
+ * fix panic in IsNumberMatch() 
+
 v1.0.56
 ----------
  * Update to metadata v8.12.5
