@@ -2582,11 +2582,10 @@ func maybeExtractCountryCode(
 			// keep that instead.
 			finds := validNumberPattern.FindAllString(fullNumber.String(), -1)
 
-			ok1 := len(finds) != 0 && fullNumber.String() == finds[0]
-			ok2 := validNumberPattern.MatchString(potentialNationalNumber.String())
-			ok3 := testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN) == TOO_LONG
-
-			if (ok1 && ok2) || ok3 {
+			cond := (len(finds) != 0 && fullNumber.String() == finds[0] &&
+				validNumberPattern.MatchString(potentialNationalNumber.String())) ||
+				testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN) == TOO_LONG
+			if cond {
 				nationalNumber.Write(potentialNationalNumber.Bytes())
 				if keepRawInput {
 					val := PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN
