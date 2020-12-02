@@ -1,30 +1,29 @@
-name: build
-
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+name: CI
+on: [push, pull_request]
 jobs:
-
-  build:
-    name: Build & Test
+  test:
+    name: Test
+    strategy:
+      matrix:
+        go-version: [1.14.x, 1.15.x]
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
 
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+    - name: Install Linux packages
+      run: sudo apt install -y --no-install-recommends pandoc gettext
+
+    - name: Install Go
+      uses: actions/setup-go@v1
       with:
-        go-version: ^1.15
+        go-version: ${{ matrix.go-version }}
 
-    - name: Check out code
-      uses: actions/checkout@v2
+    - name: Run tests
+      run: go test -p=1 -coverprofile=coverage.text -covermode=atomic ./...
 
-    - name: Download module dependencies
-      env: 
-         GOPROXY: "https://proxy.golang.org"
-      run: go mod download
-
-    - name: Test
-      run: go test -v -coverprofile=coverage.txt ./...
+    - name: Upload coverage
+      if: success()
+      uses: codecov/codecov-action@v1
+      with:
+        fail_ci_if_error: true
