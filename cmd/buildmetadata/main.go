@@ -81,18 +81,18 @@ func svnExport(dir string, url string) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error calling svn export: %s", err.Error())
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error calling svn export: %s", err.Error())
 	}
 	if err = cmd.Start(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("error calling svn export: %s", err.Error())
 	}
 	data, err := ioutil.ReadAll(stderr)
 	if err != nil {
-		log.Fatal(err, string(data))
+		log.Fatalf("error reading svn export: %s : %s", err.Error(), data)
 	}
 	outputBuf := bufio.NewReader(stdout)
 
