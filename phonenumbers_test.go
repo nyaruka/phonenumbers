@@ -672,7 +672,7 @@ func TestFormatInOriginalFormat(t *testing.T) {
 		}, {
 			in:     "49987654321",
 			region: "DE",
-			exp:    "49 9876 54321",
+			exp:    "4998 7654321",
 		}, {
 			in:     "6463752545",
 			region: "US",
