@@ -1,3 +1,10 @@
+v1.0.60
+----------
+ * update metadata
+ * better error logging in buildmetadata
+ * update CI worflow (thanks @cristaloleg)
+ * fix maybeExtractCountryCode regexp func (thanks @cristaloleg)
+
 v1.0.59
 ----------
  * update to latest metadata
