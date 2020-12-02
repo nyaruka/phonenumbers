@@ -79,7 +79,6 @@ func TestParse(t *testing.T) {
 		if err != test.err {
 			t.Errorf("[test %d:err] failed: %v != %v\n", i, err, test.err)
 		}
-		fmt.Println(GetRegionCodeForNumber(num))
 		if num.GetNationalNumber() != test.expectedNum {
 			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetNationalNumber(), test.expectedNum)
 		}
@@ -673,7 +672,7 @@ func TestFormatInOriginalFormat(t *testing.T) {
 		}, {
 			in:     "49987654321",
 			region: "DE",
-			exp:    "49 9876 54321",
+			exp:    "4998 7654321",
 		}, {
 			in:     "6463752545",
 			region: "US",
@@ -1303,8 +1302,11 @@ func TestParsing(t *testing.T) {
 		{"+62877747666", "", "+62877747666"},
 		{"0877747666", "ID", "+62877747666"},
 		{"07531669965", "GB", "+447531669965"},
+		{"447531669965", "GB", "+447531669965"},
 		{"+22658125926", "", "+22658125926"},
 		{"+2203693200", "", "+2203693200"},
+		{"0877747666", "ID", "+62877747666"},
+		{"62816640000", "ID", "+62816640000"},
 	}
 
 	for _, tc := range tests {

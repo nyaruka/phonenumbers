@@ -2580,9 +2580,12 @@ func maybeExtractCountryCode(
 			// if it was too long before, we consider the number with
 			// the country calling code stripped to be a better result and
 			// keep that instead.
-			if (!validNumberPattern.MatchString(fullNumber.String()) &&
+			finds := validNumberPattern.FindAllString(fullNumber.String(), -1)
+
+			cond := (len(finds) != 0 && fullNumber.String() == finds[0] &&
 				validNumberPattern.MatchString(potentialNationalNumber.String())) ||
-				testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN) == TOO_LONG {
+				testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN) == TOO_LONG
+			if cond {
 				nationalNumber.Write(potentialNationalNumber.Bytes())
 				if keepRawInput {
 					val := PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN
