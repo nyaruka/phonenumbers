@@ -1,3 +1,8 @@
+v1.0.61
+----------
+ * Update metadata
+ * Add MaybeSeparatePhoneFromExtension helper function (thanks @richard-rance)
+
 v1.0.60
 ----------
  * update metadata
