@@ -2719,6 +2719,38 @@ func maybeStripNationalPrefixAndCarrierCode(
 	return false
 }
 
+// MaybeSeparateExtensionFromPhone will extract any extension (as in, the part
+// of the number dialled after the call is connected, usually indicated with
+// extn, ext, x or similar) from the end of the number and returns it along
+// with the proceeding phone number. The phone number will maintain its
+// original formatting including alpha characters.
+func MaybeSeparateExtensionFromPhone(rawPhone string) (phoneNumber string, extension string) {
+	phoneNumber, extWithSeparator := splitAtExtensionSeparator(rawPhone)
+	if !isViablePhoneNumber(phoneNumber) || extWithSeparator == "" {
+		return rawPhone, ""
+	}
+	extension = removeLeadingExtensionSeparator(extWithSeparator)
+	return phoneNumber, extension
+}
+
+func splitAtExtensionSeparator(rawPhone string) (phoneNumber string, extWithSeparator string) {
+	ind := EXTN_PATTERN.FindStringIndex(rawPhone)
+	if len(ind) == 0 {
+		return rawPhone, ""
+	}
+	return rawPhone[0:ind[0]], rawPhone[ind[0]:]
+}
+
+func removeLeadingExtensionSeparator(extWithSeparator string) string {
+	matches := EXTN_PATTERN.FindStringSubmatch(extWithSeparator)
+	for _, extension := range matches[1:] {
+		if len(extension) > 0 {
+			return extension
+		}
+	}
+	return ""
+}
+
 // Strips any extension (as in, the part of the number dialled after the
 // call is connected, usually indicated with extn, ext, x or similar) from
 // the end of the number, and returns it.
