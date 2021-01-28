@@ -1,3 +1,7 @@
+v1.0.64
+----------
+ * test goreleaser config
+
 v1.0.63
 ----------
  * test goreleaser
