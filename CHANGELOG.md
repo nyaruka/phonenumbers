@@ -1,3 +1,7 @@
+v1.0.63
+----------
+ * test goreleaser
+
 v1.0.62
 ----------
  * Fix country code parsing
