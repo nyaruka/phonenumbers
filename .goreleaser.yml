@@ -11,7 +11,7 @@ builds:
       - linux
       - windows
       - darwin
-  - main: ./cmd/phoneserver/main.go      
+    main: ./cmd/phoneserver/main.go      
 archives:
   - replacements:
       darwin: Darwin
