@@ -2356,8 +2356,6 @@ func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNu
 			return IS_POSSIBLE_LOCAL_ONLY
 		}
 	}
-	fmt.Printf("len: %d possible lengths: %+x\n", actualLength, possibleLengths)
-
 	minimumLength := possibleLengths[0]
 	if minimumLength == actualLength {
 		return IS_POSSIBLE
@@ -2584,8 +2582,6 @@ func maybeExtractCountryCode(
 			fullValid := validNumberPattern.MatchString(fullNumber.String())
 			nationalValid := validNumberPattern.MatchString(potentialNationalNumber.String())
 			lengthValid := testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN)
-
-			fmt.Printf("%s  full: %t national: %t length: %d   pat: %s\n", fullNumber.String(), fullValid, nationalValid, lengthValid, patP)
 
 			if (!fullValid && nationalValid) || lengthValid == TOO_LONG {
 				nationalNumber.Write(potentialNationalNumber.Bytes())
