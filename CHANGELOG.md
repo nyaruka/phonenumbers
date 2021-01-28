@@ -1,3 +1,8 @@
+v1.0.62
+----------
+ * Fix country code parsing
+ * Update metadata
+
 v1.0.61
 ----------
  * Update metadata
