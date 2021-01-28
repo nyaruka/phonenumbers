@@ -304,6 +304,16 @@ func TestIsValidNumber(t *testing.T) {
 			err:     nil,
 			isValid: false,
 			region:  "US",
+		}, {
+			input:   "2349090000001",
+			err:     nil,
+			isValid: true,
+			region:  "NG",
+		}, {
+			input:   "+2349090000001",
+			err:     nil,
+			isValid: true,
+			region:  "NG",
 		},
 	}
 
@@ -315,9 +325,10 @@ func TestIsValidNumber(t *testing.T) {
 		if test.err != nil {
 			continue
 		}
+		fmt.Printf("%+v\n", num)
 		if IsValidNumber(num) != test.isValid {
-			t.Errorf("[test %d:validity] failed: %v != %v\n",
-				i, IsValidNumber(num), test.isValid)
+			t.Errorf("[test %d:validity] for number: %s failed: %v != %v\n",
+				i, test.input, IsValidNumber(num), test.isValid)
 		}
 	}
 }
@@ -1308,6 +1319,7 @@ func TestParsing(t *testing.T) {
 		{"+2203693200", "", "+2203693200"},
 		{"0877747666", "ID", "+62877747666"},
 		{"62816640000", "ID", "+62816640000"},
+		{"2349090000001", "NG", "+2349090000001"},
 	}
 
 	for _, tc := range tests {

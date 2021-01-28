@@ -2356,6 +2356,7 @@ func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNu
 			return IS_POSSIBLE_LOCAL_ONLY
 		}
 	}
+	fmt.Printf("len: %d possible lengths: %+x\n", actualLength, possibleLengths)
 
 	minimumLength := possibleLengths[0]
 	if minimumLength == actualLength {
@@ -2580,12 +2581,13 @@ func maybeExtractCountryCode(
 			// if it was too long before, we consider the number with
 			// the country calling code stripped to be a better result and
 			// keep that instead.
-			finds := validNumberPattern.FindAllString(fullNumber.String(), -1)
+			fullValid := validNumberPattern.MatchString(fullNumber.String())
+			nationalValid := validNumberPattern.MatchString(potentialNationalNumber.String())
+			lengthValid := testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN)
 
-			cond := (len(finds) != 0 && fullNumber.String() == finds[0] &&
-				validNumberPattern.MatchString(potentialNationalNumber.String())) ||
-				testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN) == TOO_LONG
-			if cond {
+			fmt.Printf("%s  full: %t national: %t length: %d   pat: %s\n", fullNumber.String(), fullValid, nationalValid, lengthValid, patP)
+
+			if (!fullValid && nationalValid) || lengthValid == TOO_LONG {
 				nationalNumber.Write(potentialNationalNumber.Bytes())
 				if keepRawInput {
 					val := PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN
