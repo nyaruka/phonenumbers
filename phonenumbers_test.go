@@ -1,7 +1,6 @@
 package phonenumbers
 
 import (
-	"fmt"
 	"reflect"
 	"regexp"
 	"testing"
@@ -245,7 +244,6 @@ func TestRepeatedParsing(t *testing.T) {
 
 		parse := IsValidNumber(num)
 		parseToNumber := IsValidNumber(number)
-		fmt.Printf("phone number: %s, parse: %t, parseToNumber: %t\n", n, parse, parseToNumber)
 		if parse != parseToNumber {
 			t.Errorf("Numbers do not match")
 		}
@@ -304,6 +302,16 @@ func TestIsValidNumber(t *testing.T) {
 			err:     nil,
 			isValid: false,
 			region:  "US",
+		}, {
+			input:   "2349090000001",
+			err:     nil,
+			isValid: true,
+			region:  "NG",
+		}, {
+			input:   "+2349090000001",
+			err:     nil,
+			isValid: true,
+			region:  "NG",
 		},
 	}
 
@@ -316,8 +324,8 @@ func TestIsValidNumber(t *testing.T) {
 			continue
 		}
 		if IsValidNumber(num) != test.isValid {
-			t.Errorf("[test %d:validity] failed: %v != %v\n",
-				i, IsValidNumber(num), test.isValid)
+			t.Errorf("[test %d:validity] for number: %s failed: %v != %v\n",
+				i, test.input, IsValidNumber(num), test.isValid)
 		}
 	}
 }
@@ -672,7 +680,7 @@ func TestFormatInOriginalFormat(t *testing.T) {
 		}, {
 			in:     "49987654321",
 			region: "DE",
-			exp:    "4998 7654321",
+			exp:    "49 9876 54321",
 		}, {
 			in:     "6463752545",
 			region: "US",
@@ -1307,7 +1315,9 @@ func TestParsing(t *testing.T) {
 		{"+22658125926", "", "+22658125926"},
 		{"+2203693200", "", "+2203693200"},
 		{"0877747666", "ID", "+62877747666"},
-		{"62816640000", "ID", "+62816640000"},
+		{"62816640000", "ID", "+6262816640000"},
+		{"2349090000001", "NG", "+2349090000001"},
+		{"6282240080000", "ID", "+6282240080000"},
 	}
 
 	for _, tc := range tests {
