@@ -27,3 +27,35 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         fail_ci_if_error: true
+
+  release:
+    name: Release
+    needs: [test]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Install Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: ${{ env.go-version }}
+
+    - name: Publish release
+      uses: goreleaser/goreleaser-action@v1
+      if: ${{ !contains(github.ref, '-') }}
+      with:
+        version: v0.147.2
+        args: release --rm-dist
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish non-master release
+      uses: goreleaser/goreleaser-action@v1
+      if: contains(github.ref, '-')
+      with:
+        version: v0.147.2
+        args: release --rm-dist --skip-validate
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
