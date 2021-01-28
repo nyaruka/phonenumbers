@@ -1,0 +1,14 @@
+build:
+  main: ./cmd/phoneparser/main.go
+  binary: phoneparser
+  goos:
+    - darwin
+    - linux
+  goarch:
+    - amd64
+
+archives:
+  - files:
+    - LICENSE
+    - README.md
+    - CHANGELOG.md
