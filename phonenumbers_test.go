@@ -827,6 +827,101 @@ func TestSetItalianLeadinZerosForPhoneNumber(t *testing.T) {
 	}
 }
 
+func TestIsNumberMatchWithNumbers(t *testing.T) {
+	tcs := []struct {
+		num1     string
+		reg1     string
+		num2     string
+		reg2     string
+		expected MatchType
+	}{
+		{
+			"+49 721 123456", "DE", "0049 721 123456", "DE", EXACT_MATCH,
+		},
+		{
+			"721 123456", "DE", "721 123456", "DE", EXACT_MATCH,
+		},
+		{
+			"+49 721 123456", "DE", "0721-123456", "DE", EXACT_MATCH,
+		},
+		{
+			"+49 721 123456", "DE", "0049 721-123456", "DE", EXACT_MATCH,
+		},
+		{
+			"+49 721 123456", "DE", "0049 0721 123456", "DE", EXACT_MATCH,
+		},
+		{
+			"721 123456", "DE", "+49 721 123456", "", EXACT_MATCH,
+		},
+		{
+			"0721-123456", "DE", "+49 721 123456", "DE", EXACT_MATCH,
+		},
+		{
+			"721123456", "ES", "+34 721 123456", "ES", EXACT_MATCH,
+		},
+		{
+			"0721 123456", "DE", "+49 721 123456", "ZZ", EXACT_MATCH,
+		},
+		{
+			"0721-123456", "", "+49 721 123456", "DE", NO_MATCH,
+		},
+		{
+			"0721-123456", "ES", "+49 721 123456", "DE", NO_MATCH,
+		},
+		{
+			"0721 123456", "ES", "0721 123456", "DE", NO_MATCH,
+		},
+		{
+			"123456", "DE", "0721 123456", "DE", SHORT_NSN_MATCH,
+		},
+		{
+			"0721 123456", "", "123456", "", SHORT_NSN_MATCH,
+		},
+	}
+
+	for _, tc := range tcs {
+		p1, _ := Parse(tc.num1, tc.reg1)
+		p2, _ := Parse(tc.num2, tc.reg2)
+		result := IsNumberMatchWithNumbers(p1, p2)
+		if result != tc.expected {
+			t.Errorf(`"%s"(%s) == "%s"(%s) returned %d when expecting %d`, tc.num1, tc.reg1, tc.num2, tc.reg2, result, tc.expected)
+		}
+	}
+}
+
+func TestIsNumberMatchWithOneNumber(t *testing.T) {
+	tcs := []struct {
+		num1     string
+		reg1     string
+		num2     string
+		expected MatchType
+	}{
+		{
+			"+49 721 123456", "DE", "+49721123456", EXACT_MATCH,
+		},
+		{
+			"+49 721 123456", "DE", "0049 721 123456", NSN_MATCH,
+		},
+		{
+			"6502530000", "US", "1-650-253-0000", NSN_MATCH,
+		},
+		{
+			"123456", "DE", "+49 0721 123456", SHORT_NSN_MATCH,
+		},
+		{
+			"0721 123456", "ES", "+43 721 123456", NO_MATCH,
+		},
+	}
+
+	for _, tc := range tcs {
+		p1, _ := Parse(tc.num1, tc.reg1)
+		result := IsNumberMatchWithOneNumber(p1, tc.num2)
+		if result != tc.expected {
+			t.Errorf(`"%s"(%s) == "%s" returned %d when expecting %d`, tc.num1, tc.reg1, tc.num2, result, tc.expected)
+		}
+	}
+}
+
 ////////// Copied from java-libphonenumber
 /**
  * Unit tests for PhoneNumberUtil.java
