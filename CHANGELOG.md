@@ -1,3 +1,7 @@
+v1.0.65
+----------
+ * Add exported IsNumberMatchWithNumbers and IsNumberMatchWithOneNumber (thanks @akurth)
+
 v1.0.64
 ----------
  * test goreleaser config
