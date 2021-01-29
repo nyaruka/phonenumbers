@@ -30,7 +30,7 @@ func ContainsOnlyValidXChars(number *PhoneNumber, candidate string) bool {
 				// This is the carrier code case, in which the 'X's
 				// always precede the national significant number.
 				index++
-				if isNumberMatchWithOneNumber(number, candidate[index:]) != NSN_MATCH {
+				if IsNumberMatchWithOneNumber(number, candidate[index:]) != NSN_MATCH {
 					return false
 				}
 				// This is the extension sign case, in which the 'x'

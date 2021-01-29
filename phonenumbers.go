@@ -3072,7 +3072,7 @@ func buildNationalNumberForParsing(
 // Returns NO_MATCH otherwise.
 // For example, the numbers +1 345 657 1234 and 657 1234 are a SHORT_NSN_MATCH.
 // The numbers +1 345 657 1234 and 345 657 are a NO_MATCH.
-func isNumberMatchWithNumbers(firstNumberIn, secondNumberIn *PhoneNumber) MatchType {
+func IsNumberMatchWithNumbers(firstNumberIn, secondNumberIn *PhoneNumber) MatchType {
 	// Make copies of the phone number so that the numbers passed in are not edited.
 	var firstNumber, secondNumber *PhoneNumber
 	firstNumber = &PhoneNumber{}
@@ -3159,14 +3159,14 @@ func isNationalNumberSuffixOfTheOther(firstNumber, secondNumber *PhoneNumber) bo
 func IsNumberMatch(firstNumber, secondNumber string) MatchType {
 	firstNumberAsProto, err := Parse(firstNumber, UNKNOWN_REGION)
 	if err == nil {
-		return isNumberMatchWithOneNumber(firstNumberAsProto, secondNumber)
+		return IsNumberMatchWithOneNumber(firstNumberAsProto, secondNumber)
 	} else if err != ErrInvalidCountryCode {
 		return NOT_A_NUMBER
 	}
 
 	secondNumberAsProto, err := Parse(secondNumber, UNKNOWN_REGION)
 	if err == nil {
-		return isNumberMatchWithOneNumber(secondNumberAsProto, firstNumber)
+		return IsNumberMatchWithOneNumber(secondNumberAsProto, firstNumber)
 	} else if err != ErrInvalidCountryCode {
 		return NOT_A_NUMBER
 	}
@@ -3180,19 +3180,19 @@ func IsNumberMatch(firstNumber, secondNumber string) MatchType {
 	if err != nil {
 		return NOT_A_NUMBER
 	}
-	return isNumberMatchWithNumbers(&firstNumberProto, &secondNumberProto)
+	return IsNumberMatchWithNumbers(&firstNumberProto, &secondNumberProto)
 }
 
 // Takes two phone numbers and compares them for equality. This is a
 // convenience wrapper for IsNumberMatch(PhoneNumber, PhoneNumber). No
 // default region is known.
-func isNumberMatchWithOneNumber(
+func IsNumberMatchWithOneNumber(
 	firstNumber *PhoneNumber, secondNumber string) MatchType {
 	// First see if the second number has an implicit country calling
 	// code, by attempting to parse it.
 	secondNumberAsProto, err := Parse(secondNumber, UNKNOWN_REGION)
 	if err == nil {
-		return isNumberMatchWithNumbers(firstNumber, secondNumberAsProto)
+		return IsNumberMatchWithNumbers(firstNumber, secondNumberAsProto)
 	}
 	if err != ErrInvalidCountryCode {
 		return NOT_A_NUMBER
@@ -3209,7 +3209,7 @@ func isNumberMatchWithOneNumber(
 		if err != nil {
 			return NOT_A_NUMBER
 		}
-		match := isNumberMatchWithNumbers(
+		match := IsNumberMatchWithNumbers(
 			firstNumber, secondNumberWithFirstNumberRegion)
 		if match == EXACT_MATCH {
 			return NSN_MATCH
@@ -3223,7 +3223,7 @@ func isNumberMatchWithOneNumber(
 		if err != nil {
 			return NOT_A_NUMBER
 		}
-		return isNumberMatchWithNumbers(firstNumber, secondNumberProto)
+		return IsNumberMatchWithNumbers(firstNumber, secondNumberProto)
 	}
 }
 
