@@ -468,6 +468,11 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 			region: "US",
 			err:    nil,
 			valid:  IS_POSSIBLE,
+		}, {
+			input:  "+2250749195919",
+			region: "CI",
+			err:    nil,
+			valid:  IS_POSSIBLE,
 		},
 	}
 
