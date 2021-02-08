@@ -1,3 +1,7 @@
+v1.0.66
+----------
+ * Updated metadata
+
 v1.0.65
 ----------
  * Add exported IsNumberMatchWithNumbers and IsNumberMatchWithOneNumber (thanks @akurth)
