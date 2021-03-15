@@ -1,3 +1,7 @@
+v1.0.67
+----------
+ * Update metadata (tracking 8.12.19 upstream)
+
 v1.0.66
 ----------
  * Updated metadata
