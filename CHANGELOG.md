@@ -1,3 +1,7 @@
+v1.0.68
+----------
+ * Add GetCarrierWithPrefixForNumber (thanks @RaMin0)
+
 v1.0.67
 ----------
  * Update metadata (tracking 8.12.19 upstream)
