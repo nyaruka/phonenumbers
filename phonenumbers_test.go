@@ -1229,12 +1229,6 @@ type timeZonesTestCases struct {
 	expectedTimeZone string
 }
 
-type prefixMapTestCases struct {
-	num      string
-	lang     string
-	expected string
-}
-
 func runTestBatch(t *testing.T, tests []testCase) {
 	for _, test := range tests {
 		n, err := Parse(test.num, test.parseRegion)
@@ -1538,7 +1532,11 @@ func TestGetTimeZonesForPrefix(t *testing.T) {
 }
 
 func TestGetCarrierForNumber(t *testing.T) {
-	tests := []prefixMapTestCases{
+	tests := []struct {
+		num      string
+		lang     string
+		expected string
+	}{
 		{num: "+8613702032331", lang: "en", expected: "China Mobile"},
 		{num: "+8613702032331", lang: "zh", expected: "中国移动"},
 		{num: "+6281377468527", lang: "en", expected: "Telkomsel"},
@@ -1562,8 +1560,46 @@ func TestGetCarrierForNumber(t *testing.T) {
 	}
 }
 
+func TestGetCarrierWithPrefixForNumber(t *testing.T) {
+	tests := []struct {
+		num             string
+		lang            string
+		expectedCarrier string
+		expectedPrefix  int
+	}{
+		{num: "+8613702032331", lang: "en", expectedCarrier: "China Mobile", expectedPrefix: 86137},
+		{num: "+8613702032331", lang: "zh", expectedCarrier: "中国移动", expectedPrefix: 86137},
+		{num: "+6281377468527", lang: "en", expectedCarrier: "Telkomsel", expectedPrefix: 62813},
+		{num: "+8613323241342", lang: "en", expectedCarrier: "China Telecom", expectedPrefix: 86133},
+		{num: "+61491570156", lang: "en", expectedCarrier: "Telstra", expectedPrefix: 6149},
+		{num: "+917999999543", lang: "en", expectedCarrier: "Reliance Jio", expectedPrefix: 917999},
+		{num: "+593992218722", lang: "en", expectedCarrier: "Claro", expectedPrefix: 5939922},
+		{num: "+201987654321", lang: "en", expectedCarrier: "", expectedPrefix: 0},
+	}
+	for _, test := range tests {
+		number, err := Parse(test.num, "ZZ")
+		if err != nil {
+			t.Errorf("Failed to parse number %s: %s", test.num, err)
+		}
+		carrier, prefix, err := GetCarrierWithPrefixForNumber(number, test.lang)
+		if err != nil {
+			t.Errorf("Failed to getCarrierWithPrefix for the number %s: %s", test.num, err)
+		}
+		if test.expectedCarrier != carrier {
+			t.Errorf("Expected '%s', got '%s' for '%s'", test.expectedCarrier, carrier, test.num)
+		}
+		if test.expectedPrefix != prefix {
+			t.Errorf("Expected '%d', got '%d' for '%s'", test.expectedPrefix, prefix, test.num)
+		}
+	}
+}
+
 func TestGetGeocodingForNumber(t *testing.T) {
-	tests := []prefixMapTestCases{
+	tests := []struct {
+		num      string
+		lang     string
+		expected string
+	}{
 		{num: "+8613702032331", lang: "en", expected: "Tianjin"},
 		{num: "+8613702032331", lang: "zh", expected: "天津市"},
 		{num: "+863197785050", lang: "zh", expected: "河北省邢台市"},
