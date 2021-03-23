@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"unicode"
+	"unicode/utf8"
 )
 
 /*
@@ -119,6 +120,12 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 	if p.leniency >= VALID {
 		if offset > 0 && LEAD_PATTERN.FindStringIndex(candidate) == nil {
 			previousChar := p.text[offset-1]
+			for i := 0; i < 4; i++ {
+				if utf8.Valid([]byte{previousChar}) {
+					break
+				}
+				previousChar = p.text[offset+i]
+			}
 			if p.isInvalidPunctuationSymbol(rune(previousChar)) || unicode.IsLetter(rune(previousChar)) {
 				return nil, nil
 			}
@@ -126,6 +133,12 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 		lastCharIndex := offset + len(candidate)
 		if lastCharIndex < len(p.text) {
 			nextChar := p.text[lastCharIndex]
+			for i := 1; i < 5; i++ {
+				if utf8.Valid([]byte{nextChar}) {
+					break
+				}
+				nextChar = p.text[lastCharIndex-i]
+			}
 			if p.isInvalidPunctuationSymbol(rune(nextChar)) || unicode.IsLetter(rune(nextChar)) {
 				return nil, nil
 			}
