@@ -6,14 +6,6 @@ import (
 	"unicode"
 )
 
-type PhoneNumberMatcher struct {
-}
-
-func NewPhoneNumberMatcher(seq string) *PhoneNumberMatcher {
-	// TODO(ttacon): to be implemented
-	return nil
-}
-
 func ContainsOnlyValidXChars(number *PhoneNumber, candidate string) bool {
 	// The characters 'x' and 'X' can be (1) a carrier code, in which
 	// case they always precede the national significant number or (2)
