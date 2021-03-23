@@ -180,6 +180,7 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 	for _, possibleInnerMatch := range INNER_MATCHES {
 		groupMatch := possibleInnerMatch.FindStringIndex(candidate)
 		isFirstMatch := true
+		index := 0 + offset
 		for {
 			if p.maxTries <= 0 || groupMatch == nil {
 				break
@@ -193,13 +194,18 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 				p.maxTries--
 				isFirstMatch = false
 			}
-			group := p.trimAfterFirstMatch(UNWANTED_END_CHAR_PATTERN, candidate[groupMatch[0]:groupMatch[1]])
-			match, _ := p.parseAndVerify(group, offset+groupMatch[0])
+			start := index + groupMatch[0]
+			end := index + groupMatch[1]
+			innerCandidate := candidate[start:end]
+			group := p.trimAfterFirstMatch(UNWANTED_END_CHAR_PATTERN, innerCandidate)
+			match, _ := p.parseAndVerify(group, offset+start)
 			if match != nil {
 				return match
 			}
+
+			index = start + len(innerCandidate)
+			groupMatch = possibleInnerMatch.FindStringIndex(candidate[index:])
 			p.maxTries--
-			groupMatch = possibleInnerMatch.FindStringIndex(candidate[groupMatch[1]:])
 		}
 	}
 	return nil
