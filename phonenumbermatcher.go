@@ -35,7 +35,7 @@ var (
 	NON_PARENS         = "[^" + OPENING_PARENS + CLOSING_PARENS + "]"
 	BRACKET_PAIR_LIMIT = "{0,3}"
 
-	LEAD_CLASS   = OPENING_PARENS + "\\" + PLUS_CHARS
+	LEAD_CLASS   = OPENING_PARENS + PLUS_CHARS
 	LEAD_PATTERN = regexp.MustCompile(LEAD_CLASS)
 	LEAD_LIMIT   = "{0,2}"
 
@@ -47,12 +47,12 @@ var (
 
 	BLOCK_LIMIT = "{0," + strconv.Itoa(DIGIT_BLOCK_LIMIT) + "}"
 
-	PATTERN = regexp.MustCompile("(?:" + LEAD_CLASS + PUNCTUATION + ")" + LEAD_LIMIT + DIGIT_SEQUENCE + "(?:" + PUNCTUATION + DIGIT_SEQUENCE + ")" + BLOCK_LIMIT + "(?:" + EXTN_PATTERNS_FOR_MATCHING + ")?")
+	PATTERN = regexp.MustCompile("(?i)(?:\\+){0,1}(?:" + LEAD_CLASS + PUNCTUATION + ")" + LEAD_LIMIT + DIGIT_SEQUENCE + "(?:" + PUNCTUATION + DIGIT_SEQUENCE + ")" + BLOCK_LIMIT + "(?:" + EXTN_PATTERNS_FOR_MATCHING + ")?")
 
 	SLASH_SEPARATED_DATES = regexp.MustCompile("(?:(?:[0-3]?\\d/[01]?\\d)|(?:[01]?\\d/[0-3]?\\d))/(?:[12]\\d)?\\d{2}")
 	TIME_STAMPS           = regexp.MustCompile("[12]\\d{3}[-/]?[01]\\d[-/]?[0-3]\\d +[0-2]\\d$")
 
-	MATCHING_BRACKETS = regexp.MustCompile("(?:[" + OPENING_PARENS + "])?" + "(?:" + NON_PARENS + "+" + "[" + CLOSING_PARENS + "])?" + NON_PARENS + "+" + "(?:[" + OPENING_PARENS + "]" + NON_PARENS + "+[" + CLOSING_PARENS + "])" + BRACKET_PAIR_LIMIT + NON_PARENS + "*")
+	MATCHING_BRACKETS = regexp.MustCompile("(?:([" + OPENING_PARENS + "])?" + "(?:" + NON_PARENS + "+" + "[" + CLOSING_PARENS + "])?" + NON_PARENS + "+" + "(?:[" + OPENING_PARENS + "]" + NON_PARENS + "+[" + CLOSING_PARENS + "])" + BRACKET_PAIR_LIMIT + NON_PARENS + "*")
 
 	PUB_PAGES = regexp.MustCompile("\\d{1,5}-+\\d{1,5}\\s{0,4}\\(\\d{1,4}")
 
