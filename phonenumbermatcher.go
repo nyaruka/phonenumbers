@@ -29,8 +29,8 @@ const (
 )
 
 var (
-	OPENING_PARENS     = "\\(\\[\uFF08\uFF3B"
-	CLOSING_PARENS     = "\\)\\]\uFF09\uFF3D"
+	OPENING_PARENS     = `\(\[\\uFF08\\uFF3B`
+	CLOSING_PARENS     = `\\)\\]\uFF09\uFF3D`
 	NON_PARENS         = "[^" + OPENING_PARENS + CLOSING_PARENS + "]"
 	BRACKET_PAIR_LIMIT = "{0,3}"
 
@@ -193,13 +193,15 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 }
 
 func (p *PhoneNumberMatcher) find() *PhoneNumberMatch {
-	matcher := PATTERN.FindStringIndex(p.text[p.searchIndex:len(p.text)])
+	matcher := PATTERN.FindStringIndex(p.text[p.searchIndex:])
+	index := 0
 	for {
 		if p.maxTries > 0 && matcher == nil {
 			break
 		}
-		start := matcher[0]
-		candidate := p.text[start:matcher[1]]
+		start := index + matcher[0]
+		end := index + matcher[1]
+		candidate := p.text[start:end]
 
 		// Check for extra numbers at the end.
 		// TODO: This is the place to start when trying to support extraction of multiple phone number
@@ -211,7 +213,8 @@ func (p *PhoneNumberMatcher) find() *PhoneNumberMatch {
 			return match
 		}
 
-		matcher = PATTERN.FindStringIndex(p.text[start+len(candidate) : len(p.text)])
+		index = start + len(candidate)
+		matcher = PATTERN.FindStringIndex(p.text[index:])
 		p.maxTries--
 	}
 	return nil
