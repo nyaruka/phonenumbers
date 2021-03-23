@@ -254,7 +254,7 @@ A match consists of the phone number (in .number) as well as the .start and .end
 type PhoneNumberMatch struct {
 	start, end int
 	rawString  string
-	number     PhoneNumber
+	Number     PhoneNumber
 }
 
 func NewPhoneNumberMatch(start int, rawString string, number PhoneNumber) PhoneNumberMatch {
@@ -262,6 +262,6 @@ func NewPhoneNumberMatch(start int, rawString string, number PhoneNumber) PhoneN
 		start:     start,
 		end:       start + len(rawString),
 		rawString: rawString,
-		number:    number,
+		Number:    number,
 	}
 }
