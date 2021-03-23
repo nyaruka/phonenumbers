@@ -168,7 +168,7 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 		groupMatch := possibleInnerMatch.FindStringIndex(candidate)
 		isFirstMatch := true
 		for {
-			if groupMatch == nil || p.maxTries == 0 {
+			if p.maxTries <= 0 || groupMatch == nil {
 				break
 			}
 			if isFirstMatch {
@@ -196,7 +196,7 @@ func (p *PhoneNumberMatcher) find() *PhoneNumberMatch {
 	matcher := PATTERN.FindStringIndex(p.text[p.searchIndex:])
 	index := 0 + p.searchIndex
 	for {
-		if p.maxTries == 0 || matcher == nil {
+		if p.maxTries <= 0 || matcher == nil {
 			break
 		}
 		start := index + matcher[0]
