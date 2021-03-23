@@ -194,7 +194,7 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 
 func (p *PhoneNumberMatcher) find() *PhoneNumberMatch {
 	matcher := PATTERN.FindStringIndex(p.text[p.searchIndex:])
-	index := 0
+	index := 0 + p.searchIndex
 	for {
 		if p.maxTries > 0 && matcher == nil {
 			break
