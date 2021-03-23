@@ -29,8 +29,8 @@ const (
 )
 
 var (
-	OPENING_PARENS     = "((\\[\uFF08\uFF3B"
-	CLOSING_PARENS     = "))\\]\uFF09\uFF3D"
+	OPENING_PARENS     = "\\(\\[\uFF08\uFF3B"
+	CLOSING_PARENS     = "\\)\\]\uFF09\uFF3D"
 	NON_PARENS         = "[^" + OPENING_PARENS + CLOSING_PARENS + "]"
 	BRACKET_PAIR_LIMIT = "{0,3}"
 
