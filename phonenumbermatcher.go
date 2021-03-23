@@ -118,15 +118,15 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 
 	if p.leniency >= VALID {
 		if offset > 0 && LEAD_PATTERN.FindStringIndex(candidate) == nil {
-			previousChar := []rune(p.text)[offset-1]
-			if p.isInvalidPunctuationSymbol(previousChar) || unicode.IsLetter(previousChar) {
+			previousChar := p.text[offset-1]
+			if p.isInvalidPunctuationSymbol(rune(previousChar)) || unicode.IsLetter(rune(previousChar)) {
 				return nil, nil
 			}
 		}
 		lastCharIndex := offset + len(candidate)
 		if lastCharIndex < len(p.text) {
-			nextChar := []rune(p.text)[lastCharIndex]
-			if p.isInvalidPunctuationSymbol(nextChar) || unicode.IsLetter(nextChar) {
+			nextChar := p.text[lastCharIndex]
+			if p.isInvalidPunctuationSymbol(rune(nextChar)) || unicode.IsLetter(rune(nextChar)) {
 				return nil, nil
 			}
 		}
