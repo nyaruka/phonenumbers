@@ -188,12 +188,8 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 			// not start with phone-number punctuation, check the previous
 			// character
 			previousChar := p.text[offset-1]
-			//for i := 0; i < 4; i++ {
-			//	if utf8.Valid([]byte{previousChar}) {
-			//		break
-			//	}
-			//	previousChar = p.text[offset+i]
-			//}
+			// We return nil if it is a latin letter or an invalid
+			// punctuation symbol
 			if p.isInvalidPunctuationSymbol(rune(previousChar)) || unicode.IsLetter(rune(previousChar)) {
 				return nil, nil
 			}
@@ -201,12 +197,6 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 		lastCharIndex := offset + len(candidate)
 		if lastCharIndex < len(p.text) {
 			nextChar := p.text[lastCharIndex]
-			//for i := 1; i < 5; i++ {
-			//	if utf8.Valid([]byte{nextChar}) {
-			//		break
-			//	}
-			//	nextChar = p.text[lastCharIndex-i]
-			//}
 			if p.isInvalidPunctuationSymbol(rune(nextChar)) || unicode.IsLetter(rune(nextChar)) {
 				return nil, nil
 			}
@@ -219,6 +209,11 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 	}
 
 	if p.leniency.Verify(number, candidate) {
+		//  We used parse(keep_raw_input=True) to create this number,
+		//  but for now we don't return the extra values parsed.
+		//  TODO: stop clearing all values here and switch all users
+		//  over to using raw_input rather than the raw_string of
+		//  PhoneNumberMatch.
 		match := NewPhoneNumberMatch(offset, candidate, *number)
 
 		return &match, nil
@@ -227,11 +222,23 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 	return nil, nil
 }
 
+// Attempts to extract a match from a candidate string.
+//
+//  Arguments:
+//
+//  candidate -- The candidate text that might contain a phone number.
+//
+//  offset -- The offset of candidate within self.text
+//
+//  Returns the match found, None if none can be found
 func (p *PhoneNumberMatcher) extractMatch(candidate string, offset int) *PhoneNumberMatch {
+	// Skip a match that is more likely a publication page reference or a
+	// date.
 	if SLASH_SEPARATED_DATES.FindStringIndex(candidate) != nil {
 		return nil
 	}
 
+	// Skip potential time-stamps.
 	if TIME_STAMPS.FindStringIndex(candidate) != nil {
 		followingText := p.text[offset+len(candidate):]
 		if TIME_STAMPS_SUFFIX.FindStringIndex(followingText) != nil {
@@ -239,14 +246,27 @@ func (p *PhoneNumberMatcher) extractMatch(candidate string, offset int) *PhoneNu
 		}
 	}
 
+	// Try to come up with a valid match given the entire candidate.
 	match, _ := p.parseAndVerify(candidate, offset)
 	if match != nil {
 		return match
 	}
 
+	// If that failed, try to find an "inner match" -- there might be a
+	// phone number within this candidate.
 	return p.extractInnerMatch(candidate, offset)
 }
 
+// Attempts to extract a match from candidate if the whole candidate
+// does not qualify as a match.
+//
+//  Arguments:
+//
+//  candidate -- The candidate text that might contain a phone number
+//
+//  offset -- The current offset of candidate within text
+//
+//  Returns the match found, None if none can be found
 func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *PhoneNumberMatch {
 	for _, possibleInnerMatch := range INNER_MATCHES {
 		groupMatch := possibleInnerMatch.FindStringIndex(candidate)
@@ -257,6 +277,7 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 				break
 			}
 			if isFirstMatch {
+				// We should handle any group before this one too.
 				group := p.trimAfterFirstMatch(UNWANTED_END_CHAR_PATTERN, candidate[:groupMatch[0]])
 				match, _ := p.parseAndVerify(group, offset)
 				if match != nil {
@@ -282,6 +303,14 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 	return nil
 }
 
+// Attempts to find the next subsequence in the searched sequence on or after index
+// that represents a phone number. Returns the next match, None if none was found.
+//
+// Arguments:
+//
+// index -- The search index to start searching at.
+//
+// Returns the phone number match found, None if none can be found.
 func (p *PhoneNumberMatcher) find() *PhoneNumberMatch {
 	matcher := PATTERN.FindStringIndex(p.text[p.searchIndex:])
 	index := 0 + p.searchIndex
@@ -310,6 +339,7 @@ func (p *PhoneNumberMatcher) find() *PhoneNumberMatch {
 	return nil
 }
 
+// Indicates whether there is another match available
 func (p *PhoneNumberMatcher) hasNext() bool {
 	if p.state == notReady {
 		p.lastMatch = p.find()
@@ -323,6 +353,7 @@ func (p *PhoneNumberMatcher) hasNext() bool {
 	return p.state == ready
 }
 
+// Return the next match; raises Exception if no next match available
 func (p *PhoneNumberMatcher) Next() (*PhoneNumberMatch, error) {
 	if !p.hasNext() {
 		return nil, io.EOF
