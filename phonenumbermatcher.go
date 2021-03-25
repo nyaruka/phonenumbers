@@ -187,7 +187,7 @@ func (p *PhoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 			}
 			if isFirstMatch {
 				group := p.trimAfterFirstMatch(UNWANTED_END_CHAR_PATTERN, candidate[:groupMatch[0]])
-				match, _ := p.parseAndVerify(group, offset+groupMatch[0])
+				match, _ := p.parseAndVerify(group, offset)
 				if match != nil {
 					return match
 				}
