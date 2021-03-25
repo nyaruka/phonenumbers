@@ -5,14 +5,11 @@ import (
 	"regexp"
 	"strconv"
 	"unicode"
-	"unicode/utf8"
 )
 
-/*
-A stateful class that finds and extracts telephone numbers fom text.
-
-Vanity numbers (phone numbers using alphabetic digits such as '1-800-SIX-FLAGS' are not found.
-*/
+// A stateful class that finds and extracts telephone numbers fom text.
+//
+// Vanity numbers (phone numbers using alphabetic digits such as '1-800-SIX-FLAGS' are not found.
 type PhoneNumberMatcher struct {
 	text            string
 	preferredRegion string
@@ -30,42 +27,51 @@ const (
 )
 
 var (
-	OPENING_PARENS     = "\\(\\[\uFF08\uFF3B"
-	CLOSING_PARENS     = "\\)\\]\uFF09\uFF3D"
-	NON_PARENS         = "[^" + OPENING_PARENS + CLOSING_PARENS + "]"
-	BRACKET_PAIR_LIMIT = "{0,3}"
-
-	LEAD_CLASS   = OPENING_PARENS + PLUS_CHARS
-	LEAD_PATTERN = regexp.MustCompile(LEAD_CLASS)
-	LEAD_LIMIT   = "{0,2}"
-
-	DIGIT_BLOCK_LIMIT = 17 + 3
-	DIGIT_SEQUENCE    = "\\d{1," + strconv.Itoa(DIGIT_BLOCK_LIMIT) + "}"
-
-	PUNCTIATION_LIMIT = "{0,4}"
-	PUNCTUATION       = "[" + VALID_PUNCTUATION + "]" + PUNCTIATION_LIMIT
-
-	BLOCK_LIMIT = "{0," + strconv.Itoa(DIGIT_BLOCK_LIMIT) + "}"
-
+	// The phone number pattern used by {@link #find}, similar to
+	// {@code PhoneNumberUtil.VALID_PHONE_NUMBER}, but with the following differences:
+	// <ul>
+	//   <li>All captures are limited in order to place an upper bound to the text matched by the
+	//       pattern.
+	// <ul>
+	//   <li>Leading punctuation / plus signs are limited.
+	//   <li>Consecutive occurrences of punctuation are limited.
+	//   <li>Number of digits is limited.
+	// </ul>
+	//   <li>No whitespace is allowed at the start or end.
+	//   <li>No alpha digits (vanity numbers such as 1-800-SIX-FLAGS) are currently supported.
+	// </ul>
 	PATTERN = regexp.MustCompile("(?i)(?:\\+){0,1}(?:" + LEAD_CLASS + PUNCTUATION + ")" + LEAD_LIMIT + DIGIT_SEQUENCE + "(?:" + PUNCTUATION + DIGIT_SEQUENCE + ")" + BLOCK_LIMIT + "(?:" + EXTN_PATTERNS_FOR_MATCHING + ")?")
 
-	SLASH_SEPARATED_DATES = regexp.MustCompile("(?:(?:[0-3]?\\d/[01]?\\d)|(?:[01]?\\d/[0-3]?\\d))/(?:[12]\\d)?\\d{2}")
-	TIME_STAMPS           = regexp.MustCompile("[12]\\d{3}[-/]?[01]\\d[-/]?[0-3]\\d +[0-2]\\d$")
-
-	MATCHING_BRACKETS = regexp.MustCompile("(?:[" + OPENING_PARENS + "])?" + "(?:" + NON_PARENS + "+" + "[" + CLOSING_PARENS + "])?" + NON_PARENS + "+" + "(?:[" + OPENING_PARENS + "]" + NON_PARENS + "+[" + CLOSING_PARENS + "])" + BRACKET_PAIR_LIMIT + NON_PARENS + "*")
-
+	//  Matches strings that look like publication pages. Example:
+	//  <pre>Computing Complete Answers to Queries in the Presence of Limited Access Patterns.
+	//  Chen Li. VLDB J. 12(3): 211-227 (2003).</pre>
+	//
+	//  The string "211-227 (2003)" is not a telephone number.
 	PUB_PAGES = regexp.MustCompile("\\d{1,5}-+\\d{1,5}\\s{0,4}\\(\\d{1,4}")
 
-	/**
-	 * Patterns used to extract phone numbers from a larger phone-number-like pattern. These are
-	 * ordered according to specificity. For example, white-space is last since that is frequently
-	 * used in numbers, not just to separate two numbers. We have separate patterns since we don't
-	 * want to break up the phone-number-like text on more than one different kind of symbol at one
-	 * time, although symbols of the same type (e.g. space) can be safely grouped together.
-	 *
-	 * Note that if there is a match, we will always check any text found up to the first match as
-	 * well.
-	 */
+	// Matches strings that look like dates using "/" as a separator. Examples: 3/10/2011, 31/10/96 or 08/31/95.
+	SLASH_SEPARATED_DATES = regexp.MustCompile("(?:(?:[0-3]?\\d/[01]?\\d)|(?:[01]?\\d/[0-3]?\\d))/(?:[12]\\d)?\\d{2}")
+
+	//  Matches timestamps. Examples: "2012-01-02 08:00". Note that the reg-ex does not include the trailing ":\d\d" -- that is covered by TIME_STAMPS_SUFFIX.
+	TIME_STAMPS        = regexp.MustCompile("[12]\\d{3}[-/]?[01]\\d[-/]?[0-3]\\d +[0-2]\\d$")
+	TIME_STAMPS_SUFFIX = regexp.MustCompile(":[0-5]\\d")
+
+	// Pattern to check that brackets match. Opening brackets should be closed within a phone number.
+	// This also checks that there is something inside the brackets. Having no brackets at all is also
+	// fine.
+	// An opening bracket at the beginning may not be closed, but subsequent ones should be.  It's
+	// also possible that the leading bracket was dropped, so we shouldn't be surprised if we see a
+	// closing bracket first. We limit the sets of brackets in a phone number to four.
+	MATCHING_BRACKETS = regexp.MustCompile("(?:[" + OPENING_PARENS + "])?" + "(?:" + NON_PARENS + "+" + "[" + CLOSING_PARENS + "])?" + NON_PARENS + "+" + "(?:[" + OPENING_PARENS + "]" + NON_PARENS + "+[" + CLOSING_PARENS + "])" + BRACKET_PAIR_LIMIT + NON_PARENS + "*")
+
+	// Patterns used to extract phone numbers from a larger phone-number-like pattern. These are
+	// ordered according to specificity. For example, white-space is last since that is frequently
+	// used in numbers, not just to separate two numbers. We have separate patterns since we don't
+	// want to break up the phone-number-like text on more than one different kind of symbol at one
+	// time, although symbols of the same type (e.g. space) can be safely grouped together.
+	//
+	// Note that if there is a match, we will always check any text found up to the first match as
+	// well.
 	INNER_MATCHES = []*regexp.Regexp{
 		// Breaks on the slash - e.g. "651-234-2345/332-445-1234"
 		regexp.MustCompile("/+(.*)"),
@@ -84,8 +90,49 @@ var (
 		// Breaks on space - e.g. "3324451234 8002341234"
 		regexp.MustCompile("\\p{Z}+(\\P{Z}+)"),
 	}
+
+	//  Punctuation that may be at the start of a phone number - brackets and plus signs.
+	LEAD_CLASS   = OPENING_PARENS + PLUS_CHARS
+	LEAD_PATTERN = regexp.MustCompile(LEAD_CLASS)
+
+	// Builds the MATCHING_BRACKETS and PATTERN regular expressions. The building blocks below exist to make the pattern more easily understood.
+	OPENING_PARENS = "\\(\\[\uFF08\uFF3B"
+	CLOSING_PARENS = "\\)\\]\uFF09\uFF3D"
+	NON_PARENS     = "[^" + OPENING_PARENS + CLOSING_PARENS + "]"
+
+	// Limit on the number of pairs of brackets in a phone number.
+	BRACKET_PAIR_LIMIT = "{0,3}"
+
+	// Limit on the number of leading (plus) characters.
+	LEAD_LIMIT = "{0,2}"
+
+	// Limit on the number of consecutive punctuation characters.
+	PUNCTIATION_LIMIT = "{0,4}"
+
+	// The maximum number of digits allowed in a digit-separated block. As we allow all digits in a
+	//single block, set high enough to accommodate the entire national number and the international
+	//country code.
+	DIGIT_BLOCK_LIMIT = 17 + 3
+
+	// Limit on the number of blocks separated by punctuation. Uses digitBlockLimit since some
+	// formats use spaces to separate each digit.
+	BLOCK_LIMIT = "{0," + strconv.Itoa(DIGIT_BLOCK_LIMIT) + "}"
+
+	// A punctuation sequence allowing white space.
+	PUNCTUATION = "[" + VALID_PUNCTUATION + "]" + PUNCTIATION_LIMIT
+
+	// A digits block without punctuation.
+	DIGIT_SEQUENCE = "\\d{1," + strconv.Itoa(DIGIT_BLOCK_LIMIT) + "}"
 )
 
+// Creates a new instance.
+//
+// Arguments:
+// text -- The character sequence that we will search
+// country -- The country to assume for phone numbers not written in
+//            international format (with a leading plus, or with the
+//            international dialing prefix of the specified region). May be
+//            "ZZ" if only numbers with a leading plus should be considered.
 func NewPhoneNumberMatcher(text string, region string) PhoneNumberMatcher {
 	m := PhoneNumberMatcher{
 		text:            text,
@@ -100,6 +147,8 @@ func NewPhoneNumberMatcher(text string, region string) PhoneNumberMatcher {
 	return m
 }
 
+// Trims away any characters after the first match of pattern in
+// candidate, returning the trimmed version.
 func (*PhoneNumberMatcher) trimAfterFirstMatch(pattern *regexp.Regexp, candidate string) string {
 	trailingCharsMatch := pattern.FindStringIndex(candidate)
 	if trailingCharsMatch != nil {
@@ -112,20 +161,39 @@ func (*PhoneNumberMatcher) isInvalidPunctuationSymbol(char rune) bool {
 	return char == '%' || unicode.In(char, unicode.Sc)
 }
 
+// Parses a phone number from the candidate using phonenumberutil.parse and
+// verifies it matches the requested leniency. If parsing and verification succeed, a
+// corresponding PhoneNumberMatch is returned, otherwise this method returns None.
+//
+// Arguments:
+//
+// candidate -- The candidate match.
+//
+// offset -- The offset of candidate within self.text.
+//
+// Returns the parsed and validated phone number match, or None.
 func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*PhoneNumberMatch, error) {
+	// Check the candidate doesn't contain any formatting which would
+	// indicate that it really isn't a phone number.
 	if MATCHING_BRACKETS.FindStringIndex(candidate) == nil || PUB_PAGES.FindStringIndex(candidate) != nil {
 		return nil, nil
 	}
 
+	// If leniency is set to VALID or stricter, we also want to skip
+	// numbers that are surrounded by Latin alphabetic characters, to
+	// skip cases like abc8005001234 or 8005001234def.
 	if p.leniency >= VALID {
 		if offset > 0 && LEAD_PATTERN.FindStringIndex(candidate) == nil {
+			// If the candidate is not at the start of the text, and does
+			// not start with phone-number punctuation, check the previous
+			// character
 			previousChar := p.text[offset-1]
-			for i := 0; i < 4; i++ {
-				if utf8.Valid([]byte{previousChar}) {
-					break
-				}
-				previousChar = p.text[offset+i]
-			}
+			//for i := 0; i < 4; i++ {
+			//	if utf8.Valid([]byte{previousChar}) {
+			//		break
+			//	}
+			//	previousChar = p.text[offset+i]
+			//}
 			if p.isInvalidPunctuationSymbol(rune(previousChar)) || unicode.IsLetter(rune(previousChar)) {
 				return nil, nil
 			}
@@ -133,12 +201,12 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 		lastCharIndex := offset + len(candidate)
 		if lastCharIndex < len(p.text) {
 			nextChar := p.text[lastCharIndex]
-			for i := 1; i < 5; i++ {
-				if utf8.Valid([]byte{nextChar}) {
-					break
-				}
-				nextChar = p.text[lastCharIndex-i]
-			}
+			//for i := 1; i < 5; i++ {
+			//	if utf8.Valid([]byte{nextChar}) {
+			//		break
+			//	}
+			//	nextChar = p.text[lastCharIndex-i]
+			//}
 			if p.isInvalidPunctuationSymbol(rune(nextChar)) || unicode.IsLetter(rune(nextChar)) {
 				return nil, nil
 			}
@@ -165,7 +233,10 @@ func (p *PhoneNumberMatcher) extractMatch(candidate string, offset int) *PhoneNu
 	}
 
 	if TIME_STAMPS.FindStringIndex(candidate) != nil {
-		return nil
+		followingText := p.text[offset+len(candidate):]
+		if TIME_STAMPS_SUFFIX.FindStringIndex(followingText) != nil {
+			return nil
+		}
 	}
 
 	match, _ := p.parseAndVerify(candidate, offset)
