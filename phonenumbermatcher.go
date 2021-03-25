@@ -130,7 +130,7 @@ func (p *PhoneNumberMatcher) parseAndVerify(candidate string, offset int) (*Phon
 				return nil, nil
 			}
 		}
-		lastCharIndex := offset + len(candidate) - 1
+		lastCharIndex := offset + len(candidate)
 		if lastCharIndex < len(p.text) {
 			nextChar := p.text[lastCharIndex]
 			for i := 1; i < 5; i++ {
