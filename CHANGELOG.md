@@ -1,3 +1,12 @@
+v1.0.70
+----------
+ * Update metadata to v8.12.24
+
+v1.0.69
+----------
+ * update metadata to 8.12.22
+ * update test case for AR formatting
+
 v1.0.68
 ----------
  * Add GetCarrierWithPrefixForNumber (thanks @RaMin0)

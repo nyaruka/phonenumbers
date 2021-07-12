@@ -1039,7 +1039,7 @@ func TestGetMetadata(t *testing.T) {
 			cc:         54,
 			i18nPref:   "00",
 			natPref:    "0",
-			numFmtSize: 11,
+			numFmtSize: 12,
 		},
 	}
 	for i, test := range tests {
@@ -1059,8 +1059,8 @@ func TestGetMetadata(t *testing.T) {
 				i, meta.GetNationalPrefix(), test.natPref)
 		}
 		if len(meta.GetNumberFormat()) != test.numFmtSize {
-			t.Errorf("[test %d:numFmt] %d != %d\n",
-				i, len(meta.GetNumberFormat()), test.numFmtSize)
+			t.Errorf("[test %d:numFmt] %d (%s) != %d\n",
+				i, len(meta.GetNumberFormat()), meta.GetNumberFormat(), test.numFmtSize)
 		}
 	}
 }
