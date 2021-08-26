@@ -1,6 +1,4 @@
-phonenumbers 
-==============
-
+# phonenumbers 
 [![Build Status](https://github.com/nyaruka/phonenumbers/workflows/CI/badge.svg)](https://github.com/nyaruka/phonenumbers/actions?query=workflow%3ACI) 
 [![codecov](https://codecov.io/gh/nyaruka/phonenumbers/branch/main/graph/badge.svg)](https://codecov.io/gh/nyaruka/phonenumbers)
 [![GoDoc](https://godoc.org/github.com/nyaruka/phonenumbers?status.svg)](https://godoc.org/github.com/nyaruka/phonenumbers)
@@ -44,6 +42,6 @@ It will rebuild the following files:
 `prefix_to_timezone_bin.go` - contains the information needed to map a phone number prefix to a city or region
 
 ```bash
-% cd cmd/buildmetadata && go install . && cd -
+% go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
 % $GOPATH/bin/buildmetadata
 ```

@@ -5,7 +5,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        go-version: [1.14.x, 1.15.x]
+        go-version: ['1.15.x', '1.16.x']
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -42,20 +42,13 @@ jobs:
       with:
         go-version: ${{ env.go-version }}
 
-    - name: Publish release
-      uses: goreleaser/goreleaser-action@v1
-      if: ${{ !contains(github.ref, '-') }}
-      with:
-        version: v0.147.2
-        args: release --rm-dist
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Publish non-master release
-      uses: goreleaser/goreleaser-action@v1
-      if: contains(github.ref, '-')
       with:
-        version: v0.147.2
-        args: release --rm-dist --skip-validate
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        draft: false
+        prerelease: false
