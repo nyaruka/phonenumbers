@@ -1,3 +1,7 @@
+v1.0.71
+----------
+ * Update metadata to v8.12.31
+
 v1.0.70
 ----------
  * Update metadata to v8.12.24
