@@ -70,6 +70,11 @@ func TestParse(t *testing.T) {
 			err:         nil,
 			expectedNum: 72098006,
 			region:      "",
+		}, {
+			input:       "8409990936",
+			err:         nil,
+			expectedNum: 8409990936,
+			region:      "US",
 		},
 	}
 
@@ -312,6 +317,11 @@ func TestIsValidNumber(t *testing.T) {
 			err:     nil,
 			isValid: true,
 			region:  "NG",
+		}, {
+			input:   "8409990936",
+			err:     nil,
+			isValid: true,
+			region:  "US",
 		},
 	}
 
