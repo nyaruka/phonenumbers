@@ -1,3 +1,7 @@
+v1.0.73
+----------
+ * Added fallback to region for GetGeocodingForNumber
+
 v1.0.72
 ----------
  * Update metadata to v8.12.33
