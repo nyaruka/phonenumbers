@@ -1619,6 +1619,7 @@ func TestGetGeocodingForNumber(t *testing.T) {
 		{num: "+12542462158", lang: "en", expected: "Texas"},
 		{num: "+16193165996", lang: "en", expected: "California"},
 		{num: "+12067799191", lang: "en", expected: "Washington State"},
+		{num: "+447825602614", lang: "en", expected: "United Kingdom"},
 	}
 	for _, test := range tests {
 		number, err := Parse(test.num, "ZZ")
