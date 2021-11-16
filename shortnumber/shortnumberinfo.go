@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -254,6 +255,214 @@ func loadIntStringArrayMap(data string) (*intStringArrayMap, error) {
 	}, nil
 }
 
+type ShortNumberCost int
+
+const (
+	UNKNOWN_COST ShortNumberCost = 0
+	PREMIUM_RATE                 = iota
+	TOLL_FREE
+	STANDARD_RATE
+)
+
+func GetExpectedCostForRegion(number *phonenumbers.PhoneNumber, regionDialingFrom string) ShortNumberCost {
+	if !regionDialingFromMatchesNumber(number, regionDialingFrom) {
+		return UNKNOWN_COST
+	}
+
+	phoneMetadata := getMetadataForRegion(regionDialingFrom)
+	if phoneMetadata == nil {
+		return UNKNOWN_COST
+	}
+
+	shortNumber := getNationalSignificantNumber(number)
+
+	if !uint32ListContains(phoneMetadata.GetGeneralDesc().GetPossibleLength(), int32(len(shortNumber))) {
+		return UNKNOWN_COST
+	}
+
+	if matchesPossibleNumberAndNationalNumber(shortNumber, phoneMetadata.GetPremiumRate()) {
+		return PREMIUM_RATE
+	}
+	if matchesPossibleNumberAndNationalNumber(shortNumber, phoneMetadata.GetStandardRate()) {
+		return STANDARD_RATE
+	}
+	if matchesPossibleNumberAndNationalNumber(shortNumber, phoneMetadata.GetTollFree()) {
+		fmt.Printf("toll free: %+v\n", phoneMetadata.GetTollFree())
+		return TOLL_FREE
+	}
+	if IsEmergencyNumber(shortNumber, regionDialingFrom) {
+		fmt.Println("emergency?")
+		// Emergency numbers are implicitly toll-free.
+		return TOLL_FREE
+	}
+
+	return UNKNOWN_COST
+}
+
+func uint32ListContains(l []int32, e int32) bool {
+	for _, i := range l {
+		if i == e {
+			return true
+		}
+	}
+	return false
+}
+
+/*
+  public ShortNumberCost getExpectedCostForRegion(PhoneNumber number, String regionDialingFrom) {
+    if (!regionDialingFromMatchesNumber(number, regionDialingFrom)) {
+      return ShortNumberCost.UNKNOWN_COST;
+    }
+    // Note that regionDialingFrom may be null, in which case phoneMetadata will also be null.
+    PhoneMetadata phoneMetadata = MetadataManager.getShortNumberMetadataForRegion(
+        regionDialingFrom);
+    if (phoneMetadata == null) {
+      return ShortNumberCost.UNKNOWN_COST;
+    }
+
+    String shortNumber = getNationalSignificantNumber(number);
+
+    // The possible lengths are not present for a particular sub-type if they match the general
+    // description; for this reason, we check the possible lengths against the general description
+    // first to allow an early exit if possible.
+    if (!phoneMetadata.getGeneralDesc().getPossibleLengthList().contains(shortNumber.length())) {
+      return ShortNumberCost.UNKNOWN_COST;
+    }
+
+    // The cost categories are tested in order of decreasing expense, since if for some reason the
+    // patterns overlap the most expensive matching cost category should be returned.
+    if (matchesPossibleNumberAndNationalNumber(shortNumber, phoneMetadata.getPremiumRate())) {
+      return ShortNumberCost.PREMIUM_RATE;
+    }
+    if (matchesPossibleNumberAndNationalNumber(shortNumber, phoneMetadata.getStandardRate())) {
+      return ShortNumberCost.STANDARD_RATE;
+    }
+    if (matchesPossibleNumberAndNationalNumber(shortNumber, phoneMetadata.getTollFree())) {
+      return ShortNumberCost.TOLL_FREE;
+    }
+    if (isEmergencyNumber(shortNumber, regionDialingFrom)) {
+      // Emergency numbers are implicitly toll-free.
+      return ShortNumberCost.TOLL_FREE;
+    }
+    return ShortNumberCost.UNKNOWN_COST;
+  }
+*/
+
+func matchesPossibleNumberAndNationalNumber(number string, numberDesc *phonenumbers.PhoneNumberDesc) bool {
+	if len(numberDesc.GetPossibleLength()) > 0 && !uint32ListContains(numberDesc.GetPossibleLength(), int32(len(number))) {
+		return false
+	}
+	foo := matchNationalNumber(number, numberDesc, false)
+	fmt.Printf("matchesPossibleNumberAndNationalNumber(%s...) = %+v\n", number, foo)
+	return foo
+}
+
+/*
+private boolean matchesPossibleNumberAndNationalNumber(String number,
+PhoneNumberDesc numberDesc) {
+	if (numberDesc.getPossibleLengthCount() > 0
+	&& !numberDesc.getPossibleLengthList().contains(number.length())) {
+		return false;
+	}
+	return matcherApi.matchNationalNumber(number, numberDesc, false);
+}
+*/
+
+func matchNationalNumber(number string, numberDesc *phonenumbers.PhoneNumberDesc, allowPrefixMatch bool) bool {
+	fmt.Printf("matchNationalNumber(%s..)\n", number)
+	nationalNumberPattern := numberDesc.GetNationalNumberPattern()
+	// We don't want to consider it a prefix match when matching non-empty input against an empty
+	// pattern.
+	if len(nationalNumberPattern) == 0 {
+		return false
+	}
+
+	if !allowPrefixMatch {
+		nationalNumberPattern = "^(?:" + nationalNumberPattern + ")$" // Strictly match
+	}
+	fmt.Printf("nationalNumberPattern = %+v\n", nationalNumberPattern)
+	pattern := regexFor(nationalNumberPattern)
+
+	foo := pattern.MatchString(number)
+	fmt.Printf("MatchString(%+v) = %+v\n", number, foo)
+	return foo
+}
+
+/*
+public boolean matchNationalNumber(CharSequence number, PhoneNumberDesc numberDesc,
+boolean allowPrefixMatch) {
+	String nationalNumberPattern = numberDesc.getNationalNumberPattern();
+	// We don't want to consider it a prefix match when matching non-empty input against an empty
+	// pattern.
+	if (nationalNumberPattern.length() == 0) {
+		return false;
+	}
+	return match(number, regexCache.getPatternForRegex(nationalNumberPattern), allowPrefixMatch);
+}
+
+private static boolean match(CharSequence number, Pattern pattern, boolean allowPrefixMatch) {
+	Matcher matcher = pattern.matcher(number);
+	if (!matcher.lookingAt()) {
+		return false;
+	} else {
+		return (matcher.matches()) ? true : allowPrefixMatch;
+	}
+}
+*/
+
+func regionDialingFromMatchesNumber(number *phonenumbers.PhoneNumber, regionDialingFrom string) bool {
+	regionCodes := getRegionCodesForCountryCode(int(number.GetCountryCode()))
+	for _, regionCode := range regionCodes {
+		if regionCode == regionDialingFrom {
+			return true
+		}
+	}
+	return false
+}
+
+/*
+private boolean regionDialingFromMatchesNumber(PhoneNumber number,
+String regionDialingFrom) {
+	List<String> regionCodes = getRegionCodesForCountryCode(number.getCountryCode());
+	return regionCodes.contains(regionDialingFrom);
+}
+*/
+
+func getRegionCodesForCountryCode(countryCallingCode int) []string {
+	return countryCodeToRegion[countryCallingCode]
+}
+
+/*
+  private List<String> getRegionCodesForCountryCode(int countryCallingCode) {
+    List<String> regionCodes = countryCallingCodeToRegionCodeMap.get(countryCallingCode);
+    return Collections.unmodifiableList(regionCodes == null ? new ArrayList<String>(0)
+                                                            : regionCodes);
+  }
+*/
+
+func getNationalSignificantNumber(number *phonenumbers.PhoneNumber) string {
+	var nationalNumber strings.Builder
+	if number.GetItalianLeadingZero() && number.GetNumberOfLeadingZeros() > 0 {
+		nationalNumber.WriteString(strings.Repeat("0", int(number.GetNumberOfLeadingZeros())))
+	}
+	nationalNumber.WriteString(strconv.FormatUint(number.GetNationalNumber(), 10))
+	return nationalNumber.String()
+}
+
+/*
+public String getNationalSignificantNumber(PhoneNumber number) {
+	// If leading zero(s) have been set, we prefix this now. Note this is not a national prefix.
+	StringBuilder nationalNumber = new StringBuilder();
+	if (number.isItalianLeadingZero() && number.getNumberOfLeadingZeros() > 0) {
+		char[] zeros = new char[number.getNumberOfLeadingZeros()];
+		Arrays.fill(zeros, '0');
+		nationalNumber.append(new String(zeros));
+	}
+	nationalNumber.append(number.getNationalNumber());
+	return nationalNumber.toString();
+}
+*/
+
 func ConnectsToEmergencyNumber(number string, regionCode string) bool {
 	return matchesEmergencyNumberHelper(number, regionCode, true /* allows prefix match */)
 }
@@ -282,14 +491,42 @@ func matchesEmergencyNumberHelper(number string, regionCode string, allowPrefixM
 
 	allowPrefixMatchForRegion := allowPrefixMatch && !REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT[regionCode]
 
-	natRulePattern := metadata.GetGeneralDesc().GetNationalNumberPattern()
+	fmt.Printf("metadata: %+v\n", metadata.GetEmergency())
+	natRulePattern := metadata.GetEmergency().GetNationalNumberPattern()
 	if !allowPrefixMatchForRegion {
 		natRulePattern = "^(?:" + natRulePattern + ")$" // Strictly match
 	}
+	fmt.Printf("natRulePattern = %+v\n", natRulePattern)
 	nationalNumberRule := regexFor(natRulePattern)
 
-	return nationalNumberRule.MatchString(normalizedNumber)
+	foo := nationalNumberRule.MatchString(normalizedNumber)
+	fmt.Printf("matchesEmergencyNumberHelper(%s, %s, %+v) = %+v\n", number, regionCode, allowPrefixMatch, foo)
+	return foo
 }
+
+/*
+  private boolean matchesEmergencyNumberHelper(CharSequence number, String regionCode,
+  boolean allowPrefixMatch) {
+	  CharSequence possibleNumber = PhoneNumberUtil.extractPossibleNumber(number);
+	  if (PhoneNumberUtil.PLUS_CHARS_PATTERN.matcher(possibleNumber).lookingAt()) {
+		  // Returns false if the number starts with a plus sign. We don't believe dialing the country
+		  // code before emergency numbers (e.g. +1911) works, but later, if that proves to work, we can
+		  // add additional logic here to handle it.
+		  return false;
+	  }
+	  PhoneMetadata metadata = MetadataManager.getShortNumberMetadataForRegion(regionCode);
+	  if (metadata == null || !metadata.hasEmergency()) {
+		  return false;
+	  }
+
+	  String normalizedNumber = PhoneNumberUtil.normalizeDigitsOnly(possibleNumber);
+	  boolean allowPrefixMatchForRegion =
+	  allowPrefixMatch && !REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT.contains(regionCode);
+	  return matcherApi.matchNationalNumber(normalizedNumber, metadata.getEmergency(),
+	  allowPrefixMatchForRegion);
+  }
+
+*/
 
 // Returns the metadata for the given region code or nil if the region
 // code is invalid or unknown.
