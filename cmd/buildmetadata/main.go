@@ -483,8 +483,8 @@ func readMappingsForDir(dir string) map[int]string {
 func main() {
 	metadata := buildMetadata()
 	buildRegions(metadata)
-	shortMeta := buildShortNumberMetadata()
-	buildShortNumberRegions(shortMeta)
+	_ = buildShortNumberMetadata()
+	buildShortNumberRegions(metadata)
 	buildTimezones()
 	buildPrefixData(&carrier)
 	buildPrefixData(&geocoding)

@@ -3,6 +3,8 @@ package shortnumber
 import (
 	"fmt"
 	"testing"
+
+	"github.com/nyaruka/phonenumbers"
 )
 
 func TestFoo(t *testing.T) {
@@ -24,8 +26,8 @@ func TestIsEmergencyNumber(t *testing.T) {
 	}
 	shouldNotMatch := func(number string, regionCode string) {
 		t.Run(fmt.Sprintf("!IsEmergencyNumber(%s, %s)", number, regionCode), func(t *testing.T) {
-			if !IsEmergencyNumber(number, regionCode) {
-				t.Fatalf("%q is a valid emergency number in %q", number, regionCode)
+			if IsEmergencyNumber(number, regionCode) {
+				t.Fatalf("%q should not be a valid emergency number in %q", number, regionCode)
 			}
 		})
 	}
@@ -45,14 +47,14 @@ func TestConnectsToEmergencyNumber(t *testing.T) {
 	shouldMatch := func(number string, regionCode string) {
 		t.Run(fmt.Sprintf("ConnectsToEmergencyNumber(%s, %s)", number, regionCode), func(t *testing.T) {
 			if !ConnectsToEmergencyNumber(number, regionCode) {
-				t.Fatalf("%q does not connect to the emergency number in %q", number, regionCode)
+				t.Fatalf("%q should connect to the emergency number in %q", number, regionCode)
 			}
 		})
 	}
 	shouldNotMatch := func(number string, regionCode string) {
 		t.Run(fmt.Sprintf("!ConnectsToEmergencyNumber(%s, %s)", number, regionCode), func(t *testing.T) {
-			if !ConnectsToEmergencyNumber(number, regionCode) {
-				t.Fatalf("%q connects to the emergency number in %q", number, regionCode)
+			if ConnectsToEmergencyNumber(number, regionCode) {
+				t.Fatalf("%q should not connect to the emergency number in %q", number, regionCode)
 			}
 		})
 	}
@@ -64,7 +66,6 @@ func TestConnectsToEmergencyNumber(t *testing.T) {
 	shouldMatch("9116666666", "US")
 	shouldMatch("1126666666", "US")
 
-	shouldNotMatch("9111", "US")
 	shouldNotMatch("9996666666", "US")
 
 	shouldNotMatch("911", "SE")
