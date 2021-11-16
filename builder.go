@@ -682,7 +682,7 @@ type TerritoryE struct {
 	ShortCode *PhoneNumberDescE `xml:"shortCode"`
 
 	// <!ELEMENT uan (nationalNumberPattern, possibleLengths, exampleNumber)>
-	Emergency *PhoneNumberDescE `xml:"Emergency"`
+	Emergency *PhoneNumberDescE `xml:"emergency"`
 
 	// <!ELEMENT voicemail (nationalNumberPattern, possibleLengths, exampleNumber)>
 	CarrierSpecific *PhoneNumberDescE `xml:"carrierSpecific"`
