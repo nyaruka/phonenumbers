@@ -40,6 +40,17 @@ func BuildPhoneMetadataCollection(inputXML []byte, liteBuild bool, specialBuild 
 	return buildPhoneMetadataFromElement(metadata, liteBuild, specialBuild, isShortNumberMetadata, isAlternateFormatsMetadata)
 }
 
+func BuildShortPhoneMetadataCollection(inputXML []byte, liteBuild bool, specialBuild bool) (*PhoneMetadataCollection, error) {
+	metadata := &PhoneNumberMetadataE{}
+	err := xml.Unmarshal(inputXML, metadata)
+	if err != nil {
+		panic(fmt.Sprintf("Error unmarshalling XML: %s", err))
+	}
+	isShortNumberMetadata := true
+	isAlternateFormatsMetadata := false
+	return buildPhoneMetadataFromElement(metadata, liteBuild, specialBuild, isShortNumberMetadata, isAlternateFormatsMetadata)
+}
+
 func buildPhoneMetadataFromElement(document *PhoneNumberMetadataE, liteBuild bool, specialBuild bool, isShortNumberMetadata bool, isAlternateFormatsMetadata bool) (*PhoneMetadataCollection, error) {
 	collection := PhoneMetadataCollection{}
 	numOfTerritories := len(document.Territories)

@@ -131,6 +131,12 @@ func buildRegions(metadata *phonenumbers.PhoneMetadataCollection) {
 	writeIntStringArrayMap(regionPath, regionVar, regionMap)
 }
 
+func buildShortNumberRegions(metadata *phonenumbers.PhoneMetadataCollection) {
+	log.Println("Building region map")
+	regionMap := phonenumbers.BuildCountryCodeToRegionMap(metadata)
+	writeIntStringArrayMap("shortnumber/"+regionPath, "regionMapData", regionMap)
+}
+
 func buildTimezones() {
 	log.Println("Building timezone map")
 	body := fetchURL(tzURL)
@@ -261,6 +267,27 @@ func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 
 	log.Println("Writing new metadata_bin.go")
 	writeFile(metadataPath, generateBinFile("metadataData", data))
+	return collection
+}
+
+func buildShortNumberMetadata() *phonenumbers.PhoneMetadataCollection {
+	log.Println("Fetching ShortNumberMetadata.xml from Github")
+	body := fetchURL("https://raw.githubusercontent.com/google/libphonenumber/master/resources/ShortNumberMetadata.xml")
+
+	log.Println("Building new metadata collection")
+	collection, err := phonenumbers.BuildShortPhoneMetadataCollection(body, false, false)
+	if err != nil {
+		log.Fatalf("Error converting XML: %s", err)
+	}
+
+	// write it out as a protobuf
+	data, err := proto.Marshal(collection)
+	if err != nil {
+		log.Fatalf("Error marshalling metadata: %v", err)
+	}
+
+	log.Println("Writing new shortNumber_metadata_bin.go")
+	writeFile("shortnumber/"+metadataPath, generateBinFile("metadataData", data))
 	return collection
 }
 
@@ -456,6 +483,8 @@ func readMappingsForDir(dir string) map[int]string {
 func main() {
 	metadata := buildMetadata()
 	buildRegions(metadata)
+	shortMeta := buildShortNumberMetadata()
+	buildShortNumberRegions(shortMeta)
 	buildTimezones()
 	buildPrefixData(&carrier)
 	buildPrefixData(&geocoding)
