@@ -11,6 +11,8 @@ import (
 	"unicode"
 
 	"github.com/golang/protobuf/proto"
+	"golang.org/x/text/language"
+	"golang.org/x/text/language/display"
 )
 
 const (
@@ -3410,14 +3412,25 @@ func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, in
 // just our best guess, there is no guarantee to its accuracy.
 func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
 	geocoding, _, err := getValueForNumber(geocodingOnces, geocodingPrefixMap, geocodingMapData, lang, 10, number)
-	if err != nil {
-		return "", err
-	}
-	if geocoding != "" {
-		return geocoding, nil
+	if err != nil || geocoding != "" {
+		return geocoding, err
 	}
 
 	// fallback to english
 	geocoding, _, err = getValueForNumber(geocodingOnces, geocodingPrefixMap, geocodingMapData, "en", 10, number)
-	return geocoding, err
+	if err != nil || geocoding != "" {
+		return geocoding, err
+	}
+
+	// fallback to locale
+	var reg language.Region
+	if reg, err = language.ParseRegion(GetRegionCodeForNumber(number)); err != nil {
+		return "", err
+	}
+
+	var langT language.Tag
+	if langT, err = language.Parse(lang); err != nil {
+		langT = language.English // fallback to english
+	}
+	return display.Regions(langT).Name(reg), nil
 }

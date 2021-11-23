@@ -70,6 +70,11 @@ func TestParse(t *testing.T) {
 			err:         nil,
 			expectedNum: 72098006,
 			region:      "",
+		}, {
+			input:       "8409990936",
+			err:         nil,
+			expectedNum: 8409990936,
+			region:      "US",
 		},
 	}
 
@@ -312,6 +317,11 @@ func TestIsValidNumber(t *testing.T) {
 			err:     nil,
 			isValid: true,
 			region:  "NG",
+		}, {
+			input:   "8409990936",
+			err:     nil,
+			isValid: true,
+			region:  "US",
 		},
 	}
 
@@ -1609,6 +1619,7 @@ func TestGetGeocodingForNumber(t *testing.T) {
 		{num: "+12542462158", lang: "en", expected: "Texas"},
 		{num: "+16193165996", lang: "en", expected: "California"},
 		{num: "+12067799191", lang: "en", expected: "Washington State"},
+		{num: "+447825602614", lang: "en", expected: "United Kingdom"},
 	}
 	for _, test := range tests {
 		number, err := Parse(test.num, "ZZ")
