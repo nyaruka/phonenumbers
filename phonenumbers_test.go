@@ -313,10 +313,15 @@ func TestIsValidNumber(t *testing.T) {
 			isValid: true,
 			region:  "NG",
 		}, {
-			input:   "+2349090000001",
+			input:   "8409990936",
 			err:     nil,
 			isValid: true,
-			region:  "NG",
+			region:  "US",
+		}, {
+			input:   "712276797",
+			err:     nil,
+			isValid: true,
+			region:  "RO",
 		}, {
 			input:   "8409990936",
 			err:     nil,
