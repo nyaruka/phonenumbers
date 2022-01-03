@@ -1,11 +1,9 @@
 *.cov
 .vscode
 *~
-fabric
+deploy
 fabfile.py
 fabfile.pyc
-fabconfig.py
-fabconfig.pyc
 carrier
 geocoding
 buildmetadata
