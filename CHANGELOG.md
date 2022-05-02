@@ -1,3 +1,8 @@
+v1.0.75
+----------
+ * Cleanup some of the unit tests using testify library
+ * Update metadata and add test for new 0326 PK numbers
+
 v1.0.74
 ----------
  * Update to latest metadata
