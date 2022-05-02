@@ -262,72 +262,20 @@ func TestIsValidNumber(t *testing.T) {
 		isValid bool
 		region  string
 	}{
-		{
-			input:   "4437990238",
-			err:     nil,
-			isValid: true,
-			region:  "US",
-		}, {
-			input:   "(443) 799-0238",
-			err:     nil,
-			isValid: true,
-			region:  "US",
-		}, {
-			input:   "((443) 799-023asdfghjk8",
-			err:     ErrNumTooLong,
-			isValid: false,
-			region:  "US",
-		}, {
-			input:   "+441932567890",
-			err:     nil,
-			isValid: true,
-			region:  "GB",
-		}, {
-			input:   "45",
-			err:     nil,
-			isValid: false,
-			region:  "US",
-		}, {
-			input:   "1800AWWCUTE",
-			err:     nil,
-			isValid: true,
-			region:  "US",
-		}, {
-			input:   "+343511234567",
-			err:     nil,
-			isValid: false,
-			region:  "ES",
-		}, {
-			input:   "+12424654321",
-			err:     nil,
-			isValid: true,
-			region:  "BS",
-		}, {
-			input:   "6041234567",
-			err:     nil,
-			isValid: false,
-			region:  "US",
-		}, {
-			input:   "2349090000001",
-			err:     nil,
-			isValid: true,
-			region:  "NG",
-		}, {
-			input:   "8409990936",
-			err:     nil,
-			isValid: true,
-			region:  "US",
-		}, {
-			input:   "712276797",
-			err:     nil,
-			isValid: true,
-			region:  "RO",
-		}, {
-			input:   "8409990936",
-			err:     nil,
-			isValid: true,
-			region:  "US",
-		},
+		{input: "4437990238", region: "US", err: nil, isValid: true},
+		{input: "(443) 799-0238", region: "US", err: nil, isValid: true},
+		{input: "((443) 799-023asdfghjk8", region: "US", err: ErrNumTooLong, isValid: false},
+		{input: "+441932567890", region: "GB", err: nil, isValid: true},
+		{input: "45", region: "US", err: nil, isValid: false},
+		{input: "1800AWWCUTE", region: "US", err: nil, isValid: true},
+		{input: "+343511234567", region: "ES", err: nil, isValid: false},
+		{input: "+12424654321", region: "BS", err: nil, isValid: true},
+		{input: "6041234567", region: "US", err: nil, isValid: false},
+		{input: "2349090000001", region: "NG", err: nil, isValid: true},
+		{input: "8409990936", region: "US", err: nil, isValid: true},
+		{input: "712276797", region: "RO", err: nil, isValid: true},
+		{input: "8409990936", region: "US", err: nil, isValid: true},
+		{input: "03260000000", region: "PK", err: nil, isValid: true},
 	}
 
 	for i, test := range tests {
