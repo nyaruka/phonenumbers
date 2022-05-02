@@ -1,4 +1,5 @@
 *.cov
+.DS_Store
 .vscode
 *~
 deploy
