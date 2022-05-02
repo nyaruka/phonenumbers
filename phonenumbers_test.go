@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParse(t *testing.T) {
@@ -15,128 +16,67 @@ func TestParse(t *testing.T) {
 		expectedNum uint64
 		region      string
 	}{
-		{
-			input:       "4437990238",
-			err:         nil,
-			expectedNum: 4437990238,
-			region:      "US",
-		}, {
-			input:       "(443) 799-0238",
-			err:         nil,
-			expectedNum: 4437990238,
-			region:      "US",
-		}, {
-			input:       "((443) 799-023asdfghjk8",
-			err:         ErrNumTooLong,
-			expectedNum: 0,
-			region:      "US",
-		}, {
-			input:       "+441932567890",
-			err:         nil,
-			expectedNum: 1932567890,
-			region:      "GB",
-		}, {
-			input:       "45",
-			err:         nil,
-			expectedNum: 45,
-			region:      "US",
-		}, {
-			input:       "1800AWWCUTE",
-			err:         nil,
-			expectedNum: 8002992883,
-			region:      "US",
-		}, {
-			input:       "+1 1951178619",
-			err:         nil,
-			expectedNum: 1951178619,
-			region:      "US",
-		}, {
-			input:       "+33 07856952",
-			err:         nil,
-			expectedNum: 7856952,
-			region:      "",
-		}, {
-			input:       "190022+22222",
-			err:         ErrNotANumber,
-			expectedNum: 0,
-			region:      "US",
-		}, {
-			input:       "967717105526",
-			err:         nil,
-			expectedNum: 717105526,
-			region:      "YE",
-		}, {
-			input:       "+68672098006",
-			err:         nil,
-			expectedNum: 72098006,
-			region:      "",
-		}, {
-			input:       "8409990936",
-			err:         nil,
-			expectedNum: 8409990936,
-			region:      "US",
-		},
+		{input: "4437990238", region: "US", err: nil, expectedNum: 4437990238},
+		{input: "(443) 799-0238", region: "US", err: nil, expectedNum: 4437990238},
+		{input: "((443) 799-023asdfghjk8", region: "US", err: ErrNumTooLong},
+		{input: "+441932567890", region: "GB", err: nil, expectedNum: 1932567890},
+		{input: "45", err: nil, expectedNum: 45, region: "US"},
+		{input: "1800AWWCUTE", region: "US", err: nil, expectedNum: 8002992883},
+		{input: "+1 1951178619", region: "US", err: nil, expectedNum: 1951178619},
+		{input: "+33 07856952", region: "", err: nil, expectedNum: 7856952},
+		{input: "190022+22222", region: "US", err: ErrNotANumber},
+		{input: "967717105526", region: "YE", err: nil, expectedNum: 717105526},
+		{input: "+68672098006", region: "", err: nil, expectedNum: 72098006},
+		{input: "8409990936", region: "US", err: nil, expectedNum: 8409990936},
 	}
 
-	for i, test := range tests {
-		num, err := Parse(test.input, test.region)
-		if err != test.err {
-			t.Errorf("[test %d:err] failed: %v != %v\n", i, err, test.err)
-		}
-		if num.GetNationalNumber() != test.expectedNum {
-			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetNationalNumber(), test.expectedNum)
+	for _, tc := range tests {
+		num, err := Parse(tc.input, tc.region)
+
+		if tc.err != nil {
+			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
+		} else {
+			assert.NoError(t, err, "unexpected error for input %s", tc.input)
+			assert.Equal(t, tc.expectedNum, num.GetNationalNumber(), "national number mismatch for input %s", tc.input)
 		}
 	}
 }
 
 func TestConvertAlphaCharactersInNumber(t *testing.T) {
 	var tests = []struct {
-		input, output string
+		input, expected string
 	}{
-		{input: "1800AWWPOOP", output: "18002997667"},
-		{input: "(800) DAW-ORLD", output: "(800) 329-6753"},
-		{input: "1800-ABC-DEF", output: "1800-222-333"},
+		{input: "1800AWWPOOP", expected: "18002997667"},
+		{input: "(800) DAW-ORLD", expected: "(800) 329-6753"},
+		{input: "1800-ABC-DEF", expected: "1800-222-333"},
 	}
 
-	for i, test := range tests {
-		out := ConvertAlphaCharactersInNumber(test.input)
-		if out != test.output {
-			t.Errorf("[test %d] failed, %s != %s\n", i, out, test.output)
-		}
+	for _, tc := range tests {
+		actual := ConvertAlphaCharactersInNumber(tc.input)
+		assert.Equal(t, tc.expected, actual, "mismatch for input %s", tc.input)
 	}
 }
 
 func TestNormalizeDigits(t *testing.T) {
 	var tests = []struct {
 		input         string
-		expected      []byte
 		keepNonDigits bool
+		expected      []byte
 	}{
-		{input: "4445556666", expected: []byte("4445556666"), keepNonDigits: false},
-		{input: "(444)5556666", expected: []byte("4445556666"), keepNonDigits: false},
-		{input: "(444)555a6666", expected: []byte("4445556666"), keepNonDigits: false},
-		{input: "(444)555a6666", expected: []byte("(444)555a6666"), keepNonDigits: true},
+		{input: "4445556666", keepNonDigits: false, expected: []byte("4445556666")},
+		{input: "(444)5556666", keepNonDigits: false, expected: []byte("4445556666")},
+		{input: "(444)555a6666", keepNonDigits: false, expected: []byte("4445556666")},
+		{input: "(444)555a6666", keepNonDigits: true, expected: []byte("(444)555a6666")},
 	}
 
-	for i, test := range tests {
-		out := normalizeDigits(test.input, test.keepNonDigits)
-		if string(out) != string(test.expected) {
-			t.Errorf("[test %d] failed: %s != %s\n",
-				i, string(out), string(test.expected))
-		}
+	for _, tc := range tests {
+		actual := normalizeDigits(tc.input, tc.keepNonDigits)
+		assert.Equal(t, string(tc.expected), string(actual), "mismatch for input %s", tc.input)
 	}
 }
 
 func TestExtractPossibleNumber(t *testing.T) {
-	var (
-		input    = "(530) 583-6985 x302/x2303"
-		expected = "530) 583-6985 x302" // yes, the leading '(' is missing
-	)
-
-	output := extractPossibleNumber(input)
-	if output != expected {
-		t.Error(output, "!=", expected)
-	}
+	assert.Equal(t, "530) 583-6985 x302", extractPossibleNumber("(530) 583-6985 x302/x2303")) // yes, the leading '(' is missing
 }
 
 func TestIsViablePhoneNumer(t *testing.T) {
@@ -144,114 +84,71 @@ func TestIsViablePhoneNumer(t *testing.T) {
 		input    string
 		isViable bool
 	}{
-		{
-			input:    "4445556666",
-			isViable: true,
-		}, {
-			input:    "+441932123456",
-			isViable: true,
-		}, {
-			input:    "4930123456",
-			isViable: true,
-		}, {
-			input:    "2",
-			isViable: false,
-		}, {
-			input:    "helloworld",
-			isViable: false,
-		},
+		{input: "4445556666", isViable: true},
+		{input: "+441932123456", isViable: true},
+		{input: "4930123456", isViable: true},
+		{input: "2", isViable: false},
+		{input: "helloworld", isViable: false},
 	}
 
-	for i, test := range tests {
-		result := isViablePhoneNumber(test.input)
-		if result != test.isViable {
-			t.Errorf("[test %d] %v != %v\n", i, result, test.isViable)
-		}
+	for _, tc := range tests {
+		actual := isViablePhoneNumber(tc.input)
+		assert.Equal(t, tc.isViable, actual, "mismatch for input %s", tc.input)
 	}
 }
 
 func TestNormalize(t *testing.T) {
 	var tests = []struct {
-		in  string
-		exp string
+		input    string
+		expected string
 	}{
-		{in: "4431234567", exp: "4431234567"},
-		{in: "443 1234567", exp: "4431234567"},
-		{in: "(443)123-4567", exp: "4431234567"},
-		{in: "800yoloFOO", exp: "8009656366"},
-		{in: "444111a2222", exp: "4441112222"},
+		{input: "4431234567", expected: "4431234567"},
+		{input: "443 1234567", expected: "4431234567"},
+		{input: "(443)123-4567", expected: "4431234567"},
+		{input: "800yoloFOO", expected: "8009656366"},
+		{input: "444111a2222", expected: "4441112222"},
 
 		// from libponenumber [java] unit tests
-		{in: "034-56&+#2\u00AD34", exp: "03456234"},
-		{in: "034-I-am-HUNGRY", exp: "034426486479"},
-		{in: "\uFF125\u0665", exp: "255"},
-		{in: "\u06F52\u06F0", exp: "520"},
+		{input: "034-56&+#2\u00AD34", expected: "03456234"},
+		{input: "034-I-am-HUNGRY", expected: "034426486479"},
+		{input: "\uFF125\u0665", expected: "255"},
+		{input: "\u06F52\u06F0", expected: "520"},
 	}
 
-	// TODO(ttacon): the above commented out test are because we hacked the crap
-	// out of normalizeDigits, fix it
-
-	for i, test := range tests {
-		res := normalize(test.in)
-		if res != test.exp {
-			t.Errorf("[test %d] %s != %s\n", i, res, test.exp)
-		}
+	for _, tc := range tests {
+		actual := normalize(tc.input)
+		assert.Equal(t, tc.expected, actual, "mismatch for input %s", tc.input)
 	}
 }
 
 func TestNumberType(t *testing.T) {
-	var tcs = []struct {
-		input      string
-		region     string
-		numberType PhoneNumberType
+	var tests = []struct {
+		input    string
+		region   string
+		expected PhoneNumberType
 	}{
-		{
-			input:      "2065432100",
-			region:     "US",
-			numberType: FIXED_LINE_OR_MOBILE,
-		},
+		{input: "2065432100", region: "US", expected: FIXED_LINE_OR_MOBILE},
 	}
 
-	for i, tc := range tcs {
+	for _, tc := range tests {
 		num, err := Parse(tc.input, tc.region)
-		if err != nil {
-			t.Errorf("[test %d:err] failed parsing: %s\n", i, tc.input)
-		}
-
-		typ := GetNumberType(num)
-		if typ != tc.numberType {
-			t.Errorf("[test %d: err] %s: unexpected number type: %d  Expected %d", i, tc.input, typ, tc.numberType)
-		}
+		assert.NoError(t, err, "unexpected error for input %s", tc.input)
+		assert.Equal(t, tc.expected, GetNumberType(num), "mismatch for input %s", tc.input)
 	}
 }
 
 func TestRepeatedParsing(t *testing.T) {
-	phoneNumbers := []string{
-		"+917827202781",
-		"+910000000000",
-		"+910800125778",
-		"+917503257232",
-		"+917566482842",
-	}
+	phoneNumbers := []string{"+917827202781", "+910000000000", "+910800125778", "+917503257232", "+917566482842"}
 
 	number := &PhoneNumber{}
 	for _, n := range phoneNumbers {
 		num, err := Parse(n, "IN")
-		if err != nil {
-			t.Errorf("Error Parse failed parsing phone number: %s, error: %s\n", n, err)
-			continue
-		}
+		assert.NoError(t, err, "unexpected error for input %s", n)
 
-		if err := ParseToNumber(n, "IN", number); err != nil {
-			t.Errorf("Error ParseToNumber parsing phone number: %s, error: %s\n", n, err)
-			continue
-		}
+		err = ParseToNumber(n, "IN", number)
+		assert.NoError(t, err, "unexpected error for input %s", n)
 
-		parse := IsValidNumber(num)
-		parseToNumber := IsValidNumber(number)
-		if parse != parseToNumber {
-			t.Errorf("Numbers do not match")
-		}
+		assert.Equal(t, IsValidNumber(num), IsValidNumber(number))
 	}
 }
 
@@ -278,17 +175,14 @@ func TestIsValidNumber(t *testing.T) {
 		{input: "03260000000", region: "PK", err: nil, isValid: true},
 	}
 
-	for i, test := range tests {
-		num, err := Parse(test.input, test.region)
-		if err != test.err {
-			t.Errorf("[test %d:err] failed: %v != %v\n", i, err, test.err)
-		}
-		if test.err != nil {
-			continue
-		}
-		if IsValidNumber(num) != test.isValid {
-			t.Errorf("[test %d:validity] for number: %s failed: %v != %v\n",
-				i, test.input, IsValidNumber(num), test.isValid)
+	for _, tc := range tests {
+		num, err := Parse(tc.input, tc.region)
+
+		if tc.err != nil {
+			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
+		} else {
+			assert.NoError(t, err, "unexpected error for input %s", tc.input)
+			assert.Equal(t, tc.isValid, IsValidNumber(num), "is valid mismatch for input %s", tc.input)
 		}
 	}
 }
@@ -301,80 +195,26 @@ func TestIsValidNumberForRegion(t *testing.T) {
 		validationRegion string
 		region           string
 	}{
-		{
-			input:            "4437990238",
-			err:              nil,
-			isValid:          true,
-			validationRegion: "US",
-			region:           "US",
-		}, {
-			input:            "(443) 799-0238",
-			err:              nil,
-			isValid:          true,
-			region:           "US",
-			validationRegion: "US",
-		}, {
-			input:            "((443) 799-023asdfghjk8",
-			err:              ErrNumTooLong,
-			isValid:          false,
-			region:           "US",
-			validationRegion: "US",
-		}, {
-			input:            "+441932567890",
-			err:              nil,
-			isValid:          true,
-			region:           "GB",
-			validationRegion: "GB",
-		}, {
-			input:            "45",
-			err:              nil,
-			isValid:          false,
-			region:           "US",
-			validationRegion: "US",
-		}, {
-			input:            "1800AWWCUTE",
-			err:              nil,
-			isValid:          true,
-			region:           "US",
-			validationRegion: "US",
-		}, {
-			input:            "+441932567890",
-			err:              nil,
-			isValid:          false,
-			region:           "GB",
-			validationRegion: "US",
-		}, {
-			input:            "1800AWWCUTE",
-			err:              nil,
-			isValid:          false,
-			region:           "US",
-			validationRegion: "GB",
-		}, {
-			input:            "01932 869755",
-			region:           "GB",
-			err:              nil,
-			isValid:          true,
-			validationRegion: "GB",
-		}, {
-			input:            "6041234567",
-			region:           "US",
-			err:              nil,
-			isValid:          false,
-			validationRegion: "US",
-		},
+		{input: "4437990238", region: "US", err: nil, isValid: true, validationRegion: "US"},
+		{input: "(443) 799-0238", region: "US", err: nil, isValid: true, validationRegion: "US"},
+		{input: "((443) 799-023asdfghjk8", region: "US", err: ErrNumTooLong, isValid: false, validationRegion: "US"},
+		{input: "+441932567890", region: "GB", err: nil, isValid: true, validationRegion: "GB"},
+		{input: "45", region: "US", err: nil, isValid: false, validationRegion: "US"},
+		{input: "1800AWWCUTE", region: "US", err: nil, isValid: true, validationRegion: "US"},
+		{input: "+441932567890", region: "GB", err: nil, isValid: false, validationRegion: "US"},
+		{input: "1800AWWCUTE", region: "US", err: nil, isValid: false, validationRegion: "GB"},
+		{input: "01932 869755", region: "GB", err: nil, isValid: true, validationRegion: "GB"},
+		{input: "6041234567", region: "US", err: nil, isValid: false, validationRegion: "US"},
 	}
 
-	for i, test := range tests {
-		num, err := Parse(test.input, test.region)
-		if err != test.err {
-			t.Errorf("[test %d:err] failed: %v != %v\n", i, err, test.err)
-		}
-		if test.err != nil {
-			continue
-		}
-		if IsValidNumberForRegion(num, test.validationRegion) != test.isValid {
-			t.Errorf("[test %d:validity] failed: %v != %v\n",
-				i, IsValidNumberForRegion(num, test.validationRegion), test.isValid)
+	for _, tc := range tests {
+		num, err := Parse(tc.input, tc.region)
+
+		if tc.err != nil {
+			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
+		} else {
+			assert.NoError(t, err, "unexpected error for input %s", tc.input)
+			assert.Equal(t, tc.isValid, IsValidNumberForRegion(num, tc.validationRegion), "is valid mismatch for input %s", tc.input)
 		}
 	}
 }
@@ -386,71 +226,26 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 		err    error
 		valid  ValidationResult
 	}{
-		{
-			input:  "16502530000",
-			region: "US",
-			err:    nil,
-			valid:  IS_POSSIBLE,
-		}, {
-			input:  "2530000",
-			region: "US",
-			err:    nil,
-			valid:  IS_POSSIBLE_LOCAL_ONLY,
-		}, {
-			input:  "65025300001",
-			region: "US",
-			err:    nil,
-			valid:  TOO_LONG,
-		}, {
-			input:  "2530000",
-			region: "",
-			err:    ErrInvalidCountryCode,
-			valid:  IS_POSSIBLE_LOCAL_ONLY,
-		}, {
-			input:  "253000",
-			region: "US",
-			err:    nil,
-			valid:  TOO_SHORT,
-		}, {
-			input:  "1234567890",
-			region: "SG",
-			err:    nil,
-			valid:  IS_POSSIBLE,
-		}, {
-			input:  "800123456789",
-			region: "US",
-			err:    nil,
-			valid:  TOO_LONG,
-		}, {
-			input:  "+1456723456",
-			region: "US",
-			err:    nil,
-			valid:  TOO_SHORT,
-		}, {
-			input:  "6041234567",
-			region: "US",
-			err:    nil,
-			valid:  IS_POSSIBLE,
-		}, {
-			input:  "+2250749195919",
-			region: "CI",
-			err:    nil,
-			valid:  IS_POSSIBLE,
-		},
+		{input: "16502530000", region: "US", err: nil, valid: IS_POSSIBLE},
+		{input: "2530000", region: "US", err: nil, valid: IS_POSSIBLE_LOCAL_ONLY},
+		{input: "65025300001", region: "US", err: nil, valid: TOO_LONG},
+		{input: "2530000", region: "", err: ErrInvalidCountryCode, valid: IS_POSSIBLE_LOCAL_ONLY},
+		{input: "253000", region: "US", err: nil, valid: TOO_SHORT},
+		{input: "1234567890", region: "SG", err: nil, valid: IS_POSSIBLE},
+		{input: "800123456789", region: "US", err: nil, valid: TOO_LONG},
+		{input: "+1456723456", region: "US", err: nil, valid: TOO_SHORT},
+		{input: "6041234567", region: "US", err: nil, valid: IS_POSSIBLE},
+		{input: "+2250749195919", region: "CI", err: nil, valid: IS_POSSIBLE},
 	}
 
-	for i, test := range tests {
-		num, err := Parse(test.input, test.region)
-		if err != nil {
-			if test.err == err {
-				continue
-			}
-			t.Errorf("[test %d:err] failed: %v\n", i, err)
-		}
+	for _, tc := range tests {
+		num, err := Parse(tc.input, tc.region)
 
-		valid := IsPossibleNumberWithReason(num)
-		if valid != test.valid {
-			t.Errorf("[test %d:possible] %s failed: %v != %v\n", i, test.input, valid, test.valid)
+		if tc.err != nil {
+			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
+		} else {
+			assert.NoError(t, err, "unexpected error for input %s", tc.input)
+			assert.Equal(t, tc.valid, IsPossibleNumberWithReason(num), "mismatch for input %s", tc.input)
 		}
 	}
 }
@@ -458,39 +253,23 @@ func TestIsPossibleNumberWithReason(t *testing.T) {
 func TestTruncateTooLongNumber(t *testing.T) {
 	var tests = []struct {
 		country int
-		in      uint64
-		out     uint64
+		input   uint64
 		res     bool
+		output  uint64
 	}{
-		{
-			country: 1,
-			in:      80055501234,
-			out:     8005550123,
-			res:     true,
-		}, {
-			country: 1,
-			in:      8005550123,
-			out:     8005550123,
-			res:     true,
-		}, {
-			country: 1,
-			in:      800555012,
-			out:     800555012,
-			res:     false,
-		},
+		{country: 1, input: 80055501234, res: true, output: 8005550123},
+		{country: 1, input: 8005550123, res: true, output: 8005550123},
+		{country: 1, input: 800555012, res: false, output: 800555012},
 	}
 
-	for i, test := range tests {
+	for _, tc := range tests {
 		num := &PhoneNumber{}
-		num.CountryCode = proto.Int(test.country)
-		num.NationalNumber = proto.Uint64(test.in)
+		num.CountryCode = proto.Int(tc.country)
+		num.NationalNumber = proto.Uint64(tc.input)
 		res := TruncateTooLongNumber(num)
-		if res != test.res {
-			t.Errorf("[test %d:res] failed %t != %t\n", i, res, test.res)
-		}
-		if *num.NationalNumber != test.out {
-			t.Errorf("[test %d:num] failed % d!= %d\n", i, *num.NationalNumber, test.out)
-		}
+
+		assert.Equal(t, tc.res, res, "res mismatch for input %d", tc.input)
+		assert.Equal(t, tc.output, *num.NationalNumber, "output mismatch for input %d", tc.input)
 	}
 }
 
@@ -499,59 +278,25 @@ func TestFormat(t *testing.T) {
 	// http://libphonenumber.appspot.com/phonenumberparser?number=019+3286+9755&country=GB
 
 	var tests = []struct {
-		in     string
-		exp    string
-		region string
-		frmt   PhoneNumberFormat
+		input    string
+		region   string
+		frmt     PhoneNumberFormat
+		expected string
 	}{
-		{
-			in:     "019 3286 9755",
-			region: "GB",
-			exp:    "01932 869755",
-			frmt:   NATIONAL,
-		}, {
-			in:     "+44 (0) 1932 869755",
-			region: "GB",
-			exp:    "+44 1932 869755",
-			frmt:   INTERNATIONAL,
-		}, {
-			in:     "4431234567",
-			region: "US",
-			exp:    "(443) 123-4567",
-			frmt:   NATIONAL,
-		}, {
-			in:     "4431234567",
-			region: "US",
-			exp:    "+14431234567",
-			frmt:   E164,
-		}, {
-			in:     "4431234567",
-			region: "US",
-			exp:    "+1 443-123-4567",
-			frmt:   INTERNATIONAL,
-		}, {
-			in:     "4431234567",
-			region: "US",
-			exp:    "tel:+1-443-123-4567",
-			frmt:   RFC3966,
-		},
-		{
-			in:     "+1 100-083-0033",
-			region: "US",
-			exp:    "+1 1000830033",
-			frmt:   INTERNATIONAL,
-		},
+		{input: "019 3286 9755", region: "GB", frmt: NATIONAL, expected: "01932 869755"},
+		{input: "+44 (0) 1932 869755", region: "GB", frmt: INTERNATIONAL, expected: "+44 1932 869755"},
+		{input: "4431234567", region: "US", frmt: NATIONAL, expected: "(443) 123-4567"},
+		{input: "4431234567", region: "US", frmt: E164, expected: "+14431234567"},
+		{input: "4431234567", region: "US", frmt: INTERNATIONAL, expected: "+1 443-123-4567"},
+		{input: "4431234567", region: "US", frmt: RFC3966, expected: "tel:+1-443-123-4567"},
+		{input: "+1 100-083-0033", region: "US", frmt: INTERNATIONAL, expected: "+1 1000830033"},
 	}
 
-	for i, test := range tests {
-		num, err := Parse(test.in, test.region)
-		if err != nil {
-			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
-		}
-		got := Format(num, test.frmt)
-		if got != test.exp {
-			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
-		}
+	for _, tc := range tests {
+		num, err := Parse(tc.input, tc.region)
+		assert.NoError(t, err, "unexpected error for input %s", tc.input)
+
+		assert.Equal(t, tc.expected, Format(num, tc.frmt), "formatted mismatch for input=%s fmt=%d", tc.input, tc.frmt)
 	}
 }
 
@@ -594,7 +339,7 @@ func TestFormatByPattern(t *testing.T) {
 			region: "FR",
 			format: E164,
 			userFormats: []*NumberFormat{
-				&NumberFormat{
+				{
 					Pattern: s(`(\d+)`),
 					Format:  s(`$1`),
 				},
@@ -605,7 +350,7 @@ func TestFormatByPattern(t *testing.T) {
 			region: "UK",
 			format: NATIONAL,
 			userFormats: []*NumberFormat{
-				&NumberFormat{
+				{
 					Pattern: s(`(20)(\d{4})(\d{4})`),
 					Format:  s(`$1 $2 $3`),
 				},
