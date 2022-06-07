@@ -33,6 +33,8 @@ It will rebuild the following files:
 
 `metadata_bin.go` - contains the protocol buffer definitions for all the various formats across countries etc..
 
+`shortnumber_metadata_bin.go` - contains the protocol buffer definitions for ShortNumberMetadata.xml
+
 `countrycode_to_region_bin.go` - contains the information needed to map a contrycode to a region
 
 `prefix_to_carrier_bin.go` - contains the information needed to map a phone number prefix to a carrier
