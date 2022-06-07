@@ -29,13 +29,12 @@ func ip(value int32) *int32 {
 	return &value
 }
 
-func BuildPhoneMetadataCollection(inputXML []byte, liteBuild bool, specialBuild bool) (*PhoneMetadataCollection, error) {
+func BuildPhoneMetadataCollection(inputXML []byte, liteBuild bool, specialBuild bool, isShortNumberMetadata bool) (*PhoneMetadataCollection, error) {
 	metadata := &PhoneNumberMetadataE{}
 	err := xml.Unmarshal(inputXML, metadata)
 	if err != nil {
 		panic(fmt.Sprintf("Error unmarshalling XML: %s", err))
 	}
-	isShortNumberMetadata := false
 	isAlternateFormatsMetadata := false
 	return buildPhoneMetadataFromElement(metadata, liteBuild, specialBuild, isShortNumberMetadata, isAlternateFormatsMetadata)
 }

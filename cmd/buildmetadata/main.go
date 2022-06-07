@@ -35,6 +35,9 @@ const (
 	metadataURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/PhoneNumberMetadata.xml"
 	metadataPath = "metadata_bin.go"
 
+	shortNumberMetadataURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/ShortNumberMetadata.xml"
+	shortNumberMetadataPath = "shortnumber_metadata_bin.go"
+
 	tzURL  = "https://raw.githubusercontent.com/googlei18n/libphonenumber/master/resources/timezones/map_data.txt"
 	tzPath = "prefix_to_timezone_bin.go"
 	tzVar  = "timezoneMapData"
@@ -248,7 +251,7 @@ func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 	body := fetchURL(metadataURL)
 
 	log.Println("Building new metadata collection")
-	collection, err := phonenumbers.BuildPhoneMetadataCollection(body, false, false)
+	collection, err := phonenumbers.BuildPhoneMetadataCollection(body, false, false, false)
 	if err != nil {
 		log.Fatalf("Error converting XML: %s", err)
 	}
@@ -261,6 +264,27 @@ func buildMetadata() *phonenumbers.PhoneMetadataCollection {
 
 	log.Println("Writing new metadata_bin.go")
 	writeFile(metadataPath, generateBinFile("metadataData", data))
+	return collection
+}
+
+func buildShortNumberMetadata() *phonenumbers.PhoneMetadataCollection {
+	log.Println("Fetching ShortNumberMetadata.xml from Github")
+	body := fetchURL(shortNumberMetadataURL)
+
+	log.Println("Building new short number metadata collection")
+	collection, err := phonenumbers.BuildPhoneMetadataCollection(body, false, false, true)
+	if err != nil {
+		log.Fatalf("Error converting XML: %s", err)
+	}
+
+	// write it out as a protobuf
+	data, err := proto.Marshal(collection)
+	if err != nil {
+		log.Fatalf("Error marshalling metadata: %v", err)
+	}
+
+	log.Println("Writing new metadata_bin.go")
+	writeFile(shortNumberMetadataPath, generateBinFile("shortNumberMetadataData", data))
 	return collection
 }
 
@@ -455,6 +479,7 @@ func readMappingsForDir(dir string) map[int]string {
 
 func main() {
 	metadata := buildMetadata()
+	buildShortNumberMetadata()
 	buildRegions(metadata)
 	buildTimezones()
 	buildPrefixData(&carrier)
