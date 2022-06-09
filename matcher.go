@@ -218,12 +218,16 @@ func MatchNationalNumber(number string, numberDesc PhoneNumberDesc, allowPrefixM
 	if len(nationalNumberPattern) == 0 {
 		return false
 	}
-	patP := `^(?:` + nationalNumberPattern + `)$` // Strictly match
-	regex := regexFor(patP)
+	regex := regexFor(nationalNumberPattern)
 	return match(number, regex, allowPrefixMatch)
 }
 
-// TODO: review this matches java version?
 func match(number string, pattern *regexp.Regexp, allowPrefixMatch bool) bool {
-	return pattern.MatchString(number)
+	ind := pattern.FindStringIndex(number)
+	if len(ind) == 0 || ind[0] != 0 {
+		return false
+	}
+	patP := `^(?:` + pattern.String() + `)$` // Strictly match
+	pat := regexFor(patP)
+	return pat.MatchString(number) || allowPrefixMatch
 }
