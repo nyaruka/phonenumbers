@@ -733,7 +733,7 @@ func TestGetMetadata(t *testing.T) {
 			cc:         1,
 			i18nPref:   "011",
 			natPref:    "1",
-			numFmtSize: 2,
+			numFmtSize: 3,
 		}, {
 			name:       "DE",
 			id:         "DE",
