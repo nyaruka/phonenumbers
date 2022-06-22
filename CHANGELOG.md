@@ -1,3 +1,8 @@
+v1.1.0
+----------
+ * Update to latest metadata
+ * Port initial short number support
+
 v1.0.75
 ----------
  * Cleanup some of the unit tests using testify library
