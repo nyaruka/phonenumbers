@@ -73,9 +73,9 @@ func loadShortNumberMetadataFromFile() error {
 // multiple regions, this returns true if it's possible in any of them. This provides a more
 // lenient check than #isValidShortNumber.
 // See IsPossibleShortNumberForRegion(PhoneNumber, string) for details.
-func IsPossibleShortNumber(number PhoneNumber) bool {
+func IsPossibleShortNumber(number *PhoneNumber) bool {
 	regionsCodes := GetRegionCodesForCountryCode(int(number.GetCountryCode()))
-	shortNumberLength := len(GetNationalSignificantNumber(&number))
+	shortNumberLength := len(GetNationalSignificantNumber(number))
 	for _, region := range regionsCodes {
 		phoneMetadata := getShortNumberMetadataForRegion(region)
 		if phoneMetadata == nil {
@@ -90,7 +90,7 @@ func IsPossibleShortNumber(number PhoneNumber) bool {
 
 // Check whether a short number is a possible number when dialed from the given region. This
 // provides a more lenient check than IsValidShortNumberForRegion.
-func IsPossibleShortNumberForRegion(number PhoneNumber, regionDialingFrom string) bool {
+func IsPossibleShortNumberForRegion(number *PhoneNumber, regionDialingFrom string) bool {
 	if !regionDialingFromMatchesNumber(number, regionDialingFrom) {
 		return false
 	}
@@ -98,7 +98,7 @@ func IsPossibleShortNumberForRegion(number PhoneNumber, regionDialingFrom string
 	if phoneMetadata == nil {
 		return false
 	}
-	numberLength := len(GetNationalSignificantNumber(&number))
+	numberLength := len(GetNationalSignificantNumber(number))
 	return phoneMetadata.GeneralDesc.hasPossibleLength(int32(numberLength))
 }
 
@@ -106,7 +106,7 @@ func IsPossibleShortNumberForRegion(number PhoneNumber, regionDialingFrom string
 // multiple regions, this returns true if it's valid in any of them. Note that this doesn't verify
 // the number is actually in use, which is impossible to tell by just looking at the number
 // itself. See IsValidShortNumberForRegion(PhoneNumber, String) for details.
-func IsValidShortNumber(number PhoneNumber) bool {
+func IsValidShortNumber(number *PhoneNumber) bool {
 	regionCodes := GetRegionCodesForCountryCode(int(number.GetCountryCode()))
 	regionCode := getRegionCodeForShortNumberFromRegionList(number, regionCodes)
 	if len(regionCodes) > 1 && regionCode != "" {
@@ -119,7 +119,7 @@ func IsValidShortNumber(number PhoneNumber) bool {
 
 // Tests whether a short number matches a valid pattern in a region. Note that this doesn't verify
 // the number is actually in use, which is impossible to tell by just looking at the number itself.
-func IsValidShortNumberForRegion(number PhoneNumber, regionDialingFrom string) bool {
+func IsValidShortNumberForRegion(number *PhoneNumber, regionDialingFrom string) bool {
 	if !regionDialingFromMatchesNumber(number, regionDialingFrom) {
 		return false
 	}
@@ -127,7 +127,7 @@ func IsValidShortNumberForRegion(number PhoneNumber, regionDialingFrom string) b
 	if phoneMetadata == nil {
 		return false
 	}
-	shortNumber := GetNationalSignificantNumber(&number)
+	shortNumber := GetNationalSignificantNumber(number)
 	generalDesc := phoneMetadata.GeneralDesc
 	if !matchesPossibleNumberAndNationalNumber(shortNumber, generalDesc) {
 		return false
@@ -141,14 +141,14 @@ func getShortNumberMetadataForRegion(regionCode string) *PhoneMetadata {
 	return val
 }
 
-func getRegionCodeForShortNumberFromRegionList(number PhoneNumber, regionCodes []string) string {
+func getRegionCodeForShortNumberFromRegionList(number *PhoneNumber, regionCodes []string) string {
 	if len(regionCodes) == 0 {
 		return ""
 	}
 	if len(regionCodes) == 1 {
 		return regionCodes[0]
 	}
-	nationalNumber := GetNationalSignificantNumber(&number)
+	nationalNumber := GetNationalSignificantNumber(number)
 	for _, regionCode := range regionCodes {
 		phoneMetadata := getShortNumberMetadataForRegion(regionCode)
 		if phoneMetadata != nil && matchesPossibleNumberAndNationalNumber(nationalNumber, phoneMetadata.GetShortCode()) {
@@ -161,7 +161,7 @@ func getRegionCodeForShortNumberFromRegionList(number PhoneNumber, regionCodes [
 
 // Helper method to check that the country calling code of the number matches the region it's
 // being dialed from.
-func regionDialingFromMatchesNumber(number PhoneNumber, regionDialingFrom string) bool {
+func regionDialingFromMatchesNumber(number *PhoneNumber, regionDialingFrom string) bool {
 	regionCodes := GetRegionCodesForCountryCode(int(number.GetCountryCode()))
 	for _, region := range regionCodes {
 		if region == regionDialingFrom {
