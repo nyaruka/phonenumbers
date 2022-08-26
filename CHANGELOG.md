@@ -1,3 +1,7 @@
+v1.1.1
+----------
+ * Update metadata
+
 v1.1.0
 ----------
  * Update to latest metadata
