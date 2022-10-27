@@ -3,7 +3,6 @@ package phonenumbers
 import (
 	"errors"
 	fmt "fmt"
-	math "math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -3328,7 +3327,11 @@ func GetTimezonesForPrefix(number string) ([]string, error) {
 	// strip any leading +
 	number = strings.TrimLeft(number, "+")
 
-	matchLength := int(math.Min(float64(timezoneMap.MaxLength), float64(len(number))))
+	matchLength := len(number) // maxLength: min( len(number), timezoneMap.MaxLength )
+	if matchLength > timezoneMap.MaxLength {
+		matchLength = timezoneMap.MaxLength
+	}
+
 	for i := matchLength; i > 0; i-- {
 		index, err := strconv.Atoi(number[0:i])
 		if err != nil {
