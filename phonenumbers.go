@@ -3327,7 +3327,12 @@ func GetTimezonesForPrefix(number string) ([]string, error) {
 	// strip any leading +
 	number = strings.TrimLeft(number, "+")
 
-	for i := timezoneMap.MaxLength; i > 0; i-- {
+	matchLength := len(number) // maxLength: min( len(number), timezoneMap.MaxLength )
+	if matchLength > timezoneMap.MaxLength {
+		matchLength = timezoneMap.MaxLength
+	}
+
+	for i := matchLength; i > 0; i-- {
 		index, err := strconv.Atoi(number[0:i])
 		if err != nil {
 			return nil, err
