@@ -1,3 +1,8 @@
+v1.1.2
+----------
+ * Update metadata
+ * Fix slice out of bounds in GetTimezonesForPrefix
+
 v1.1.1
 ----------
  * Update metadata
