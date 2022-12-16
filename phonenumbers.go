@@ -475,6 +475,7 @@ const (
 	EXACT_MATCH
 )
 
+//go:generate stringer -type=ValidationResult -output=generated_string.go
 type ValidationResult int
 
 const (
