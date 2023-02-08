@@ -2799,6 +2799,7 @@ func checkRegionForParsing(numberToParse, defaultRegion string) bool {
 // done separately with IsValidNumber().
 func Parse(numberToParse, defaultRegion string) (*PhoneNumber, error) {
 	var phoneNumber *PhoneNumber = &PhoneNumber{}
+	defaultRegion = strings.ToUpper(defaultRegion)
 	err := ParseToNumber(numberToParse, defaultRegion, phoneNumber)
 	return phoneNumber, err
 }
