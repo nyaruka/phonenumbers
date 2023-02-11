@@ -2054,7 +2054,7 @@ func getNumberTypeHelper(nationalNumber string, metadata *PhoneMetadata) PhoneNu
 // code is invalid or unknown.
 func getMetadataForRegion(regionCode string) *PhoneMetadata {
 
-	// regionCode = strings.ToUpper(regionCode)
+	regionCode = strings.ToUpper(regionCode)
 	if !isValidRegionCode(regionCode) {
 		return nil
 	}
