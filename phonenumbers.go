@@ -2053,6 +2053,8 @@ func getNumberTypeHelper(nationalNumber string, metadata *PhoneMetadata) PhoneNu
 // Returns the metadata for the given region code or nil if the region
 // code is invalid or unknown.
 func getMetadataForRegion(regionCode string) *PhoneMetadata {
+
+	// regionCode = strings.ToUpper(regionCode)
 	if !isValidRegionCode(regionCode) {
 		return nil
 	}
@@ -2799,7 +2801,7 @@ func checkRegionForParsing(numberToParse, defaultRegion string) bool {
 // done separately with IsValidNumber().
 func Parse(numberToParse, defaultRegion string) (*PhoneNumber, error) {
 	var phoneNumber *PhoneNumber = &PhoneNumber{}
-	err := ParseToNumber(numberToParse, defaultRegion, phoneNumber)
+	err := ParseToNumber(numberToParse, strings.ToUpper(defaultRegion), phoneNumber)
 	return phoneNumber, err
 }
 

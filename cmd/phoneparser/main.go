@@ -9,7 +9,7 @@ import (
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Println("usage: phoneparser [number] [two letter coutry]")
+		fmt.Println("usage: phoneparser [number] [two letter country]")
 		os.Exit(1)
 	}
 	num, err := phonenumbers.Parse(os.Args[1], os.Args[2])
