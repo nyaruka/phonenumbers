@@ -1,3 +1,15 @@
+v1.1.7 (2023-05-10)
+-------------------------
+ * Merge pull request #137 from nyaruka/updates
+ * Add isValid display to phoneparser
+ * Update metadata
+ * Merge pull request #133 from nyaruka/dependabot/go_modules/golang.org/x/text-0.3.8
+ * Merge pull request #134 from nyaruka/dependabot/go_modules/cmd/phoneparser/golang.org/x/text-0.3.8
+ * Merge pull request #135 from nyaruka/dependabot/go_modules/cmd/phoneserver/golang.org/x/text-0.3.8
+ * Bump golang.org/x/text from 0.3.7 to 0.3.8 in /cmd/phoneserver
+ * Bump golang.org/x/text from 0.3.7 to 0.3.8 in /cmd/phoneparser
+ * Bump golang.org/x/text from 0.3.7 to 0.3.8
+
 v1.1.6 (2023-02-13)
 -------------------------
  * Update metadata
