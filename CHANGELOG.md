@@ -1,3 +1,7 @@
+v1.1.8 (2023-08-09)
+-------------------------
+ * Update metadata
+
 v1.1.7 (2023-05-10)
 -------------------------
  * Merge pull request #137 from nyaruka/updates
