@@ -937,7 +937,7 @@ func GetLengthOfNationalDestinationCode(number *PhoneNumber) int {
 	}
 
 	nationalSignificantNumber := Format(copiedProto, INTERNATIONAL)
-	numberGroups := DIGITS_PATTERN.FindAllString(nationalSignificantNumber, -1)
+	numberGroups := NON_DIGITS_PATTERN.FindAllString(nationalSignificantNumber, -1)
 
 	// The pattern will start with "+COUNTRY_CODE " so the first group
 	// will always be the empty string (before the + symbol) and the
