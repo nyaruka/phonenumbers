@@ -741,17 +741,23 @@ func isViablePhoneNumber(number string) bool {
 
 // Normalizes a string of characters representing a phone number. This
 // performs the following conversions:
+//
 //   - Punctuation is stripped.
+//
 //   - For ALPHA/VANITY numbers:
-//     - Letters are converted to their numeric representation on a telephone
-//       keypad. The keypad used here is the one defined in ITU Recommendation
-//       E.161. This is only done if there are 3 or more letters in the
-//       number, to lessen the risk that such letters are typos.
+//
+//   - Letters are converted to their numeric representation on a telephone
+//     keypad. The keypad used here is the one defined in ITU Recommendation
+//     E.161. This is only done if there are 3 or more letters in the
+//     number, to lessen the risk that such letters are typos.
 //
 //   - For other numbers:
-//     - Wide-ascii digits are converted to normal ASCII (European) digits.
-//     - Arabic-Indic numerals are converted to European numerals.
-//     - Spurious alpha characters are stripped.
+//
+//   - Wide-ascii digits are converted to normal ASCII (European) digits.
+//
+//   - Arabic-Indic numerals are converted to European numerals.
+//
+//   - Spurious alpha characters are stripped.
 func normalize(number string) string {
 	if VALID_ALPHA_PHONE_PATTERN.MatchString(number) {
 		return normalizeHelper(number, ALPHA_PHONE_MAPPINGS, true)
@@ -848,33 +854,33 @@ func ConvertAlphaCharactersInNumber(number string) string {
 // works in such a way that the resultant subscriber number should be
 // diallable, at least on some devices. An example of how this could be used:
 //
-//   number, err := Parse("16502530000", "US");
-//   // ... deal with err appropriately ...
-//   nationalSignificantNumber := GetNationalSignificantNumber(number);
-//   var areaCode, subscriberNumber;
+//	number, err := Parse("16502530000", "US");
+//	// ... deal with err appropriately ...
+//	nationalSignificantNumber := GetNationalSignificantNumber(number);
+//	var areaCode, subscriberNumber;
 //
-//   int areaCodeLength = GetLengthOfGeographicalAreaCode(number);
-//   if (areaCodeLength > 0) {
-//     areaCode = nationalSignificantNumber[0:areaCodeLength];
-//     subscriberNumber = nationalSignificantNumber[areaCodeLength:];
-//   } else {
-//     areaCode = "";
-//     subscriberNumber = nationalSignificantNumber;
-//   }
+//	int areaCodeLength = GetLengthOfGeographicalAreaCode(number);
+//	if (areaCodeLength > 0) {
+//	  areaCode = nationalSignificantNumber[0:areaCodeLength];
+//	  subscriberNumber = nationalSignificantNumber[areaCodeLength:];
+//	} else {
+//	  areaCode = "";
+//	  subscriberNumber = nationalSignificantNumber;
+//	}
 //
 // N.B.: area code is a very ambiguous concept, so the I18N team generally
 // recommends against using it for most purposes, but recommends using the
 // more general national_number instead. Read the following carefully before
 // deciding to use this method:
 //
-//  - geographical area codes change over time, and this method honors those changes;
-//    therefore, it doesn't guarantee the stability of the result it produces.
-//  - subscriber numbers may not be diallable from all devices (notably mobile
-//    devices, which typically requires the full national_number to be dialled
-//    in most regions).
-//  - most non-geographical numbers have no area codes, including numbers from
-//    non-geographical entities
-//  - some geographical numbers have no area codes.
+//   - geographical area codes change over time, and this method honors those changes;
+//     therefore, it doesn't guarantee the stability of the result it produces.
+//   - subscriber numbers may not be diallable from all devices (notably mobile
+//     devices, which typically requires the full national_number to be dialled
+//     in most regions).
+//   - most non-geographical numbers have no area codes, including numbers from
+//     non-geographical entities
+//   - some geographical numbers have no area codes.
 func GetLengthOfGeographicalAreaCode(number *PhoneNumber) int {
 	metadata := getMetadataForRegion(GetRegionCodeForNumber(number))
 	if metadata == nil {
@@ -903,23 +909,23 @@ func GetLengthOfGeographicalAreaCode(number *PhoneNumber) int {
 // format, if there is a subscriber number part that follows. An example
 // of how this could be used:
 //
-//   PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-//   PhoneNumber number = phoneUtil.parse("18002530000", "US");
-//   String nationalSignificantNumber = phoneUtil.GetNationalSignificantNumber(number);
-//   String nationalDestinationCode;
-//   String subscriberNumber;
+//	PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+//	PhoneNumber number = phoneUtil.parse("18002530000", "US");
+//	String nationalSignificantNumber = phoneUtil.GetNationalSignificantNumber(number);
+//	String nationalDestinationCode;
+//	String subscriberNumber;
 //
-//   int nationalDestinationCodeLength =
-//       phoneUtil.GetLengthOfNationalDestinationCode(number);
-//   if nationalDestinationCodeLength > 0 {
-//       nationalDestinationCode = nationalSignificantNumber.substring(0,
-//           nationalDestinationCodeLength);
-//       subscriberNumber = nationalSignificantNumber.substring(
-//           nationalDestinationCodeLength);
-//   } else {
-//       nationalDestinationCode = "";
-//       subscriberNumber = nationalSignificantNumber;
-//   }
+//	int nationalDestinationCodeLength =
+//	    phoneUtil.GetLengthOfNationalDestinationCode(number);
+//	if nationalDestinationCodeLength > 0 {
+//	    nationalDestinationCode = nationalSignificantNumber.substring(0,
+//	        nationalDestinationCodeLength);
+//	    subscriberNumber = nationalSignificantNumber.substring(
+//	        nationalDestinationCodeLength);
+//	} else {
+//	    nationalDestinationCode = "";
+//	    subscriberNumber = nationalSignificantNumber;
+//	}
 //
 // Refer to the unittests to see the difference between this function and
 // GetLengthOfGeographicalAreaCode().
@@ -1579,16 +1585,16 @@ func hasFormattingPatternForNumber(number *PhoneNumber) bool {
 //
 // Caveats:
 //
-//  - This will not produce good results if the country calling code is
-//    both present in the raw input _and_ is the start of the national
-//    number. This is not a problem in the regions which typically use
-//    alpha numbers.
-//  - This will also not produce good results if the raw input has any
-//    grouping information within the first three digits of the national
-//    number, and if the function needs to strip preceding digits/words
-//    in the raw input before these digits. Normally people group the
-//    first three digits together so this is not a huge problem - and will
-//    be fixed if it proves to be so.
+//   - This will not produce good results if the country calling code is
+//     both present in the raw input _and_ is the start of the national
+//     number. This is not a problem in the regions which typically use
+//     alpha numbers.
+//   - This will also not produce good results if the raw input has any
+//     grouping information within the first three digits of the national
+//     number, and if the function needs to strip preceding digits/words
+//     in the raw input before these digits. Normally people group the
+//     first three digits together so this is not a huge problem - and will
+//     be fixed if it proves to be so.
 func FormatOutOfCountryKeepingAlphaChars(
 	number *PhoneNumber,
 	regionCallingFrom string) string {
@@ -2379,21 +2385,21 @@ func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNu
 // Check whether a phone number is a possible number. It provides a more
 // lenient check than IsValidNumber() in the following sense:
 //
-//  - It only checks the length of phone numbers. In particular, it
-//    doesn't check starting digits of the number.
-//  - It doesn't attempt to figure out the type of the number, but uses
-//    general rules which applies to all types of phone numbers in a
-//    region. Therefore, it is much faster than isValidNumber.
-//  - For fixed line numbers, many regions have the concept of area code,
-//    which together with subscriber number constitute the national
-//    significant number. It is sometimes okay to dial the subscriber number
-//    only when dialing in the same area. This function will return true
-//    if the subscriber-number-only version is passed in. On the other hand,
-//    because isValidNumber validates using information on both starting
-//    digits (for fixed line numbers, that would most likely be area codes)
-//    and length (obviously includes the length of area codes for fixed
-//    line numbers), it will return false for the subscriber-number-only
-//    version.
+//   - It only checks the length of phone numbers. In particular, it
+//     doesn't check starting digits of the number.
+//   - It doesn't attempt to figure out the type of the number, but uses
+//     general rules which applies to all types of phone numbers in a
+//     region. Therefore, it is much faster than isValidNumber.
+//   - For fixed line numbers, many regions have the concept of area code,
+//     which together with subscriber number constitute the national
+//     significant number. It is sometimes okay to dial the subscriber number
+//     only when dialing in the same area. This function will return true
+//     if the subscriber-number-only version is passed in. On the other hand,
+//     because isValidNumber validates using information on both starting
+//     digits (for fixed line numbers, that would most likely be area codes)
+//     and length (obviously includes the length of area codes for fixed
+//     line numbers), it will return false for the subscriber-number-only
+//     version.
 func IsPossibleNumberWithReason(number *PhoneNumber) ValidationResult {
 	nationalNumber := GetNationalSignificantNumber(number)
 	countryCode := int(number.GetCountryCode())
@@ -2506,17 +2512,17 @@ var ErrTooShortAfterIDD = errors.New("phone number had an IDD, but " +
 // return zero if no country calling code is considered to be present.
 // Country calling codes are extracted in the following ways:
 //
-//  - by stripping the international dialing prefix of the region the
-//    person is dialing from, if this is present in the number, and looking
-//    at the next digits
-//  - by stripping the '+' sign if present and then looking at the next digits
-//  - by comparing the start of the number and the country calling code of
-//    the default region. If the number is not considered possible for the
-//    numbering plan of the default region initially, but starts with the
-//    country calling code of this region, validation will be reattempted
-//    after stripping this country calling code. If this number is considered a
-//    possible number, then the first digits will be considered the country
-//    calling code and removed as such.
+//   - by stripping the international dialing prefix of the region the
+//     person is dialing from, if this is present in the number, and looking
+//     at the next digits
+//   - by stripping the '+' sign if present and then looking at the next digits
+//   - by comparing the start of the number and the country calling code of
+//     the default region. If the number is not considered possible for the
+//     numbering plan of the default region initially, but starts with the
+//     country calling code of this region, validation will be reattempted
+//     after stripping this country calling code. If this number is considered a
+//     possible number, then the first digits will be considered the country
+//     calling code and removed as such.
 //
 // It will throw a NumberParseException if the number starts with a '+' but
 // the country calling code supplied after this does not match that of any
@@ -3396,6 +3402,17 @@ func getValueForNumber(onceMap map[string]*sync.Once, langMap map[string]*intStr
 func GetCarrierForNumber(number *PhoneNumber, lang string) (string, error) {
 	carrier, _, err := GetCarrierWithPrefixForNumber(number, lang)
 	return carrier, err
+}
+
+// GetSafeCarrierDisplayNameForNumber Gets the name of the carrier for the given phone number
+// only when it is 'safe' to display to users.
+// A carrier name is considered safe if the number is valid and
+// for a region that doesn't support mobile number portability .
+func GetSafeCarrierDisplayNameForNumber(phoneNumber *PhoneNumber, lang string) (string, error) {
+	if IsMobileNumberPortableRegion(GetRegionCodeForNumber(phoneNumber)) {
+		return "", nil
+	}
+	return GetCarrierForNumber(phoneNumber, lang)
 }
 
 // GetCarrierWithPrefixForNumber returns the carrier we believe the number belongs to, as well as
