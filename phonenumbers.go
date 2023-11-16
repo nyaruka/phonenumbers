@@ -937,7 +937,7 @@ func GetLengthOfNationalDestinationCode(number *PhoneNumber) int {
 	}
 
 	nationalSignificantNumber := Format(copiedProto, INTERNATIONAL)
-	numberGroups := NON_DIGITS_PATTERN.FindAllString(nationalSignificantNumber, -1)
+	numberGroups := NON_DIGITS_PATTERN.Split(nationalSignificantNumber, -1)
 
 	// The pattern will start with "+COUNTRY_CODE " so the first group
 	// will always be the empty string (before the + symbol) and the
@@ -959,7 +959,7 @@ func GetLengthOfNationalDestinationCode(number *PhoneNumber) int {
 			return len(numberGroups[1]) + len(numberGroups[2])
 		}
 	}
-	return len(numberGroups[1])
+	return len(numberGroups[2])
 }
 
 // Returns the mobile token for the provided country calling code if it
