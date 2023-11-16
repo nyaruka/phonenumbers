@@ -822,13 +822,13 @@ func TestGetLengthOfGeographicalAreaCode(t *testing.T) {
 		numName string
 		length  int
 	}{
-		{numName: "US_NUMBER", length: 1},
+		{numName: "US_NUMBER", length: 3},
 		{numName: "US_TOLLFREE", length: 0},
-		{numName: "GB_NUMBER", length: 1},
+		{numName: "GB_NUMBER", length: 2},
 		{numName: "GB_MOBILE", length: 0},
-		{numName: "AR_NUMBER", length: 1},
+		{numName: "AR_NUMBER", length: 2},
 		{numName: "AU_NUMBER", length: 1},
-		{numName: "IT_NUMBER", length: 1},
+		{numName: "IT_NUMBER", length: 2},
 		{numName: "SG_NUMBER", length: 0},
 		{numName: "US_SHORT_BY_ONE_NUMBER", length: 0},
 		{numName: "INTERNATIONAL_TOLL_FREE", length: 0},
