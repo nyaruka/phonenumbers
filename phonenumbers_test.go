@@ -1613,6 +1613,30 @@ func TestRegexCacheStrict(t *testing.T) {
 	}
 }
 
+func TestGetSafeCarrierDisplayNameForNumber(t *testing.T) {
+	tests := []struct {
+		num      string
+		lang     string
+		expected string
+	}{
+		{num: "+447387654321", lang: "en", expected: ""},
+		{num: "+244917654321", lang: "en", expected: "Movicel"},
+	}
+	for _, test := range tests {
+		number, err := Parse(test.num, "ZZ")
+		if err != nil {
+			t.Errorf("Failed to parse number %s: %s", test.num, err)
+		}
+		carrier, err := GetSafeCarrierDisplayNameForNumber(number, test.lang)
+		if err != nil {
+			t.Errorf("Failed to getSafeCarrierDisplayNameForNumber for the number %s: %s", test.num, err)
+		}
+		if test.expected != carrier {
+			t.Errorf("Expected '%s', got '%s' for '%s'", test.expected, carrier, test.num)
+		}
+	}
+}
+
 func s(str string) *string {
 	return &str
 }
