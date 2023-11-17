@@ -1,3 +1,9 @@
+v1.2.0 (2023-11-17)
+-------------------------
+ * Update metadata
+ * Fix regex matching in GetLengthOfNationalDestinationCode
+ * Implement carrier GetSafeDisplayName
+
 v1.1.9 (2023-11-08)
 -------------------------
  * Update metadata
