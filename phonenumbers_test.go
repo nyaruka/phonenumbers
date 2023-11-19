@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestParse(t *testing.T) {
@@ -264,7 +264,7 @@ func TestTruncateTooLongNumber(t *testing.T) {
 
 	for _, tc := range tests {
 		num := &PhoneNumber{}
-		num.CountryCode = proto.Int(tc.country)
+		num.CountryCode = proto.Int32(int32(tc.country))
 		num.NationalNumber = proto.Uint64(tc.input)
 		res := TruncateTooLongNumber(num)
 
@@ -635,7 +635,7 @@ func TestIsNumberMatchWithOneNumber(t *testing.T) {
 	}
 }
 
-////////// Copied from java-libphonenumber
+// //////// Copied from java-libphonenumber
 /**
  * Unit tests for PhoneNumberUtil.java
  *
@@ -701,7 +701,7 @@ var testPhoneNumbers = map[string]*PhoneNumber{
 
 func newPhoneNumber(cc int, natNum uint64) *PhoneNumber {
 	p := &PhoneNumber{}
-	p.CountryCode = proto.Int(cc)
+	p.CountryCode = proto.Int32(int32(cc))
 	p.NationalNumber = proto.Uint64(natNum)
 	return p
 }

@@ -10,6 +10,6 @@ require (
 )
 
 require (
-	github.com/golang/protobuf v1.3.2 // indirect
 	golang.org/x/text v0.3.8 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 )
