@@ -1,7 +1,7 @@
 package phonenumbers
 
 import (
-	proto "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 var (

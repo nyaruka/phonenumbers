@@ -2,7 +2,7 @@ package phonenumbers
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -10,9 +10,9 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/golang/protobuf/proto"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -1900,7 +1900,7 @@ func GetExampleNumberForType(regionCode string, typ PhoneNumberType) *PhoneNumbe
 	if !isValidRegionCode(regionCode) {
 		return nil
 	}
-	//PhoneNumberDesc (pointer?)
+	// PhoneNumberDesc (pointer?)
 	var desc = getNumberDescByType(getMetadataForRegion(regionCode), typ)
 	exNum := desc.GetExampleNumber()
 	if len(exNum) > 0 {
@@ -2476,9 +2476,9 @@ func TruncateTooLongNumber(number *PhoneNumber) bool {
 
 // Gets an AsYouTypeFormatter for the specific region.
 // TODO(ttacon): uncomment once we do asyoutypeformatter.go
-//public AsYouTypeFormatter getAsYouTypeFormatter(String regionCode) {
+// public AsYouTypeFormatter getAsYouTypeFormatter(String regionCode) {
 //    return new AsYouTypeFormatter(regionCode);
-//}
+// }
 
 // Extracts country calling code from fullNumber, returns it and places
 // the remaining number in nationalNumber. It assumes that the leading plus
@@ -2555,7 +2555,7 @@ func maybeExtractCountryCode(
 		}
 		potentialCountryCode := extractCountryCode(fullNumber, nationalNumber)
 		if potentialCountryCode != 0 {
-			phoneNumber.CountryCode = proto.Int(potentialCountryCode)
+			phoneNumber.CountryCode = proto.Int32(int32(potentialCountryCode))
 			return potentialCountryCode, nil
 		}
 
@@ -2597,13 +2597,13 @@ func maybeExtractCountryCode(
 					val := PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN
 					phoneNumber.CountryCodeSource = &val
 				}
-				phoneNumber.CountryCode = proto.Int(defaultCountryCode)
+				phoneNumber.CountryCode = proto.Int32(int32(defaultCountryCode))
 				return defaultCountryCode, nil
 			}
 		}
 	}
 	// No country calling code present.
-	phoneNumber.CountryCode = proto.Int(0)
+	phoneNumber.CountryCode = proto.Int32(0)
 	return 0, nil
 }
 
@@ -2838,12 +2838,12 @@ func ParseAndKeepRawInputToNumber(
 // Returns an iterable over all PhoneNumberMatch PhoneNumberMatches in text.
 // This is a shortcut for findNumbers(CharSequence, String, Leniency, long)
 // getMatcher(text, defaultRegion, Leniency.VALID, Long.MAX_VALUE)}.
-//public Iterable<PhoneNumberMatch> findNumbers(CharSequence text, String defaultRegion) {
+// public Iterable<PhoneNumberMatch> findNumbers(CharSequence text, String defaultRegion) {
 //    return findNumbers(text, defaultRegion, Leniency.VALID, Long.MAX_VALUE);
-//}
+// }
 
 // Returns an iterable over all PhoneNumberMatch PhoneNumberMatches in text.
-//public Iterable<PhoneNumberMatch> findNumbers(
+// public Iterable<PhoneNumberMatch> findNumbers(
 //	final CharSequence text, final String defaultRegion, final Leniency leniency,
 //	final long maxTries) {
 //
@@ -2872,7 +2872,7 @@ func setItalianLeadingZerosForPhoneNumber(
 		numLeadZeros++
 	}
 	if numLeadZeros != 1 {
-		phoneNumber.NumberOfLeadingZeros = proto.Int(numLeadZeros)
+		phoneNumber.NumberOfLeadingZeros = proto.Int32(int32(numLeadZeros))
 	}
 }
 
@@ -2963,7 +2963,7 @@ func parseHelper(
 		normalizedNationalNumber.WriteString(normalize(nationalNumber.String()))
 		if len(defaultRegion) != 0 {
 			countryCode = int(regionMetadata.GetCountryCode())
-			phoneNumber.CountryCode = proto.Int(countryCode)
+			phoneNumber.CountryCode = proto.Int32(int32(countryCode))
 		} else if keepRawInput {
 			phoneNumber.CountryCodeSource = nil
 		}
@@ -3135,7 +3135,7 @@ func IsNumberMatchWithNumbers(firstNumberIn, secondNumberIn *PhoneNumber) MatchT
 	// Checks cases where one or both country_code fields were not
 	// specified. To make equality checks easier, we first set the
 	// country_code fields to be equal.
-	firstNumber.CountryCode = proto.Int(int(secondNumberCountryCode))
+	firstNumber.CountryCode = proto.Int32(secondNumberCountryCode)
 	// If all else was the same, then this is an NSN_MATCH.
 	// TODO(ttacon): remove when make gen-equals
 	if reflect.DeepEqual(firstNumber, secondNumber) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/binary"
@@ -18,9 +19,8 @@ import (
 	"strconv"
 	"strings"
 
-	"bytes"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/nyaruka/phonenumbers"
 )
 
