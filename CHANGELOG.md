@@ -1,3 +1,8 @@
+v1.2.1 (2023-11-20)
+-------------------------
+ * Update metadata
+ * Replace github.com/golang/protobuf with google.golang.org/protobuf
+
 v1.2.0 (2023-11-17)
 -------------------------
  * Update metadata
