@@ -42,6 +42,48 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParseNationalNumber(t *testing.T) {
+	var tests = []struct {
+		input       string
+		region      string
+		err         error
+		expectedNum *PhoneNumber
+	}{
+		{input: "033316005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "33316005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "03-331 6005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "03 331 6005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "tel:03-331-6005;phone-context=+64", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "tel:331-6005;phone-context=+64-3", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "tel:331-6005;phone-context=+64-3", region: "US", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "tel:03-331-6005;phone-context=+64;a=%A1", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "tel:03-331-6005;isub=12345;phone-context=+64", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "tel:+64-3-331-6005;isub=12345", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "03-331-6005;phone-context=+64", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "0064 3 331 6005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "01164 3 331 6005", region: "US", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "+64 3 331 6005", region: "US", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "+01164 3 331 6005", region: "US", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "+0064 3 331 6005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+		{input: "+ 00 64 3 331 6005", region: "NZ", err: nil, expectedNum: testPhoneNumbers["NZ_NUMBER"]},
+
+		{input: "tel:253-0000;phone-context=www.google.com", region: "US", err: nil, expectedNum: testPhoneNumbers["US_LOCAL_NUMBER"]},
+		{input: "tel:253-0000;isub=12345;phone-context=www.google.com", region: "US", err: nil, expectedNum: testPhoneNumbers["US_LOCAL_NUMBER"]},
+		{input: "tel:2530000;isub=12345;phone-context=1234.com", region: "US", err: nil, expectedNum: testPhoneNumbers["US_LOCAL_NUMBER"]},
+	}
+
+	for _, tc := range tests {
+		num, err := Parse(tc.input, tc.region)
+
+		if tc.err != nil {
+			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
+		} else {
+			assert.NoError(t, err, "unexpected error for input %s", tc.input)
+			assert.Equal(t, tc.expectedNum, num, "number mismatch for input=%s region=%s", tc.input, tc.region)
+		}
+	}
+}
+
 func TestConvertAlphaCharactersInNumber(t *testing.T) {
 	var tests = []struct {
 		input, expected string
