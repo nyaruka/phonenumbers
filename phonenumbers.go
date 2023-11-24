@@ -397,6 +397,21 @@ var (
 	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile(`\(?\$1\)?`)
 
 	REGION_CODE_FOR_NON_GEO_ENTITY = "001"
+
+	// Regular expression of valid global-number-digits for the phone-context parameter, following the
+	// syntax defined in RFC3966.
+	RFC3966_VISUAL_SEPARATOR             = "[\\-\\.\\(\\)]?"
+	RFC3966_PHONE_DIGIT                  = "(" + DIGITS + "|" + RFC3966_VISUAL_SEPARATOR + ")"
+	RFC3966_GLOBAL_NUMBER_DIGITS         = "^\\" + string(PLUS_SIGN) + RFC3966_PHONE_DIGIT + "*" + DIGITS + RFC3966_PHONE_DIGIT + "*$"
+	RFC3966_GLOBAL_NUMBER_DIGITS_PATTERN = regexp.MustCompile(RFC3966_GLOBAL_NUMBER_DIGITS)
+
+	// Regular expression of valid domainname for the phone-context parameter, following the syntax
+	// defined in RFC3966.
+	ALPHANUM                   = VALID_ALPHA + DIGITS
+	RFC3966_DOMAINLABEL        = "[" + ALPHANUM + "]+((\\-)*[" + ALPHANUM + "])*"
+	RFC3966_TOPLABEL           = "[" + VALID_ALPHA + "]+((\\-)*[" + ALPHANUM + "])*"
+	RFC3966_DOMAINNAME         = "^(" + RFC3966_DOMAINLABEL + "\\.)*" + RFC3966_TOPLABEL + "\\.?$"
+	RFC3966_DOMAINNAME_PATTERN = regexp.MustCompile(RFC3966_DOMAINNAME)
 )
 
 // INTERNATIONAL and NATIONAL formats are consistent with the definition
@@ -2898,7 +2913,10 @@ func parseHelper(
 	}
 
 	nationalNumber := NewBuilder(nil)
-	buildNationalNumberForParsing(numberToParse, nationalNumber)
+	err := buildNationalNumberForParsing(numberToParse, nationalNumber)
+	if err != nil {
+		return err
+	}
 
 	if !isViablePhoneNumber(nationalNumber.String()) {
 		return ErrNotANumber
@@ -3008,43 +3026,78 @@ func parseHelper(
 
 var ErrNumTooLong = errors.New("the string supplied is too long to be a phone number")
 
+// Extracts the value of the phone-context parameter of numberToExtractFrom where the index of
+// ";phone-context=" is the parameter indexOfPhoneContext, following the syntax defined in
+// RFC3966.
+func extractPhoneContext(numberToExtractFrom string, indexOfPhoneContext int) string {
+	// If no phone-context parameter is present
+	if indexOfPhoneContext == -1 {
+		return ""
+	}
+
+	phoneContextStart := indexOfPhoneContext + len(RFC3966_PHONE_CONTEXT)
+	// If phone-context parameter is empty
+	if phoneContextStart >= len(numberToExtractFrom) {
+		return ""
+	}
+
+	// find end of this phone-context (go doesn't have a indexOf(s, after))
+	phoneContextEnd := strings.IndexRune(numberToExtractFrom[phoneContextStart:], ';')
+	if phoneContextEnd != -1 {
+		phoneContextEnd += phoneContextStart
+	}
+
+	// If phone-context is not the last parameter
+	if phoneContextEnd != -1 {
+		return numberToExtractFrom[phoneContextStart:phoneContextEnd]
+	} else {
+		return numberToExtractFrom[phoneContextStart:]
+	}
+}
+
+// Returns whether the value of phoneContext follows the syntax defined in RFC3966.
+func isPhoneContextValid(phoneContext string) bool {
+	if len(phoneContext) == 0 {
+		return false
+	}
+
+	// Does phone-context value match pattern of global-number-digits or domainname
+	return RFC3966_GLOBAL_NUMBER_DIGITS_PATTERN.MatchString(phoneContext) || RFC3966_DOMAINNAME_PATTERN.MatchString(phoneContext)
+}
+
 // Converts numberToParse to a form that we can parse and write it to
 // nationalNumber if it is written in RFC3966; otherwise extract a possible
 // number out of it and write to nationalNumber.
 func buildNationalNumberForParsing(
 	numberToParse string,
-	nationalNumber *Builder) {
+	nationalNumber *Builder) error {
 
 	indexOfPhoneContext := strings.Index(numberToParse, RFC3966_PHONE_CONTEXT)
+
+	phoneContext := extractPhoneContext(numberToParse, indexOfPhoneContext)
+	if indexOfPhoneContext >= 0 && !isPhoneContextValid(phoneContext) {
+		return ErrNotANumber
+	}
 	if indexOfPhoneContext > 0 {
-		phoneContextStart := indexOfPhoneContext + len(RFC3966_PHONE_CONTEXT)
-		// If the phone context contains a phone number prefix, we need
-		// to capture it, whereas domains will be ignored.
-		if numberToParse[phoneContextStart] == PLUS_SIGN {
-			// Additional parameters might follow the phone context. If so,
-			// we will remove them here because the parameters after phone
-			// context are not important for parsing the phone number.
-			phoneContextEnd := strings.Index(numberToParse[phoneContextStart:], ";")
-			if phoneContextEnd > 0 {
-				nationalNumber.WriteString(
-					numberToParse[phoneContextStart:phoneContextEnd])
-			} else {
-				nationalNumber.WriteString(numberToParse[phoneContextStart:])
-			}
+		// If the phone context contains a phone number prefix, we need to capture it, whereas domains
+		// will be ignored.
+		if phoneContext[0] == PLUS_SIGN {
+			// Additional parameters might follow the phone context. If so, we will remove them here
+			// because the parameters after phone context are not important for parsing the phone
+			// number.
+			nationalNumber.WriteString(phoneContext)
 		}
-		// Now append everything between the "tel:" prefix and the
-		// phone-context. This should include the national number, an
-		// optional extension or isdn-subaddress component. Note we also
-		// handle the case when "tel:" is missing, as we have seen in some
-		// of the phone number inputs. In that case, we append everything
-		// from the beginning.
+
+		// Now append everything between the "tel:" prefix and the phone-context. This should include
+		// the national number, an optional extension or isdn-subaddress component. Note we also
+		// handle the case when "tel:" is missing, as we have seen in some of the phone number inputs.
+		// In that case, we append everything from the beginning.
 		indexOfRfc3966Prefix := strings.Index(numberToParse, RFC3966_PREFIX)
 		indexOfNationalNumber := 0
 		if indexOfRfc3966Prefix >= 0 {
 			indexOfNationalNumber = indexOfRfc3966Prefix + len(RFC3966_PREFIX)
 		}
-		nationalNumber.WriteString(
-			numberToParse[indexOfNationalNumber:indexOfPhoneContext])
+		nationalNumber.WriteString(numberToParse[indexOfNationalNumber:indexOfPhoneContext])
 	} else {
 		// Extract a possible number from the string passed in (this
 		// strips leading characters that could not be the start of a
@@ -3065,6 +3118,7 @@ func buildNationalNumberForParsing(
 	// This is because we are concerned about deleting content from a
 	// potential number string when there is no strong evidence that the
 	// number is actually written in RFC3966.
+	return nil
 }
 
 // Takes two phone numbers and compares them for equality.
