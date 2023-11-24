@@ -1,3 +1,8 @@
+v1.2.2 (2023-11-24)
+-------------------------
+ * Update metadata
+ * Update support for phone-context
+
 v1.2.1 (2023-11-20)
 -------------------------
  * Update metadata
