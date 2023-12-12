@@ -1,7 +1,7 @@
 name: CI
 on: [push, pull_request]
 env:
-  go-version: "1.17.x"
+  go-version: "1.19.x"
 jobs:
   test:
     name: Test
