@@ -1,3 +1,8 @@
+v1.2.3 (2023-12-12)
+-------------------------
+ * Update metadata
+ * Update dependencies and go version to 1.19
+
 v1.2.2 (2023-11-24)
 -------------------------
  * Update metadata
