@@ -31,17 +31,12 @@ The `buildmetadata` command will fetch the latest XML file from the official Goo
 
 It will rebuild the following files:
 
-`metadata_bin.go` - contains the protocol buffer definitions for all the various formats across countries etc..
-
-`shortnumber_metadata_bin.go` - contains the protocol buffer definitions for ShortNumberMetadata.xml
-
-`countrycode_to_region_bin.go` - contains the information needed to map a contrycode to a region
-
-`prefix_to_carrier_bin.go` - contains the information needed to map a phone number prefix to a carrier
-
-`prefix_to_geocoding_bin.go` - contains the information needed to map a phone number prefix to a city or region
-
-`prefix_to_timezone_bin.go` - contains the information needed to map a phone number prefix to a city or region
+ * `metadata_bin.go` - protocol buffer definitions for all the various formats across countries etc..
+ * `shortnumber_metadata_bin.go` - protocol buffer definitions for ShortNumberMetadata.xml
+ * `countrycode_to_region_bin.go` - information needed to map a contry code to a region
+ * `prefix_to_carrier_bin.go` - information needed to map a phone number prefix to a carrier
+ * `prefix_to_geocoding_bin.go` - information needed to map a phone number prefix to a city or region
+ * `prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
 
 ```bash
 % go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
