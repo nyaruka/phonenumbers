@@ -1,3 +1,8 @@
+v1.3.0 (2023-12-14)
+-------------------------
+ * Refactor buildmetadata, no longer requires SVN
+ * Update metadata
+
 v1.2.3 (2023-12-12)
 -------------------------
  * Update metadata
