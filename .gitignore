@@ -10,3 +10,4 @@ geocoding
 buildmetadata
 functions/*
 dist/
+_build
