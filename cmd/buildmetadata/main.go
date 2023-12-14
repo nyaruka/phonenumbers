@@ -186,9 +186,6 @@ func buildPrefixMetadata(srcDir, varName, dstFile string) error {
 			continue
 		}
 
-		// get our language code
-		parts := strings.Split(dir, "/")
-
 		// build a map for that directory
 		mappings, err := readMappingsForDir(dir)
 		if err != nil {
@@ -196,7 +193,7 @@ func buildPrefixMetadata(srcDir, varName, dstFile string) error {
 		}
 
 		// save it for our language
-		languageMappings[parts[1]] = mappings
+		languageMappings[filepath.Base(dir)] = mappings
 	}
 
 	output := bytes.Buffer{}
@@ -386,6 +383,7 @@ func generateBinFile(variableName string, data []byte) []byte {
 }
 
 func readMappingsForDir(dir string) (map[int]string, error) {
+	lang := filepath.Base(dir)
 	mappings := make(map[int]string)
 
 	files, err := filepath.Glob(dir + "/*.txt")
@@ -428,7 +426,7 @@ func readMappingsForDir(dir string) (map[int]string, error) {
 		}
 	}
 
-	fmt.Printf(" > read %d mappings for %s\n", len(mappings), filepath.Base(dir))
+	fmt.Printf(" > read %d mappings for %s\n", len(mappings), lang)
 
 	return mappings, nil
 }
