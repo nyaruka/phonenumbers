@@ -781,16 +781,6 @@ func normalize(number string) string {
 	return NormalizeDigitsOnly(number)
 }
 
-// Normalizes a string of characters representing a phone number. This is
-// a wrapper for normalize(String number) but does in-place normalization
-// of the StringBuilder provided.
-func normalizeBytes(number *Builder) *Builder {
-	normalizedNumber := normalize(number.String())
-	b := number.Bytes()
-	copy(b[0:len(normalizedNumber)], []byte(normalizedNumber))
-	return NewBuilder(b)
-}
-
 // Normalizes a string of characters representing a phone number. This
 // converts wide-ascii and arabic-indic numerals to European numerals,
 // and strips punctuation and alpha characters.
@@ -2444,21 +2434,6 @@ func IsPossibleNumberWithReason(number *PhoneNumber) ValidationResult {
 		}
 	}
 	return testNumberLength(nationalNumber, metadata, UNKNOWN)
-}
-
-// Check whether a phone number is a possible number given a number in the
-// form of a string, and the region where the number could be dialed from.
-// It provides a more lenient check than IsValidNumber(). See
-// IsPossibleNumber(PhoneNumber) for details.
-//
-// This method first parses the number, then invokes
-// IsPossibleNumber(PhoneNumber) with the resultant PhoneNumber object.
-func isPossibleNumberWithRegion(number, regionDialingFrom string) bool {
-	num, err := Parse(number, regionDialingFrom)
-	if err != nil {
-		return false
-	}
-	return IsPossibleNumber(num)
 }
 
 // Attempts to extract a valid number from a phone number that is too long
