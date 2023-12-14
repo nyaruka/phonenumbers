@@ -10,6 +10,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/nyaruka/phonenumbers/gen"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 	"google.golang.org/protobuf/proto"
@@ -699,7 +700,7 @@ func MetadataCollection() (*PhoneMetadataCollection, error) {
 		return currMetadataColl, nil
 	}
 
-	rawBytes, err := decodeUnzipString(metadataData)
+	rawBytes, err := decodeUnzipString(gen.NumberData)
 	if err != nil {
 		return nil, err
 	}
@@ -3320,7 +3321,7 @@ func IsMobileNumberPortableRegion(regionCode string) bool {
 
 func init() {
 	// load our regions
-	regionMap, err := loadIntStringArrayMap(regionMapData)
+	regionMap, err := loadIntStringArrayMap(gen.RegionData)
 	if err != nil {
 		panic(err)
 	}
@@ -3362,10 +3363,10 @@ func init() {
 	}
 
 	// Create our sync.Onces for each of our languages for carriers
-	for lang := range carrierMapData {
+	for lang := range gen.CarrierData {
 		carrierOnces[lang] = &sync.Once{}
 	}
-	for lang := range geocodingMapData {
+	for lang := range gen.GeocodingData {
 		geocodingOnces[lang] = &sync.Once{}
 	}
 }
@@ -3377,7 +3378,7 @@ func init() {
 func GetTimezonesForPrefix(number string) ([]string, error) {
 	var err error
 	timezoneOnce.Do(func() {
-		timezoneMap, err = loadIntStringArrayMap(timezoneMapData)
+		timezoneMap, err = loadIntStringArrayMap(gen.TimezoneData)
 	})
 
 	if timezoneMap == nil {
@@ -3472,7 +3473,7 @@ func GetSafeCarrierDisplayNameForNumber(phoneNumber *PhoneNumber, lang string) (
 // GetCarrierWithPrefixForNumber returns the carrier we believe the number belongs to, as well as
 // its prefix. Note due to number porting this is only a guess, there is no guarantee to its accuracy.
 func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, int, error) {
-	carrier, prefix, err := getValueForNumber(carrierOnces, carrierPrefixMap, carrierMapData, lang, 10, number)
+	carrier, prefix, err := getValueForNumber(carrierOnces, carrierPrefixMap, gen.CarrierData, lang, 10, number)
 	if err != nil {
 		return "", 0, err
 	}
@@ -3481,19 +3482,19 @@ func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, in
 	}
 
 	// fallback to english
-	return getValueForNumber(carrierOnces, carrierPrefixMap, carrierMapData, "en", 10, number)
+	return getValueForNumber(carrierOnces, carrierPrefixMap, gen.CarrierData, "en", 10, number)
 }
 
 // GetGeocodingForNumber returns the location we think the number was first acquired in. This is
 // just our best guess, there is no guarantee to its accuracy.
 func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
-	geocoding, _, err := getValueForNumber(geocodingOnces, geocodingPrefixMap, geocodingMapData, lang, 10, number)
+	geocoding, _, err := getValueForNumber(geocodingOnces, geocodingPrefixMap, gen.GeocodingData, lang, 10, number)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
 
 	// fallback to english
-	geocoding, _, err = getValueForNumber(geocodingOnces, geocodingPrefixMap, geocodingMapData, "en", 10, number)
+	geocoding, _, err = getValueForNumber(geocodingOnces, geocodingPrefixMap, gen.GeocodingData, "en", 10, number)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
