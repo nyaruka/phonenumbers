@@ -27,16 +27,17 @@ formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 
 # Rebuilding Metadata and Maps
 
-The `buildmetadata` command will fetch the latest XML file from the official Google repo and rebuild the go source files containing all the territory metadata, timezone and region maps. (you will need `svn` installed on your path)
+The `buildmetadata` command will fetch the latest XML file from the official Google repo and rebuild the go source files 
+containing all the territory metadata, timezone and region maps.
 
 It will rebuild the following files:
 
- * `metadata_bin.go` - protocol buffer definitions for all the various formats across countries etc..
- * `shortnumber_metadata_bin.go` - protocol buffer definitions for ShortNumberMetadata.xml
- * `countrycode_to_region_bin.go` - information needed to map a contry code to a region
- * `prefix_to_carrier_bin.go` - information needed to map a phone number prefix to a carrier
- * `prefix_to_geocoding_bin.go` - information needed to map a phone number prefix to a city or region
- * `prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
+ * `gen/metadata_bin.go` - protocol buffer definitions for all the various formats across countries etc..
+ * `gen/shortnumber_metadata_bin.go` - protocol buffer definitions for ShortNumberMetadata.xml
+ * `gen/countrycode_to_region_bin.go` - information needed to map a contry code to a region
+ * `gen/prefix_to_carrier_bin.go` - information needed to map a phone number prefix to a carrier
+ * `gen/prefix_to_geocoding_bin.go` - information needed to map a phone number prefix to a city or region
+ * `gen/prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
 
 ```bash
 % go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
