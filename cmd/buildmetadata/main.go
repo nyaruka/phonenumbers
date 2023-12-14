@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/nyaruka/phonenumbers"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -200,7 +201,12 @@ func buildPrefixMetadata(srcDir, varName, dstFile string) error {
 	output.WriteString("package phonenumbers\n\n")
 	output.WriteString(fmt.Sprintf("var %s = map[string]string {\n", varName))
 
-	for lang, mappings := range languageMappings {
+	langs := maps.Keys(languageMappings)
+	sort.Strings(langs)
+
+	for _, lang := range langs {
+		mappings := languageMappings[lang]
+
 		// iterate through our map, creating our full set of values and prefixes
 		prefixes := make([]int, 0, len(mappings))
 		seenValues := make(map[string]bool)
