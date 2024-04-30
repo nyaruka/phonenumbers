@@ -1,7 +1,7 @@
 # phonenumbers 
-[![Build Status](https://github.com/nyaruka/phonenumbers/workflows/CI/badge.svg)](https://github.com/nyaruka/phonenumbers/actions?query=workflow%3ACI) 
-[![codecov](https://codecov.io/gh/nyaruka/phonenumbers/branch/main/graph/badge.svg)](https://codecov.io/gh/nyaruka/phonenumbers)
-[![GoDoc](https://godoc.org/github.com/nyaruka/phonenumbers?status.svg)](https://godoc.org/github.com/nyaruka/phonenumbers)
+[![Build Status](https://github.com/lytics/phonenumbers/workflows/CI/badge.svg)](https://github.com/lytics/phonenumbers/actions?query=workflow%3ACI) 
+[![codecov](https://codecov.io/gh/lytics/phonenumbers/branch/main/graph/badge.svg)](https://codecov.io/gh/lytics/phonenumbers)
+[![GoDoc](https://godoc.org/github.com/lytics/phonenumbers?status.svg)](https://godoc.org/github.com/lytics/phonenumbers)
 
 golang port of Google's libphonenumber, forked from [libphonenumber from ttacon](https://github.com/ttacon/libphonenumber) which in turn is a port of the original [Java library](https://github.com/googlei18n/libphonenumber/tree/master/java/libphonenumber/src/com/google/i18n/phonenumbers).
 
@@ -40,6 +40,6 @@ It will rebuild the following files:
  * `gen/prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
 
 ```bash
-% go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
+% go install github.com/lytics/phonenumbers/cmd/buildmetadata
 % $GOPATH/bin/buildmetadata
 ```

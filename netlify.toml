@@ -4,4 +4,4 @@ functions = "functions"
 publish = "site"
 
 [build.environment]
-GO_IMPORT_PATH = "github.com/nyaruka/phonenumbers"
+GO_IMPORT_PATH = "github.com/lytics/phonenumbers"

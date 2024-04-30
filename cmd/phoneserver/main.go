@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/nyaruka/phonenumbers"
+	"github.com/lytics/phonenumbers"
 )
 
 var Version = "dev"
