@@ -1679,6 +1679,27 @@ func TestGetSafeCarrierDisplayNameForNumber(t *testing.T) {
 	}
 }
 
+func TestGetNationalPrefix(t *testing.T) {
+	tests := []struct {
+		num      string
+		expected string
+	}{
+		{num: "+1213-290-1064", expected: "1"},
+		{num: "+8601087777777", expected: "0"},
+		{num: "+442079460958", expected: "0"},
+	}
+	for _, test := range tests {
+		number, err := Parse(test.num, "CN")
+		if err != nil {
+			t.Errorf("Failed to parse number %s: %s", test.num, err)
+		}
+		nationalPrefix := GetNationalPrefix(number)
+		if test.expected != nationalPrefix {
+			t.Errorf("Expected '%s', got '%s' for '%s'", test.expected, nationalPrefix, test.num)
+		}
+	}
+}
+
 func s(str string) *string {
 	return &str
 }

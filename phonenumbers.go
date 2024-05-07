@@ -3486,3 +3486,12 @@ func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
 	}
 	return display.Regions(langT).Name(reg), nil
 }
+
+// GetNationalPrefix return the region national prefix of the number
+func GetNationalPrefix(number *PhoneNumber) string {
+	metadata := getMetadataForRegion(GetRegionCodeForNumber(number))
+	if metadata == nil {
+		return ""
+	}
+	return metadata.GetNationalPrefix()
+}
