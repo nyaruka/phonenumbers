@@ -29,7 +29,7 @@ func main() {
 func buildMetadata() error {
 	fmt.Print("Cloning upstream repo... ")
 
-	if err := cloneUpstreamRepo("git@github.com:google/libphonenumber.git"); err != nil {
+	if err := cloneUpstreamRepo("https://github.com/google/libphonenumber.git"); err != nil {
 		return err
 	}
 

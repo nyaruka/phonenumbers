@@ -7,7 +7,6 @@ fabfile.py
 fabfile.pyc
 carrier
 geocoding
-buildmetadata
 functions/*
 dist/
 _build
