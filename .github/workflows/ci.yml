@@ -1,11 +1,12 @@
 name: CI
 on: [push, pull_request]
-env:
-  go-version: "1.19.x"
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.20.x, 1.21.x, 1.22.x]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -13,7 +14,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.go-version }}
+          go-version: ${{ matrix.go-version }}
 
       - name: Run tests
         run: go test -p=1 -coverprofile=coverage.text -covermode=atomic ./...
@@ -37,7 +38,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.go-version }}
+          go-version: 1.20.x
 
       - name: Create release
         id: create_release
