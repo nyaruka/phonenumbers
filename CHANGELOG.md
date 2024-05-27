@@ -1,3 +1,8 @@
+v1.3.6 (2024-05-27)
+-------------------------
+ * Update metadata
+ * Use https for git fetch
+
 v1.3.5 (2024-05-08)
 -------------------------
  * Update metadata
