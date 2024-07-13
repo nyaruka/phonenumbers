@@ -1102,10 +1102,14 @@ func TestBurkinaFaso(t *testing.T) {
 }
 
 // see https://groups.google.com/forum/#!topic/libphonenumber-discuss/pecTIo_HpVE
+//
+// by official decision from the Federal Telecommunication Institute (IFT)(https://www.ift.org.mx/),
+// dialing telephone numbers from across Mexico will change to only 10 digits, among other decisions, take note:
+// Prefix 01 is eliminated for national calls and non-geographic numbers (880 and 900)
 func TestMexico(t *testing.T) {
 	tests := []testCase{
 		{
-			num:           "044 664 899 1010",
+			num:           "664 899 1010", // 664 (area code): local 7 digits
 			parseRegion:   "MX",
 			expectedE164:  "+526648991010",
 			validRegion:   "MX",
@@ -1113,7 +1117,15 @@ func TestMexico(t *testing.T) {
 			isValidRegion: true,
 		},
 		{
-			num:           "01 800 123 2222",
+			num:           "55 8912 4785", // 55 (area code): local 8 digits
+			parseRegion:   "MX",
+			expectedE164:  "+525589124785",
+			validRegion:   "MX",
+			isValid:       true,
+			isValidRegion: true,
+		},
+		{
+			num:           "800 123 2222", // Non-geographic 800
 			parseRegion:   "MX",
 			expectedE164:  "+528001232222",
 			validRegion:   "MX",
@@ -1121,7 +1133,15 @@ func TestMexico(t *testing.T) {
 			isValidRegion: true,
 		},
 		{
-			num:           "+52 664 899 1010",
+			num:           "900 433 1234", // Non-geographic 900
+			parseRegion:   "MX",
+			expectedE164:  "+529004331234",
+			validRegion:   "MX",
+			isValid:       true,
+			isValidRegion: true,
+		},
+		{
+			num:           "+52 664 899 1010", // Long distance international incoming call to cell phone
 			parseRegion:   "",
 			expectedE164:  "+526648991010",
 			validRegion:   "MX",
@@ -1129,9 +1149,9 @@ func TestMexico(t *testing.T) {
 			isValidRegion: true,
 		},
 		{
-			num:           "+52 1 664 899 1010",
-			parseRegion:   "",
-			expectedE164:  "+526648991010",
+			num:           "228 234 5687", // National Long Distance
+			parseRegion:   "MX",
+			expectedE164:  "+522282345687",
 			validRegion:   "MX",
 			isValid:       true,
 			isValidRegion: true,
