@@ -413,6 +413,19 @@ var (
 	RFC3966_TOPLABEL           = "[" + VALID_ALPHA + "]+((\\-)*[" + ALPHANUM + "])*"
 	RFC3966_DOMAINNAME         = "^(" + RFC3966_DOMAINLABEL + "\\.)*" + RFC3966_TOPLABEL + "\\.?$"
 	RFC3966_DOMAINNAME_PATTERN = regexp.MustCompile(RFC3966_DOMAINNAME)
+
+	// Set of country codes that have geographically assigned mobile numbers (see GEO_MOBILE_COUNTRIES
+	// below) which are not based on *area codes*. For example, in China mobile numbers start with a
+	// carrier indicator, and beyond that are geographically assigned: this carrier indicator is not
+	// considered to be an area code.
+	GEO_MOBILE_COUNTRIES_WITHOUT_MOBILE_AREA_CODES = map[int32]bool{
+		86: true, // China
+	}
+
+	// Set of country codes that doesn't have national prefix, but it has area codes.
+	COUNTRIES_WITHOUT_NATIONAL_PREFIX_WITH_AREA_CODES = map[int32]bool{
+		52: true, // Mexico
+	}
 )
 
 // INTERNATIONAL and NATIONAL formats are consistent with the definition
@@ -893,10 +906,21 @@ func GetLengthOfGeographicalAreaCode(number *PhoneNumber) int {
 		return 0
 	}
 
-	// If a country doesn't use a national prefix, and this number
-	// doesn't have an Italian leading zero, we assume it is a closed
-	// dialling plan with no area codes.
-	if len(metadata.GetNationalPrefix()) == 0 && !number.GetItalianLeadingZero() {
+	numType := GetNumberType(number)
+	countryCallingCode := number.GetCountryCode()
+
+	// If a country doesn't use a national prefix, and this number doesn't have an Italian leading
+	// zero, we assume it is a closed dialling plan with no area codes.
+	// Note:this is our general assumption, but there are exceptions which are tracked in
+	// COUNTRIES_WITHOUT_NATIONAL_PREFIX_WITH_AREA_CODES.
+	if len(metadata.GetNationalPrefix()) == 0 && !number.GetItalianLeadingZero() && !COUNTRIES_WITHOUT_NATIONAL_PREFIX_WITH_AREA_CODES[countryCallingCode] {
+		return 0
+	}
+
+	// Note this is a rough heuristic; it doesn't cover Indonesia well, for example, where area
+	// codes are present for some mobile phones but not for others. We have no better way of
+	// representing this in the metadata at this point.
+	if numType == MOBILE && GEO_MOBILE_COUNTRIES_WITHOUT_MOBILE_AREA_CODES[countryCallingCode] {
 		return 0
 	}
 
