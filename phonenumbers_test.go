@@ -1156,6 +1156,14 @@ func TestMexico(t *testing.T) {
 			isValid:       true,
 			isValidRegion: true,
 		},
+		{
+			num:           "+5214424123123", // too long
+			parseRegion:   "MX",
+			expectedE164:  "+5214424123123",
+			validRegion:   "MX",
+			isValid:       false,
+			isValidRegion: false,
+		},
 	}
 
 	runTestBatch(t, tests)
