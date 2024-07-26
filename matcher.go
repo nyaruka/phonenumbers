@@ -8,11 +8,89 @@ import (
 )
 
 type PhoneNumberMatcher struct {
+	PhoneNumber *PhoneNumber
+	Next        *PhoneNumberMatcher
+	Start       int
+	End         int
 }
 
 func NewPhoneNumberMatcher(seq string) *PhoneNumberMatcher {
 	// TODO(ttacon): to be implemented
 	return nil
+}
+
+// NewPhoneNumberMatcherForRegion constructs a PhoneNumberMatcher for the specified text sequence and region.
+// It returns a linked list of valid phone numbers found in the sequence that are valid for the given region.
+// If no valid numbers are found, the function returns nil.
+func NewPhoneNumberMatcherForRegion(seq string, region string) *PhoneNumberMatcher {
+	var head, current *PhoneNumberMatcher
+	seenNumbers := make(map[uint64]bool) // Tracks numbers to avoid duplicate entries in the list.
+
+	// First, find all starting indices where a phone number could potentially start.
+	startIndicesMatches := VALID_START_CHAR_PATTERN.FindAllIndex([]byte(seq), -1)
+	startIndices := make([]int, len(startIndicesMatches))
+	for i, match := range startIndicesMatches {
+		startIndices[i] = match[0]
+	}
+
+	// Similarly, find all indices where a phone number should not end.
+	unwantedEndIndicesMatches := UNWANTED_END_CHAR_PATTERN.FindAllIndex([]byte(seq), -1)
+	unwantedEndIndices := make([]int, len(unwantedEndIndicesMatches))
+	for i, match := range unwantedEndIndicesMatches {
+		unwantedEndIndices[i] = match[0]
+	}
+
+	// Append the length of the sequence as an end index if not already included.
+	if len(unwantedEndIndices) == 0 || unwantedEndIndices[len(unwantedEndIndices)-1] != len(seq) {
+		unwantedEndIndices = append(unwantedEndIndices, len(seq))
+	}
+
+	// Iterate over each possible start index.
+	for i := 0; i < len(startIndices); i++ {
+		for j := 0; j < len(unwantedEndIndices); j++ {
+			if unwantedEndIndices[j] < startIndices[i] {
+				continue // Ensure the end index is after the start index.
+			}
+			// Explore the sequence between the start and end indices to find valid phone numbers.
+			for k := startIndices[i]; k < unwantedEndIndices[j]; k++ {
+				if k-startIndices[i] > MAX_LENGTH_COUNTRY_CODE+MAX_LENGTH_FOR_NSN {
+					break // Exceeds max phone number length, stop searching this slice.
+				}
+				if k-startIndices[i] < MIN_LENGTH_FOR_NSN {
+					continue // Does not meet min phone number length, continue searching.
+				}
+
+				phoneNumber, err := Parse(seq[startIndices[i]:k], region)
+				if err != nil || !IsValidNumberForRegion(phoneNumber, region) {
+					continue // Skip invalid numbers or parse errors.
+				}
+
+				nationalNumber := phoneNumber.GetNationalNumber()
+				if _, exists := seenNumbers[nationalNumber]; exists {
+					continue // Skip this number if already seen.
+				}
+
+				// Mark this phone number as seen.
+				seenNumbers[nationalNumber] = true
+
+				// Create a new matcher node and append it to the linked list.
+				newMatcher := &PhoneNumberMatcher{
+					PhoneNumber: phoneNumber,
+					Start:       startIndices[i],
+					End:         k,
+				}
+				if head == nil {
+					head = newMatcher
+					current = head
+				} else {
+					current.Next = newMatcher
+					current = current.Next
+				}
+			}
+			break
+		}
+	}
+	return head
 }
 
 func ContainsOnlyValidXChars(number *PhoneNumber, candidate string) bool {
