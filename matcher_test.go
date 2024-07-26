@@ -29,6 +29,12 @@ func TestNewPhoneNumberMatcherForRegion(t *testing.T) {
 			region: "TN",
 			want:   map[uint64]int{71123456: 1, 71123457: 1},
 		},
+		{
+			name:   "Valid when sequence ends with a number",
+			seq:    "for more info 71123458",
+			region: "TN",
+			want:   map[uint64]int{71123458: 1},
+		},
 	}
 
 	for _, tt := range tests {

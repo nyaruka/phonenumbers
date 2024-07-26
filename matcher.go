@@ -42,7 +42,7 @@ func NewPhoneNumberMatcherForRegion(seq string, region string) *PhoneNumberMatch
 
 	// Append the length of the sequence as an end index if not already included.
 	if len(unwantedEndIndices) == 0 || unwantedEndIndices[len(unwantedEndIndices)-1] != len(seq) {
-		unwantedEndIndices = append(unwantedEndIndices, len(seq))
+		unwantedEndIndices = append(unwantedEndIndices, len(seq)-1)
 	}
 
 	// Iterate over each possible start index.
@@ -52,7 +52,7 @@ func NewPhoneNumberMatcherForRegion(seq string, region string) *PhoneNumberMatch
 				continue // Ensure the end index is after the start index.
 			}
 			// Explore the sequence between the start and end indices to find valid phone numbers.
-			for k := startIndices[i]; k < unwantedEndIndices[j]; k++ {
+			for k := startIndices[i]; k <= unwantedEndIndices[j]; k++ {
 				if k-startIndices[i] > MAX_LENGTH_COUNTRY_CODE+MAX_LENGTH_FOR_NSN {
 					break // Exceeds max phone number length, stop searching this slice.
 				}
@@ -60,7 +60,7 @@ func NewPhoneNumberMatcherForRegion(seq string, region string) *PhoneNumberMatch
 					continue // Does not meet min phone number length, continue searching.
 				}
 
-				phoneNumber, err := Parse(seq[startIndices[i]:k], region)
+				phoneNumber, err := Parse(seq[startIndices[i]:k+1], region)
 				if err != nil || !IsValidNumberForRegion(phoneNumber, region) {
 					continue // Skip invalid numbers or parse errors.
 				}
