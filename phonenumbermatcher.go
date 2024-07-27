@@ -125,6 +125,11 @@ var (
 	DIGIT_SEQUENCE = "\\d{1," + strconv.Itoa(DIGIT_BLOCK_LIMIT) + "}"
 )
 
+func NewPhoneNumberMatcher(seq string) *PhoneNumberMatcher {
+	// TODO: Add region parameter and implement in the next major release (2.0)
+	return nil
+}
+
 // Creates a new instance.
 //
 // Arguments:
@@ -133,7 +138,8 @@ var (
 //            international format (with a leading plus, or with the
 //            international dialing prefix of the specified region). May be
 //            "ZZ" if only numbers with a leading plus should be considered.
-func NewPhoneNumberMatcher(text string, region string) PhoneNumberMatcher {
+func NewPhoneNumberMatcherForRegion(text string, region string) PhoneNumberMatcher {
+	// TODO: Deprecate in the next major release (2.0) and remove in the following major release (3.0).
 	m := PhoneNumberMatcher{
 		text:            text,
 		preferredRegion: region,
