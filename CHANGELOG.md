@@ -1,3 +1,7 @@
+v1.4.1 (2024-10-16)
+-------------------------
+ * Update metadata
+
 v1.4.0 (2024-07-15)
 -------------------------
  * Update GetLengthOfGeographicalAreaCode to match recent libphonenumber changes
