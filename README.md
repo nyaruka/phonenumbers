@@ -34,7 +34,7 @@ It will rebuild the following files:
 
  * `gen/metadata_bin.go` - protocol buffer definitions for all the various formats across countries etc..
  * `gen/shortnumber_metadata_bin.go` - protocol buffer definitions for ShortNumberMetadata.xml
- * `gen/countrycode_to_region_bin.go` - information needed to map a contry code to a region
+ * `gen/countrycode_to_region_bin.go` - information needed to map a country code to a region
  * `gen/prefix_to_carrier_bin.go` - information needed to map a phone number prefix to a carrier
  * `gen/prefix_to_geocoding_bin.go` - information needed to map a phone number prefix to a city or region
  * `gen/prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
