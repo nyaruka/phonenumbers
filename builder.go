@@ -575,7 +575,6 @@ type PhoneNumberMetadataE struct {
 }
 
 // <!ELEMENT territory (references?, availableFormats?, generalDesc, noInternationalDialling?,
-//
 //	fixedLine?, mobile?, pager?, tollFree?, premiumRate?,
 //	sharedCost?, personalNumber?, voip?, uan?, voicemail?)>
 type TerritoryE struct {
