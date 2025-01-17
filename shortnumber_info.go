@@ -220,7 +220,7 @@ func matchesEmergencyNumber(number string, regionCode string, allowPrefixMatch b
 // number: the phone number to test
 // regionCode: the region where the phone number is being dialed
 // return: whether the number exactly matches an emergency services number in the given region
-func isEmergencyNumber(number string, regionCode string) bool {
+func IsEmergencyNumber(number string, regionCode string) bool {
 	return matchesEmergencyNumber(number, regionCode, false)
 }
 
@@ -236,6 +236,6 @@ func isEmergencyNumber(number string, regionCode string) bool {
 // number: the phone number to test
 // regionCode: the region where the phone number is being dialed
 // return: whether the number might be used to connect to an emergency service in the given region
-func connectsToEmergencyNumber(number string, regionCode string) bool {
+func ConnectsToEmergencyNumber(number string, regionCode string) bool {
 	return matchesEmergencyNumber(number, regionCode, true)
 }
