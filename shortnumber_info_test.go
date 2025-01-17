@@ -72,3 +72,9 @@ func TestIsValidShortNumber(t *testing.T) {
 	}
 	assert.False(t, IsValidShortNumberForRegion(invalidNumber, "FR"))
 }
+
+func TestConnectsToEmergencyNumber_US(t *testing.T) {
+	assert.True(t, connectsToEmergencyNumber("911", "US"))
+	assert.True(t, connectsToEmergencyNumber("112", "US"))
+	assert.False(t, connectsToEmergencyNumber("999", "US"))
+}
