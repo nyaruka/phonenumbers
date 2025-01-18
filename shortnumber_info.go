@@ -1,6 +1,8 @@
 package phonenumbers
 
 import (
+	"golang.org/x/exp/slices"
+
 	"github.com/nyaruka/phonenumbers/gen"
 	"google.golang.org/protobuf/proto"
 )
@@ -182,4 +184,58 @@ func matchesPossibleNumberAndNationalNumber(number string, numberDesc *PhoneNumb
 		return false
 	}
 	return MatchNationalNumber(number, *numberDesc, false)
+}
+
+// In these countries, if extra digits are added to an emergency number, it no longer connects
+// to the emergency service.
+var REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT = []string{"BR", "CL", "NI"}
+
+func matchesEmergencyNumber(number string, regionCode string, allowPrefixMatch bool) bool {
+	possibleNumber := extractPossibleNumber(number)
+	// Returns false if the number starts with a plus sign. We don't believe dialing the country
+	// code before emergency numbers (e.g. +1911) works, but later, if that proves to work, we can
+	// add additional logic here to handle it.
+	if PLUS_CHARS_PATTERN.MatchString(possibleNumber) {
+		return false
+	}
+
+	phoneMetadata := getShortNumberMetadataForRegion(regionCode)
+	if phoneMetadata == nil || phoneMetadata.GetEmergency() == nil {
+		return false
+	}
+
+	normalizedNumber := NormalizeDigitsOnly(possibleNumber)
+
+	allowPrefixMatchForRegion := allowPrefixMatch && !slices.Contains(REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT, regionCode)
+	return MatchNationalNumber(normalizedNumber, *phoneMetadata.GetEmergency(), allowPrefixMatchForRegion)
+}
+
+// Returns true if the given number exactly matches an emergency service number in the given
+// region.
+//
+// This method takes into account cases where the number might contain formatting, but doesn't
+// allow additional digits to be appended. Note that isEmergencyNumber(number, region)
+// implies connectsToEmergencyNumber(number, region).
+//
+// number: the phone number to test
+// regionCode: the region where the phone number is being dialed
+// return: whether the number exactly matches an emergency services number in the given region
+func IsEmergencyNumber(number string, regionCode string) bool {
+	return matchesEmergencyNumber(number, regionCode, false)
+}
+
+// Returns true if the given number, exactly as dialed, might be used to connect to an emergency
+// service in the given region.
+//
+// This method accepts a string, rather than a PhoneNumber, because it needs to distinguish
+// cases such as "+1 911" and "911", where the former may not connect to an emergency service in
+// all cases but the latter would. This method takes into account cases where the number might
+// contain formatting, or might have additional digits appended (when it is okay to do that in
+// the specified region).
+//
+// number: the phone number to test
+// regionCode: the region where the phone number is being dialed
+// return: whether the number might be used to connect to an emergency service in the given region
+func ConnectsToEmergencyNumber(number string, regionCode string) bool {
+	return matchesEmergencyNumber(number, regionCode, true)
 }
