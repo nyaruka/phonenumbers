@@ -1,3 +1,7 @@
+v1.5.0 (2025-01-18)
+-------------------------
+ * Add shortnumber emergency functions
+
 v1.4.4 (2024-12-20)
 -------------------------
  * Update metadata
