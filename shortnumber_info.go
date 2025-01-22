@@ -3,7 +3,7 @@ package phonenumbers
 import (
 	"golang.org/x/exp/slices"
 
-	"github.com/nyaruka/phonenumbers/gen"
+	"github.com/Accompany-Health/phonenumbers/gen"
 	"google.golang.org/protobuf/proto"
 )
 

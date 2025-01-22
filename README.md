@@ -1,7 +1,6 @@
 # ☎️ phonenumbers 
-[![Build Status](https://github.com/nyaruka/phonenumbers/workflows/CI/badge.svg)](https://github.com/nyaruka/phonenumbers/actions?query=workflow%3ACI) 
-[![codecov](https://codecov.io/gh/nyaruka/phonenumbers/branch/main/graph/badge.svg)](https://codecov.io/gh/nyaruka/phonenumbers)
-[![GoDoc](https://godoc.org/github.com/nyaruka/phonenumbers?status.svg)](https://godoc.org/github.com/nyaruka/phonenumbers)
+
+Forked from [liphonenumber nyaruka go](https://github.com/nyaruka/phonenumbers)
 
 golang port of Google's [libphonenumber](https://github.com/googlei18n/libphonenumber) forked from libphonenumber from [ttacon/libphonenumber](https://github.com/ttacon/libphonenumber). This library is used daily in production for parsing and validation of numbers across the world, so is well maintained. Please open an issue if you encounter any problems, we'll do our best to address them.
 
@@ -40,6 +39,6 @@ It will rebuild the following files:
  * `gen/prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
 
 ```bash
-% go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
+% go install github.com/Accompany-Health/phonenumbers/cmd/buildmetadata
 % $GOPATH/bin/buildmetadata
 ```
