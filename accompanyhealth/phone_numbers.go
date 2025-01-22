@@ -6,7 +6,7 @@ import (
 
 	logger "github.com/Accompany-Health/ah-logger"
 	stats "github.com/Accompany-Health/ah-stats"
-	libphonenumber "github.com/Accompany-Health/phonenumbers"
+	libphonenumber "github.com/Accompany-Health/libphonenumber2"
 )
 
 // Filter out non-number characters from input phone number string

@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Accompany-Health/phonenumbers"
+	"github.com/Accompany-Health/libphonenumber2"
 )
 
 func main() {

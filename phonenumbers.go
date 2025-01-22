@@ -10,7 +10,7 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/Accompany-Health/phonenumbers/gen"
+	"github.com/Accompany-Health/libphonenumber2/gen"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 	"google.golang.org/protobuf/proto"

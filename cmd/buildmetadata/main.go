@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Accompany-Health/phonenumbers"
+	phonenumbers "github.com/Accompany-Health/libphonenumber2"
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/proto"
 )
