@@ -3,7 +3,6 @@ package phonenumbers
 import (
 	"golang.org/x/exp/slices"
 
-	"github.com/nyaruka/phonenumbers/gen"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -37,7 +36,7 @@ func ShortNumberMetadataCollection() (*PhoneMetadataCollection, error) {
 		return currShortNumberMetadataColl, nil
 	}
 
-	rawBytes, err := decodeUnzipString(gen.ShortNumberData)
+	rawBytes, err := decodeUnzip(shortNumberData)
 	if err != nil {
 		return nil, err
 	}

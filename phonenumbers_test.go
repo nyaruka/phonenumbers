@@ -3,6 +3,7 @@ package phonenumbers
 import (
 	"reflect"
 	"regexp"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1377,6 +1378,7 @@ func TestGetCarrierWithPrefixForNumber(t *testing.T) {
 		{num: "+917999999543", lang: "en", expectedCarrier: "Reliance Jio", expectedPrefix: 917999},
 		{num: "+593992218722", lang: "en", expectedCarrier: "Claro", expectedPrefix: 5939922},
 		{num: "+201987654321", lang: "en", expectedCarrier: "", expectedPrefix: 0},
+		{num: "+201987654321", lang: "notFound", expectedCarrier: "", expectedPrefix: 0},
 	}
 	for _, test := range tests {
 		number, err := Parse(test.num, "ZZ")
@@ -1394,6 +1396,25 @@ func TestGetCarrierWithPrefixForNumber(t *testing.T) {
 			t.Errorf("Expected '%d', got '%d' for '%s'", test.expectedPrefix, prefix, test.num)
 		}
 	}
+}
+
+func TestGetCarrierWithPrefixForNumberWithConcurrency(t *testing.T) {
+	number, _ := Parse("+8613702032331", "ZZ")
+
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, _, err := GetCarrierWithPrefixForNumber(number, "en")
+			if err != nil {
+				t.Errorf("Failed to getCarrierWithPrefix for the number %s: %s", "+8613702032331", err)
+			}
+		}()
+	}
+
+	wg.Wait()
 }
 
 func TestGetGeocodingForNumber(t *testing.T) {
@@ -1709,4 +1730,21 @@ func TestGetSafeCarrierDisplayNameForNumber(t *testing.T) {
 
 func s(str string) *string {
 	return &str
+}
+
+func BenchmarkLoadMetadata(b *testing.B) {
+	for i := 0; i <= b.N; i++ {
+		initMetadata()
+	}
+}
+
+func BenchmarkGetCarrierWithPrefixForNumber(b *testing.B) {
+	number, _ := Parse("+8613702032331", "ZZ")
+
+	for n := 0; n < b.N; n++ {
+		_, _, err := GetCarrierWithPrefixForNumber(number, "en")
+		if err != nil {
+			b.Errorf("Failed to getCarrierWithPrefix for the number %s: %s", "+8613702032331", err)
+		}
+	}
 }

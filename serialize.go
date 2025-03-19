@@ -3,10 +3,10 @@ package phonenumbers
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/base64"
 	"encoding/binary"
 	fmt "fmt"
-	"io/ioutil"
+	"io"
+	"math"
 	"strings"
 )
 
@@ -17,8 +17,8 @@ type intStringMap struct {
 	MaxLength int
 }
 
-func loadPrefixMap(data string) (*intStringMap, error) {
-	rawBytes, err := decodeUnzipString(data)
+func loadPrefixMap(data []byte) (*intStringMap, error) {
+	rawBytes, err := decodeUnzip(data)
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +68,9 @@ func loadPrefixMap(data string) (*intStringMap, error) {
 
 		mappings[prefix] = values[valueIntern]
 
-		strPrefix := fmt.Sprintf("%d", prefix)
-		if len(strPrefix) > maxLength {
-			maxLength = len(strPrefix)
+		count := digitCount(prefix)
+		if count > maxLength {
+			maxLength = count
 		}
 	}
 
@@ -81,6 +81,18 @@ func loadPrefixMap(data string) (*intStringMap, error) {
 	}, nil
 }
 
+func digitCount(n int) int {
+	if n == 0 {
+		return 1 // Special case for 0
+	}
+
+	if n < 0 {
+		n = -n // Handle negative numbers
+	}
+
+	return int(math.Floor(math.Log10(float64(n)))) + 1
+}
+
 // intStringArrayMap is our map from an int to an array of strings
 // this is used for our timezone and region maps
 type intStringArrayMap struct {
@@ -88,8 +100,8 @@ type intStringArrayMap struct {
 	MaxLength int
 }
 
-func loadIntStringArrayMap(data string) (*intStringArrayMap, error) {
-	rawBytes, err := decodeUnzipString(data)
+func loadIntArrayMap(data []byte) (*intStringArrayMap, error) {
+	rawBytes, err := decodeUnzip(data)
 	if err != nil {
 		return nil, err
 	}
@@ -147,9 +159,9 @@ func loadIntStringArrayMap(data string) (*intStringArrayMap, error) {
 		}
 		mappings[key] = keyValues
 
-		strPrefix := fmt.Sprintf("%d", key)
-		if len(strPrefix) > maxLength {
-			maxLength = len(strPrefix)
+		count := digitCount(key)
+		if count > maxLength {
+			maxLength = count
 		}
 	}
 
@@ -160,18 +172,15 @@ func loadIntStringArrayMap(data string) (*intStringArrayMap, error) {
 	}, nil
 }
 
-func decodeUnzipString(data string) ([]byte, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(data)
+func decodeUnzip(data []byte) ([]byte, error) {
+	zipReader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
 
-	zipReader, err := gzip.NewReader(bytes.NewReader(decodedBytes))
-	if err != nil {
-		return nil, err
-	}
+	defer zipReader.Close()
 
-	rawBytes, err := ioutil.ReadAll(zipReader)
+	rawBytes, err := io.ReadAll(zipReader)
 	if err != nil {
 		return nil, err
 	}
