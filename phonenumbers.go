@@ -3402,46 +3402,39 @@ func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
 	return GetTimezonesForPrefix(e164)
 }
 
-func fillLangMap(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string) (bool, error) {
+func lazyLoadPrefixes(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string) (*intStringMap, error) {
 	dataLoadMutex.Lock()
 	defer dataLoadMutex.Unlock()
 
-	_, ok := langMap[language]
+	// if we already have prefixes (or nil if they don't exist) return that
+	prefixes, ok := langMap[language]
 	if ok {
-		return true, nil
+		return prefixes, nil
 	}
 
-	// do we have data for this language
+	// try to load the data file for this language
 	data, err := dataFS.ReadFile(dir + "/" + language + ".txt.gz")
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return false, nil
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+
+	if data != nil {
+		prefixes, err = loadPrefixMap(data)
+		if err != nil {
+			return nil, err
 		}
-
-		return false, err
+		langMap[language] = prefixes
+	} else {
+		langMap[language] = nil // language doesn't have data
 	}
 
-	// load it into our map
-	prefixMap, err := loadPrefixMap(data)
-	if err == nil {
-		langMap[language] = prefixMap
-
-		return true, nil
-	}
-
-	return false, err
+	return langMap[language], nil
 }
 
 func getValueForNumber(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string, maxLength int, number *PhoneNumber) (string, int, error) {
-	ok, err := fillLangMap(langMap, dataFS, dir, language)
-	if !ok || err != nil {
+	prefixes, err := lazyLoadPrefixes(langMap, dataFS, dir, language)
+	if err != nil || prefixes == nil {
 		return "", 0, err
-	}
-
-	// do we have a map for this language?
-	prefixMap, ok := langMap[language]
-	if !ok {
-		return "", 0, fmt.Errorf("error loading language map for %s", language)
 	}
 
 	e164 := Format(number, E164)
@@ -3455,7 +3448,7 @@ func getValueForNumber(langMap map[string]*intStringMap, dataFS embed.FS, dir, l
 		if err != nil {
 			return "", 0, err
 		}
-		if value, has := prefixMap.Map[index]; has {
+		if value, has := prefixes.Map[index]; has {
 			return value, index, nil
 		}
 	}
