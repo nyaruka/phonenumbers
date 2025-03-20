@@ -212,7 +212,7 @@ func AllNumberGroupsAreExactlyPresent(
 
 // Returns whether the given national number (a string containing only decimal digits) matches
 // the national number pattern defined in the given PhoneNumberDesc message.
-func MatchNationalNumber(number string, numberDesc PhoneNumberDesc, allowPrefixMatch bool) bool {
+func MatchNationalNumber(number string, numberDesc *PhoneNumberDesc, allowPrefixMatch bool) bool {
 	nationalNumberPattern := numberDesc.GetNationalNumberPattern()
 	// We don't want to consider it a prefix match when matching non-empty input against an empty pattern.
 	if len(nationalNumberPattern) == 0 {
