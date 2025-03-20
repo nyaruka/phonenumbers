@@ -17,6 +17,53 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+func init() {
+	initMetadata()
+}
+
+func initMetadata() {
+	// load our regions
+	regionMap, err := loadIntArrayMap(regionData)
+	if err != nil {
+		panic(err)
+	}
+	countryCodeToRegion = regionMap.Map
+
+	// then our metadata
+	if err = loadMetadataFromFile(); err != nil {
+		panic(err)
+	}
+
+	for eKey, regionCodes := range countryCodeToRegion {
+		// We can assume that if the county calling code maps to the
+		// non-geo entity region code then that's the only region code
+		// it maps to.
+		if len(regionCodes) == 1 && REGION_CODE_FOR_NON_GEO_ENTITY == regionCodes[0] {
+			// This is the subset of all country codes that map to the
+			// non-geo entity region code.
+			countryCodesForNonGeographicalRegion[eKey] = true
+		} else {
+			// The supported regions set does not include the "001"
+			// non-geo entity region code.
+			for _, val := range regionCodes {
+				supportedRegions[val] = true
+			}
+		}
+
+		supportedCallingCodes[eKey] = true
+	}
+	// If the non-geo entity still got added to the set of supported
+	// regions it must be because there are entries that list the non-geo
+	// entity alongside normal regions (which is wrong). If we discover
+	// this, remove the non-geo entity from the set of supported regions
+	// and log (or not log).
+	delete(supportedRegions, REGION_CODE_FOR_NON_GEO_ENTITY)
+
+	for _, val := range countryCodeToRegion[NANPA_COUNTRY_CODE] {
+		writeToNanpaRegions(val, struct{}{})
+	}
+}
+
 const (
 	// MIN_LENGTH_FOR_NSN is the minimum and maximum length of the national significant number.
 	MIN_LENGTH_FOR_NSN = 2
@@ -428,7 +475,7 @@ var (
 		52: true, // Mexico
 	}
 
-	m = sync.Mutex{}
+	dataLoadMutex = sync.Mutex{}
 )
 
 // INTERNATIONAL and NATIONAL formats are consistent with the definition
@@ -676,10 +723,7 @@ func writeToCountryCodeToNonGeographicalMetadataMap(key int, v *PhoneMetadata) {
 	countryCodeToNonGeographicalMetadataMap[key] = v
 }
 
-func loadMetadataFromFile(
-	regionCode string,
-	countryCallingCode int) error {
-
+func loadMetadataFromFile() error {
 	metadataCollection, err := MetadataCollection()
 	if err != nil {
 		return err
@@ -3319,54 +3363,6 @@ func IsMobileNumberPortableRegion(regionCode string) bool {
 	return metadata.GetMobileNumberPortableRegion()
 }
 
-func initMetadata() {
-	// load our regions
-	regionMap, err := loadIntArrayMap(regionData)
-	if err != nil {
-		panic(err)
-	}
-	countryCodeToRegion = regionMap.Map
-
-	// then our metadata
-	err = loadMetadataFromFile("US", 1)
-	if err != nil {
-		panic(err)
-	}
-
-	for eKey, regionCodes := range countryCodeToRegion {
-		// We can assume that if the county calling code maps to the
-		// non-geo entity region code then that's the only region code
-		// it maps to.
-		if len(regionCodes) == 1 && REGION_CODE_FOR_NON_GEO_ENTITY == regionCodes[0] {
-			// This is the subset of all country codes that map to the
-			// non-geo entity region code.
-			countryCodesForNonGeographicalRegion[eKey] = true
-		} else {
-			// The supported regions set does not include the "001"
-			// non-geo entity region code.
-			for _, val := range regionCodes {
-				supportedRegions[val] = true
-			}
-		}
-
-		supportedCallingCodes[eKey] = true
-	}
-	// If the non-geo entity still got added to the set of supported
-	// regions it must be because there are entries that list the non-geo
-	// entity alongside normal regions (which is wrong). If we discover
-	// this, remove the non-geo entity from the set of supported regions
-	// and log (or not log).
-	delete(supportedRegions, REGION_CODE_FOR_NON_GEO_ENTITY)
-
-	for _, val := range countryCodeToRegion[NANPA_COUNTRY_CODE] {
-		writeToNanpaRegions(val, struct{}{})
-	}
-}
-
-func init() {
-	initMetadata()
-}
-
 // GetTimezonesForPrefix returns a slice of Timezones corresponding to the number passed
 // or error when it is impossible to convert the string to int
 // The algorythm tries to match the timezones starting from the maximum
@@ -3409,9 +3405,9 @@ func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
 	return GetTimezonesForPrefix(e164)
 }
 
-func fillLangMap(langMap map[string]*intStringMap, binMap embed.FS, filename, language string) (bool, error) {
-	m.Lock()
-	defer m.Unlock()
+func fillLangMap(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string) (bool, error) {
+	dataLoadMutex.Lock()
+	defer dataLoadMutex.Unlock()
 
 	_, ok := langMap[language]
 	if ok {
@@ -3419,7 +3415,7 @@ func fillLangMap(langMap map[string]*intStringMap, binMap embed.FS, filename, la
 	}
 
 	// do we have data for this language
-	data, err := binMap.ReadFile(filename)
+	data, err := dataFS.ReadFile(dir + "/" + language + ".txt.gz")
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return false, nil
@@ -3439,8 +3435,8 @@ func fillLangMap(langMap map[string]*intStringMap, binMap embed.FS, filename, la
 	return false, err
 }
 
-func getValueForNumber(langMap map[string]*intStringMap, dir string, binMap embed.FS, language string, maxLength int, number *PhoneNumber) (string, int, error) {
-	ok, err := fillLangMap(langMap, binMap, dir+"/"+language+".txt.gz", language)
+func getValueForNumber(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string, maxLength int, number *PhoneNumber) (string, int, error) {
+	ok, err := fillLangMap(langMap, dataFS, dir, language)
 	if !ok || err != nil {
 		return "", 0, err
 	}
@@ -3490,7 +3486,7 @@ func GetSafeCarrierDisplayNameForNumber(phoneNumber *PhoneNumber, lang string) (
 // GetCarrierWithPrefixForNumber returns the carrier we believe the number belongs to, as well as
 // its prefix. Note due to number porting this is only a guess, there is no guarantee to its accuracy.
 func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, int, error) {
-	carrier, prefix, err := getValueForNumber(carrierPrefixMap, carrierDataPath, carrierData, lang, 10, number)
+	carrier, prefix, err := getValueForNumber(carrierPrefixMap, carrierData, carrierDataPath, lang, 10, number)
 	if err != nil {
 		return "", 0, err
 	}
@@ -3499,19 +3495,19 @@ func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, in
 	}
 
 	// fallback to english
-	return getValueForNumber(carrierPrefixMap, carrierDataPath, carrierData, "en", 10, number)
+	return getValueForNumber(carrierPrefixMap, carrierData, carrierDataPath, "en", 10, number)
 }
 
 // GetGeocodingForNumber returns the location we think the number was first acquired in. This is
 // just our best guess, there is no guarantee to its accuracy.
 func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
-	geocoding, _, err := getValueForNumber(geocodingPrefixMap, geocodingDataPath, geocodingData, lang, 10, number)
+	geocoding, _, err := getValueForNumber(geocodingPrefixMap, geocodingData, geocodingDataPath, lang, 10, number)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
 
 	// fallback to english
-	geocoding, _, err = getValueForNumber(geocodingPrefixMap, geocodingDataPath, geocodingData, "en", 10, number)
+	geocoding, _, err = getValueForNumber(geocodingPrefixMap, geocodingData, geocodingDataPath, "en", 10, number)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
