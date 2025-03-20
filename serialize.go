@@ -50,7 +50,7 @@ func loadPrefixMap(data []byte) (*intStringMap, error) {
 	maxLength := 0
 	mappings := make(map[int]string, mappingCount)
 	prefix := 0
-	for i := 0; i < int(mappingCount); i++ {
+	for range int(mappingCount) {
 		// first read our diff
 		diff, err := binary.ReadUvarint(reader)
 		if err != nil {
@@ -133,7 +133,7 @@ func loadIntArrayMap(data []byte) (*intStringArrayMap, error) {
 	maxLength := 0
 	mappings := make(map[int][]string, mappingCount)
 	key := 0
-	for i := 0; i < int(mappingCount); i++ {
+	for range int(mappingCount) {
 		// first read our diff
 		diff, err := binary.ReadUvarint(reader)
 		if err != nil {
@@ -149,7 +149,7 @@ func loadIntArrayMap(data []byte) (*intStringArrayMap, error) {
 		}
 
 		keyValues := make([]string, valueCount)
-		for i := 0; i < int(valueCount); i++ {
+		for i := range int(valueCount) {
 			var valueIntern uint16
 			err = binary.Read(reader, binary.LittleEndian, &valueIntern)
 			if err != nil || int(valueIntern) >= len(values) {
