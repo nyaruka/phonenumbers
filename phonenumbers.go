@@ -3380,10 +3380,7 @@ func GetTimezonesForPrefix(number string) ([]string, error) {
 	// strip any leading +
 	number = strings.TrimLeft(number, "+")
 
-	matchLength := len(number) // maxLength: min( len(number), timezoneMap.MaxLength )
-	if matchLength > timezoneMap.MaxLength {
-		matchLength = timezoneMap.MaxLength
-	}
+	matchLength := min(len(number), timezoneMap.MaxLength)
 
 	for i := matchLength; i > 0; i-- {
 		index, err := strconv.Atoi(number[0:i])
