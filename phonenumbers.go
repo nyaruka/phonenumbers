@@ -1,8 +1,10 @@
 package phonenumbers
 
 import (
+	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -10,7 +12,6 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/nyaruka/phonenumbers/gen"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 	"google.golang.org/protobuf/proto"
@@ -426,6 +427,8 @@ var (
 	COUNTRIES_WITHOUT_NATIONAL_PREFIX_WITH_AREA_CODES = map[int32]bool{
 		52: true, // Mexico
 	}
+
+	m = sync.Mutex{}
 )
 
 // INTERNATIONAL and NATIONAL formats are consistent with the definition
@@ -605,12 +608,10 @@ var (
 	// default capacity of 16 (load factor=0.75) is fine.
 	countryCodesForNonGeographicalRegion = make(map[int]bool, 16)
 
-	// These are our onces and maps for our prefix to carrier maps
-	carrierOnces     = make(map[string]*sync.Once)
+	// These are maps for our prefix to carrier maps
 	carrierPrefixMap = make(map[string]*intStringMap)
 
-	// These are our onces and maps for our prefix to geocoding maps
-	geocodingOnces     = make(map[string]*sync.Once)
+	// These are maps for our prefix to geocoding maps
 	geocodingPrefixMap = make(map[string]*intStringMap)
 
 	// All the calling codes we support
@@ -713,7 +714,7 @@ func MetadataCollection() (*PhoneMetadataCollection, error) {
 		return currMetadataColl, nil
 	}
 
-	rawBytes, err := decodeUnzipString(gen.NumberData)
+	rawBytes, err := decodeUnzip(numberData)
 	if err != nil {
 		return nil, err
 	}
@@ -3318,9 +3319,9 @@ func IsMobileNumberPortableRegion(regionCode string) bool {
 	return metadata.GetMobileNumberPortableRegion()
 }
 
-func init() {
+func initMetadata() {
 	// load our regions
-	regionMap, err := loadIntStringArrayMap(gen.RegionData)
+	regionMap, err := loadIntArrayMap(regionData)
 	if err != nil {
 		panic(err)
 	}
@@ -3360,14 +3361,10 @@ func init() {
 	for _, val := range countryCodeToRegion[NANPA_COUNTRY_CODE] {
 		writeToNanpaRegions(val, struct{}{})
 	}
+}
 
-	// Create our sync.Onces for each of our languages for carriers
-	for lang := range gen.CarrierData {
-		carrierOnces[lang] = &sync.Once{}
-	}
-	for lang := range gen.GeocodingData {
-		geocodingOnces[lang] = &sync.Once{}
-	}
+func init() {
+	initMetadata()
 }
 
 // GetTimezonesForPrefix returns a slice of Timezones corresponding to the number passed
@@ -3377,7 +3374,7 @@ func init() {
 func GetTimezonesForPrefix(number string) ([]string, error) {
 	var err error
 	timezoneOnce.Do(func() {
-		timezoneMap, err = loadIntStringArrayMap(gen.TimezoneData)
+		timezoneMap, err = loadIntArrayMap(timezoneData)
 	})
 
 	if timezoneMap == nil {
@@ -3412,20 +3409,41 @@ func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
 	return GetTimezonesForPrefix(e164)
 }
 
-func getValueForNumber(onceMap map[string]*sync.Once, langMap map[string]*intStringMap, binMap map[string]string, language string, maxLength int, number *PhoneNumber) (string, int, error) {
+func fillLangMap(langMap map[string]*intStringMap, binMap embed.FS, filename, language string) (bool, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	_, ok := langMap[language]
+	if ok {
+		return true, nil
+	}
+
 	// do we have data for this language
-	_, existing := binMap[language]
-	if !existing {
-		return "", 0, nil
+	data, err := binMap.ReadFile(filename)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil
+		}
+
+		return false, err
 	}
 
 	// load it into our map
-	onceMap[language].Do(func() {
-		prefixMap, err := loadPrefixMap(binMap[language])
-		if err == nil {
-			langMap[language] = prefixMap
-		}
-	})
+	prefixMap, err := loadPrefixMap(data)
+	if err == nil {
+		langMap[language] = prefixMap
+
+		return true, nil
+	}
+
+	return false, err
+}
+
+func getValueForNumber(langMap map[string]*intStringMap, dir string, binMap embed.FS, language string, maxLength int, number *PhoneNumber) (string, int, error) {
+	ok, err := fillLangMap(langMap, binMap, dir+"/"+language+".txt.gz", language)
+	if !ok || err != nil {
+		return "", 0, err
+	}
 
 	// do we have a map for this language?
 	prefixMap, ok := langMap[language]
@@ -3472,7 +3490,7 @@ func GetSafeCarrierDisplayNameForNumber(phoneNumber *PhoneNumber, lang string) (
 // GetCarrierWithPrefixForNumber returns the carrier we believe the number belongs to, as well as
 // its prefix. Note due to number porting this is only a guess, there is no guarantee to its accuracy.
 func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, int, error) {
-	carrier, prefix, err := getValueForNumber(carrierOnces, carrierPrefixMap, gen.CarrierData, lang, 10, number)
+	carrier, prefix, err := getValueForNumber(carrierPrefixMap, carrierDataPath, carrierData, lang, 10, number)
 	if err != nil {
 		return "", 0, err
 	}
@@ -3481,19 +3499,19 @@ func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, in
 	}
 
 	// fallback to english
-	return getValueForNumber(carrierOnces, carrierPrefixMap, gen.CarrierData, "en", 10, number)
+	return getValueForNumber(carrierPrefixMap, carrierDataPath, carrierData, "en", 10, number)
 }
 
 // GetGeocodingForNumber returns the location we think the number was first acquired in. This is
 // just our best guess, there is no guarantee to its accuracy.
 func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
-	geocoding, _, err := getValueForNumber(geocodingOnces, geocodingPrefixMap, gen.GeocodingData, lang, 10, number)
+	geocoding, _, err := getValueForNumber(geocodingPrefixMap, geocodingDataPath, geocodingData, lang, 10, number)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
 
 	// fallback to english
-	geocoding, _, err = getValueForNumber(geocodingOnces, geocodingPrefixMap, gen.GeocodingData, "en", 10, number)
+	geocoding, _, err = getValueForNumber(geocodingPrefixMap, geocodingDataPath, geocodingData, "en", 10, number)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}

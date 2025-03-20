@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -18,6 +17,8 @@ import (
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/proto"
 )
+
+const distPath = "data"
 
 func main() {
 	if err := buildMetadata(); err != nil {
@@ -35,39 +36,39 @@ func buildMetadata() error {
 
 	fmt.Print("OK\nBuilding number metadata...")
 
-	metadata, err := buildNumberMetadata("resources/PhoneNumberMetadata.xml", "NumberData", "metadata_bin.go", false)
+	metadata, err := buildNumberMetadata("resources/PhoneNumberMetadata.xml", "NumberData", "metadata.xml.gz", false)
 	if err != nil {
 		return err
 	}
 
 	fmt.Print("OK\nBuilding short number metadata...")
 
-	_, err = buildNumberMetadata("resources/ShortNumberMetadata.xml", "ShortNumberData", "shortnumber_metadata_bin.go", true)
+	_, err = buildNumberMetadata("resources/ShortNumberMetadata.xml", "ShortNumberData", "shortnumber_metadata.xml.gz", true)
 	if err != nil {
 		return err
 	}
 
 	fmt.Print("OK\nBuilding region metadata...")
 
-	if err := buildRegionMetadata(metadata, "RegionData", "countrycode_to_region_bin.go"); err != nil {
+	if err := buildRegionMetadata(metadata, "RegionData", "countrycode_to_region.xml.gz"); err != nil {
 		return err
 	}
 
 	fmt.Print("OK\nBuilding timezone metadata...")
 
-	if err := buildTimezoneMetadata("resources/timezones/map_data.txt", "TimezoneData", "prefix_to_timezone_bin.go"); err != nil {
+	if err := buildTimezoneMetadata("resources/timezones/map_data.txt", "TimezoneData", "prefix_to_timezone.xml.gz"); err != nil {
 		return err
 	}
 
 	fmt.Println("OK\nBuilding carrier prefix metadata...")
 
-	if err := buildPrefixMetadata("resources/carrier", "CarrierData", "prefix_to_carriers_bin.go"); err != nil {
+	if err := buildPrefixMetadata("resources/carrier", "CarrierData", "prefix_to_carriers"); err != nil {
 		return err
 	}
 
 	fmt.Println("Building geographic prefix metadata...")
 
-	if err := buildPrefixMetadata("resources/geocoding", "GeocodingData", "prefix_to_geocodings_bin.go"); err != nil {
+	if err := buildPrefixMetadata("resources/geocoding", "GeocodingData", "prefix_to_geocodings"); err != nil {
 		return err
 	}
 
@@ -101,7 +102,7 @@ func buildNumberMetadata(srcFile, varName, dstFile string, short bool) (*phonenu
 		return nil, fmt.Errorf("error marshaling metadata as protobuf: %w", err)
 	}
 
-	if err := os.WriteFile("gen/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
+	if err := os.WriteFile(distPath+"/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
 		return nil, fmt.Errorf("error writing %s: %w", dstFile, err)
 	}
 
@@ -117,7 +118,7 @@ func buildRegionMetadata(metadata *phonenumbers.PhoneMetadataCollection, varName
 		return fmt.Errorf("error generating %s: %w", dstFile, err)
 	}
 
-	if err := os.WriteFile("gen/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
+	if err := os.WriteFile(distPath+"/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
 		return fmt.Errorf("error writing %s: %w", dstFile, err)
 	}
 
@@ -165,16 +166,21 @@ func buildTimezoneMetadata(srcFile, varName, dstFile string) error {
 		return fmt.Errorf("error generating %s: %w", dstFile, err)
 	}
 
-	if err := os.WriteFile("gen/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
+	if err := os.WriteFile(distPath+"/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
 		return fmt.Errorf("error writing %s: %w", dstFile, err)
 	}
 
 	return nil
 }
 
-func buildPrefixMetadata(srcDir, varName, dstFile string) error {
+func buildPrefixMetadata(srcDir, varName, dstDir string) error {
 	// get our top level language directories
-	dirs, err := filepath.Glob(fmt.Sprintf("_build/%s/*", srcDir))
+	dirs, err := filepath.Glob(filepath.Join("_build", srcDir, "*"))
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(distPath+"/"+dstDir, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -196,10 +202,6 @@ func buildPrefixMetadata(srcDir, varName, dstFile string) error {
 		// save it for our language
 		languageMappings[filepath.Base(dir)] = mappings
 	}
-
-	output := bytes.Buffer{}
-	output.WriteString("package gen\n\n")
-	output.WriteString(fmt.Sprintf("var %s = map[string]string {\n", varName))
 
 	langs := maps.Keys(languageMappings)
 	sort.Strings(langs)
@@ -275,20 +277,14 @@ func buildPrefixMetadata(srcDir, varName, dstFile string) error {
 
 		var compressed bytes.Buffer
 		w := gzip.NewWriter(&compressed)
-		w.Write(data.Bytes())
+		if _, err := w.Write(data.Bytes()); err != nil {
+			return err
+		}
 		w.Close()
-		c := base64.StdEncoding.EncodeToString(compressed.Bytes())
-		output.WriteString("\t")
-		output.WriteString(strconv.Quote(lang))
-		output.WriteString(": ")
-		output.WriteString(strconv.Quote(c))
-		output.WriteString(",\n")
-	}
 
-	output.WriteString("}")
-
-	if err := os.WriteFile("gen/"+dstFile, output.Bytes(), os.FileMode(0664)); err != nil {
-		return fmt.Errorf("error writing %s: %w", dstFile, err)
+		if err := os.WriteFile(distPath+"/"+dstDir+"/"+lang+".txt.gz", compressed.Bytes(), os.FileMode(0664)); err != nil {
+			return fmt.Errorf("error writing %s: %w", dstDir, err)
+		}
 	}
 
 	return nil
@@ -374,18 +370,8 @@ func generateBinFile(varName string, data []byte) []byte {
 	w := gzip.NewWriter(&compressed)
 	w.Write(data)
 	w.Close()
-	encoded := base64.StdEncoding.EncodeToString(compressed.Bytes())
 
-	// create our output
-	output := &bytes.Buffer{}
-
-	// write our header
-	output.WriteString("package gen\n\nvar ")
-	output.WriteString(varName)
-	output.WriteString(" = ")
-	output.WriteString(strconv.Quote(string(encoded)))
-	output.WriteString("\n")
-	return output.Bytes()
+	return compressed.Bytes()
 }
 
 func readMappingsForDir(dir string) (map[int]string, error) {
