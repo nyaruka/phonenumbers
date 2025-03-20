@@ -1,3 +1,10 @@
+v1.6.0 (2025-03-20)
+-------------------------
+ * Fix copying mutex in number desc
+ * Update dependencies
+ * Bump supported go versions
+ * Optimize package initialization
+
 v1.5.0 (2025-01-18)
 -------------------------
  * Add shortnumber emergency functions
