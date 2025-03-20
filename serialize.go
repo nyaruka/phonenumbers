@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
-	fmt "fmt"
+	"fmt"
 	"io"
 	"math"
 	"strings"
