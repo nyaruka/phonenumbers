@@ -475,6 +475,18 @@ var (
 		52: true, // Mexico
 	}
 
+	// Set of country calling codes that have geographically assigned mobile numbers. This may not be
+	// complete; we add calling codes case by case, as we find geographical mobile numbers or hear
+	// from user reports. Note that countries like the US, where we can't distinguish between
+	// fixed-line or mobile numbers, are not listed here, since we consider FIXED_LINE_OR_MOBILE to be
+	// a possibly geographically-related type anyway (like FIXED_LINE).
+	GEO_MOBILE_COUNTRIES = map[int32]bool{
+		52: true, // Mexico
+		54: true, // Argentina
+		55: true, // Brazil
+		62: true, // Indonesia: some prefixes only (fixed CMDA wireless)
+	}
+
 	dataLoadMutex = sync.Mutex{}
 )
 
@@ -1110,10 +1122,9 @@ func formattingRuleHasFirstGroupOnly(nationalPrefixFormattingRule string) bool {
 // updated too.
 func isNumberGeographical(phoneNumber *PhoneNumber) bool {
 	numberType := GetNumberType(phoneNumber)
-	// TODO: Include mobile phone numbers from countries like Indonesia,
-	// which has some mobile numbers that are geographical.
 	return numberType == FIXED_LINE ||
-		numberType == FIXED_LINE_OR_MOBILE
+		numberType == FIXED_LINE_OR_MOBILE ||
+		(GEO_MOBILE_COUNTRIES[phoneNumber.GetCountryCode()] && numberType == MOBILE)
 }
 
 // Helper function to check region code is not unknown or null.
