@@ -1,3 +1,7 @@
+v1.6.3 (2025-05-22)
+-------------------------
+ * Update metadata
+
 v1.6.2 (2025-05-22)
 -------------------------
  * Update isNumberGeographical to consider GEO_MOBILE_COUNTRIES
