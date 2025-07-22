@@ -216,7 +216,7 @@ func TestIsValidNumber(t *testing.T) {
 		{input: "712276797", region: "RO", err: nil, isValid: true},
 		{input: "8409990936", region: "US", err: nil, isValid: true},
 		{input: "03260000000", region: "PK", err: nil, isValid: true},
-		{input: "+85247431471", region: "JK", err: nil, isValid: true},
+		{input: "+85247431471", region: "HK", err: nil, isValid: true},
 	}
 
 	for _, tc := range tests {
