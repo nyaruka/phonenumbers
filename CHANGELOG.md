@@ -1,3 +1,9 @@
+v1.6.6 (2025-10-10)
+-------------------------
+ * Merge pull request #211 from nyaruka/update_metadata
+ * Update test for DE format number size
+ * Update metadata
+
 v1.6.5 (2025-08-11)
 -------------------------
  * Update metadata
