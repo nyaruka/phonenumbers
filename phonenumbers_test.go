@@ -1189,7 +1189,7 @@ func TestParsing(t *testing.T) {
 		{"+22658125926", "", "+22658125926"},
 		{"+2203693200", "", "+2203693200"},
 		{"0877747666", "ID", "+62877747666"},
-		{"62816640000", "ID", "+6262816640000"},
+		{"62816640000", "ID", "+62816640000"},
 		{"2349090000001", "NG", "+2349090000001"},
 		{"6282240080000", "ID", "+6282240080000"},
 	}
@@ -1726,6 +1726,88 @@ func TestGetSafeCarrierDisplayNameForNumber(t *testing.T) {
 		if test.expected != carrier {
 			t.Errorf("Expected '%s', got '%s' for '%s'", test.expected, carrier, test.num)
 		}
+	}
+}
+
+func TestIndonesiaMinLengthNumber(t *testing.T) {
+	// Mobile phone numbers typically have a total of 9 to 12 digits (excluding the country code, +62).
+	// Prepaid services usually range from 10 to 12 digits, while postpaid can be 9 to 11 digits.
+	tests := []struct {
+		name     string
+		num      string
+		expected string
+	}{
+		{
+			name:     "should be valid indonesian number with 9 digits.",
+			num:      "811258591",
+			expected: "+62811258591",
+		},
+		{
+			name:     "should be valid indonesian number with 10 digits.",
+			num:      "8112585891",
+			expected: "+628112585891",
+		},
+		{
+			name:     "should be valid indonesian number with 11 digits.",
+			num:      "81125858913",
+			expected: "+6281125858913",
+		},
+		{
+			name:     "should be valid indonesian number with 12 digits.",
+			num:      "811258581235",
+			expected: "+62811258581235",
+		},
+		{
+			name:     "should be valid indonesian number with 9 digits.",
+			num:      "0811258591",
+			expected: "+62811258591",
+		},
+		{
+			name:     "should be valid indonesian number with 10 digits.",
+			num:      "08112585891",
+			expected: "+628112585891",
+		},
+		{
+			name:     "should be valid indonesian number with 11 digits.",
+			num:      "081125858913",
+			expected: "+6281125858913",
+		},
+		{
+			name:     "should be valid indonesian number with 12 digits.",
+			num:      "0811258581235",
+			expected: "+62811258581235",
+		},
+		{
+			name:     "should be valid indonesian number with 9 digits with format E14, include country code 62.",
+			num:      "62811258591",
+			expected: "+62811258591",
+		},
+		{
+			name:     "should be valid indonesian number with 10 digits with format E14, include country code 62.",
+			num:      "628112585891",
+			expected: "+628112585891",
+		},
+		{
+			name:     "should be valid indonesian number with 11 digits with format E14, include country code 62.",
+			num:      "6281125858913",
+			expected: "+6281125858913",
+		},
+		{
+			name:     "should be valid indonesian number with 12 digits with format E14, include country code 62.",
+			num:      "62811258581235",
+			expected: "+62811258581235",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			num, err := Parse(test.num, "ID")
+			if err != nil {
+				t.Errorf("Failed to parse number %s: %s", test.num, err)
+			}
+			result := Format(num, E164)
+			assert.Equal(t, test.expected, result, "Unexpected result for num: %s", test.name)
+		})
 	}
 }
 
