@@ -1,3 +1,7 @@
+v1.6.7 (2025-11-12)
+-------------------------
+ * Update metadata
+
 v1.6.6 (2025-10-10)
 -------------------------
  * Merge pull request #211 from nyaruka/update_metadata
