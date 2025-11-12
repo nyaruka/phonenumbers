@@ -2661,8 +2661,14 @@ func maybeExtractCountryCode(
 			fullValid := validNumberPattern.MatchString(fullNumber.String())
 			nationalValid := validNumberPattern.MatchString(potentialNationalNumber.String())
 			lengthValid := testNumberLength(fullNumber.String(), defaultRegionMetadata, UNKNOWN)
+			shouldStrip := (!fullValid && nationalValid) || lengthValid == TOO_LONG
 
-			if (!fullValid && nationalValid) || lengthValid == TOO_LONG {
+			// validate additional rules by country
+			if !shouldStrip && nationalValid {
+				shouldStrip = getAdditionalRulesByRegion(potentialNationalNumber.String(), defaultRegionMetadata.GetId())
+			}
+
+			if shouldStrip {
 				nationalNumber.Write(potentialNationalNumber.Bytes())
 				if keepRawInput {
 					val := PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN
@@ -2676,6 +2682,18 @@ func maybeExtractCountryCode(
 	// No country calling code present.
 	phoneNumber.CountryCode = proto.Int32(0)
 	return 0, nil
+}
+
+func getAdditionalRulesByRegion(potentialNationalNumber string, region string) bool {
+	// Indonesian mobile numbers / landline that already include the country code are 8-12 digits
+	var shouldStrip = false
+	if region == "ID" {
+		if len(potentialNationalNumber) >= 8 && len(potentialNationalNumber) <= 12 {
+			shouldStrip = true
+		}
+	}
+
+	return shouldStrip
 }
 
 // Strips the IDD from the start of the number if present. Helper function
