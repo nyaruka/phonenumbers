@@ -1732,11 +1732,36 @@ func TestGetSafeCarrierDisplayNameForNumber(t *testing.T) {
 func TestIndonesiaMinLengthNumber(t *testing.T) {
 	// Mobile phone numbers typically have a total of 9 to 12 digits (excluding the country code, +62).
 	// Prepaid services usually range from 10 to 12 digits, while postpaid can be 9 to 11 digits.
+
+	// Landline Phone Numbers
+	// Minimum length: 7 digits (in non-major cities/areas, excluding area code)
+	// Maximum length: 8 digits (in large cities, excluding area code)
+	// When including the area code (which varies in length), landline numbers typically total around 11 digits.
+
+	// International Format
+	// When dialing internationally, the country code +62 is used, and the leading 0 (used for domestic long distance calls) is omitted.
+	// The total number length, including the country code, adheres to the international E.164 standard maximum of 15 digits.
+
 	tests := []struct {
 		name     string
 		num      string
 		expected string
 	}{
+		{
+			name:     "should be valid indonesian landline jakarta.",
+			num:      "0213456789",
+			expected: "+62213456789",
+		},
+		{
+			name:     "should be valid indonesian landline jakarta without zero.",
+			num:      "213456789",
+			expected: "+62213456789",
+		},
+		{
+			name:     "should be valid indonesian landline jakarta with format E14.",
+			num:      "62213456789",
+			expected: "+62213456789",
+		},
 		{
 			name:     "should be valid indonesian number with 9 digits.",
 			num:      "811258591",
@@ -1758,22 +1783,22 @@ func TestIndonesiaMinLengthNumber(t *testing.T) {
 			expected: "+62811258581235",
 		},
 		{
-			name:     "should be valid indonesian number with 9 digits.",
+			name:     "should be valid indonesian number with 9 digits, include zero.",
 			num:      "0811258591",
 			expected: "+62811258591",
 		},
 		{
-			name:     "should be valid indonesian number with 10 digits.",
+			name:     "should be valid indonesian number with 10 digits, include zero.",
 			num:      "08112585891",
 			expected: "+628112585891",
 		},
 		{
-			name:     "should be valid indonesian number with 11 digits.",
+			name:     "should be valid indonesian number with 11 digits, include zero.",
 			num:      "081125858913",
 			expected: "+6281125858913",
 		},
 		{
-			name:     "should be valid indonesian number with 12 digits.",
+			name:     "should be valid indonesian number with 12 digits, include zero.",
 			num:      "0811258581235",
 			expected: "+62811258581235",
 		},
