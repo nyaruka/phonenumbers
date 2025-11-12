@@ -1748,6 +1748,36 @@ func TestIndonesiaMinLengthNumber(t *testing.T) {
 		expected string
 	}{
 		{
+			name:     "should be valid indonesian landline pematang siantar longer.",
+			num:      "0622425678",
+			expected: "+62622425678",
+		},
+		{
+			name:     "should be valid indonesian landline pematang siantar longer without zero.",
+			num:      "622425678",
+			expected: "+62622425678",
+		},
+		{
+			name:     "should be valid indonesian landline pematang siantar longer format E14.",
+			num:      "62622425678",
+			expected: "+62622425678",
+		},
+		{
+			name:     "should be valid indonesian landline pematang siantar.",
+			num:      "062221234",
+			expected: "+6262221234",
+		},
+		{
+			name:     "should be valid indonesian landline pematang siantar without zero.",
+			num:      "62221234",
+			expected: "+6262221234",
+		},
+		{
+			name:     "should be valid indonesian landline pematang siantar format E14.",
+			num:      "6262221234",
+			expected: "+6262221234",
+		},
+		{
 			name:     "should be valid indonesian landline jakarta.",
 			num:      "0213456789",
 			expected: "+62213456789",

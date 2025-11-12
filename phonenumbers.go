@@ -2685,11 +2685,10 @@ func maybeExtractCountryCode(
 }
 
 func getAdditionalRulesByRegion(potentialNationalNumber string, region string) bool {
-	// Indonesian mobile numbers that already include the country code are 9-12 digits
+	// Indonesian mobile numbers / landline that already include the country code are 8-12 digits
 	var shouldStrip = false
 	if region == "ID" {
-		local := potentialNationalNumber
-		if len(local) >= 9 && len(local) <= 12 {
+		if len(potentialNationalNumber) >= 8 && len(potentialNationalNumber) <= 12 {
 			shouldStrip = true
 		}
 	}
