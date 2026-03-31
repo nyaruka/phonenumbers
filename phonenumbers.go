@@ -82,6 +82,10 @@ const (
 
 	NANPA_COUNTRY_CODE = 1
 
+	// The prefix that needs to be inserted in front of a Colombian
+	// landline number when dialed from a mobile phone in Colombia.
+	COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX = "3"
+
 	// The PLUS_SIGN signifies the international prefix.
 	PLUS_SIGN = '+'
 
@@ -120,6 +124,7 @@ var (
 	// the length of the national destination code, which should be the
 	// length of the area code plus the length of the mobile token.
 	MOBILE_TOKEN_MAPPINGS = map[int]string{
+		52: "1",
 		54: "9",
 	}
 
@@ -140,7 +145,6 @@ var (
 		'0':       '0',
 		PLUS_SIGN: PLUS_SIGN,
 		'*':       '*',
-		'#':       '#',
 	}
 
 	// Only upper-case variants of alpha characters are stored.
@@ -175,17 +179,19 @@ var (
 
 	// For performance reasons, amalgamate both into one map.
 	ALPHA_PHONE_MAPPINGS = map[rune]rune{
-		'0': '0',
-		'1': '1',
-		'2': '2',
-		'3': '3',
-		'4': '4',
-		'5': '5',
-		'6': '6',
-		'7': '7',
-		'8': '8',
-		'9': '9',
-		'A': '2',
+		'1':       '1',
+		'2':       '2',
+		'3':       '3',
+		'4':       '4',
+		'5':       '5',
+		'6':       '6',
+		'7':       '7',
+		'8':       '8',
+		'9':       '9',
+		'0':       '0',
+		PLUS_SIGN: PLUS_SIGN,
+		'*':       '*',
+		'A':       '2',
 		'B':       '2',
 		'C':       '2',
 		'D':       '3',
@@ -479,7 +485,6 @@ var (
 		54: true, // Argentina
 		55: true, // Brazil
 		62: true, // Indonesia: some prefixes only (fixed CMDA wireless)
-		86: true, // China
 	}
 
 	dataLoadMutex = sync.Mutex{}
@@ -1355,11 +1360,11 @@ func FormatNumberForMobileDialing(
 				numberType == MOBILE ||
 				numberType == FIXED_LINE_OR_MOBILE
 		// Carrier codes may be needed in some countries. We handle this here.
-		if regionCode == "BR" && isFixedLineOrMobile {
-			// Historically, we set this to an empty string when parsing with
-			// raw input if none was found in the input string. However, this
-			// doesn't result in a number we can dial. For this reason, we
-			// treat the empty string the same as if it isn't set at all.
+		if regionCode == "CO" && numberType == FIXED_LINE {
+			formattedNumber =
+				FormatNationalNumberWithCarrierCode(
+					numberNoExt, COLOMBIA_MOBILE_TO_FIXED_LINE_PREFIX)
+		} else if regionCode == "BR" && isFixedLineOrMobile {
 			if numberNoExt.GetPreferredDomesticCarrierCode() != "" {
 				formattedNumber =
 					FormatNationalNumberWithPreferredCarrierCode(numberNoExt, "")
@@ -1370,6 +1375,16 @@ func FormatNumberForMobileDialing(
 				// Because of that, we return an empty string here.
 				formattedNumber = ""
 			}
+		} else if isValidNumber && regionCode == "HU" {
+			// The national format for HU numbers doesn't contain the
+			// national prefix, because that is how numbers are normally
+			// written down. However, the national prefix is obligatory when
+			// dialing from a mobile phone, except for short numbers. As a
+			// result, we add it back here
+			// if it is a valid regular length phone number.
+			formattedNumber =
+				GetNddPrefixForRegion(regionCode, true /* strip non-digits */) +
+					" " + Format(numberNoExt, NATIONAL)
 		} else if countryCallingCode == NANPA_COUNTRY_CODE {
 			// For NANPA countries, we output international format for
 			// numbers that can be dialed internationally, since that
