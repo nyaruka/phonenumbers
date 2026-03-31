@@ -418,13 +418,13 @@ var (
 
 	// Regexp of all known extension prefixes used by different regions
 	// followed by 1 or more valid digits, for use when parsing.
-	EXTN_PATTERN = regexp.MustCompile("(?:" + EXTN_PATTERNS_FOR_PARSING + ")$")
+	EXTN_PATTERN = regexp.MustCompile("(?i)(?:" + EXTN_PATTERNS_FOR_PARSING + ")$")
 
 	// We append optionally the extension pattern to the end here, as a
 	// valid phone number may have an extension prefix appended,
 	// followed by 1 or more digits.
 	VALID_PHONE_NUMBER_PATTERN = regexp.MustCompile(
-		"^(" + VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?)$")
+		"(?i)^(" + VALID_PHONE_NUMBER + "(?:" + EXTN_PATTERNS_FOR_PARSING + ")?)$")
 
 	NON_DIGITS_PATTERN = regexp.MustCompile(`(\D+)`)
 	DIGITS_PATTERN     = regexp.MustCompile(`(\d+)`)
@@ -443,7 +443,7 @@ var (
 	// formatting rule has the first group only, i.e., does not start
 	// with the national prefix. Note that the pattern explicitly allows
 	// for unbalanced parentheses.
-	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile(`\(?\$1\)?`)
+	FIRST_GROUP_ONLY_PREFIX_PATTERN = regexp.MustCompile(`^\(?\$1\)?$`)
 
 	REGION_CODE_FOR_NON_GEO_ENTITY = "001"
 
@@ -1049,7 +1049,7 @@ func GetLengthOfNationalDestinationCode(number *PhoneNumber) int {
 		// from the rest of the phone number.
 		mobileToken := GetCountryMobileToken(int(number.GetCountryCode()))
 		if mobileToken != "" {
-			return len(numberGroups[1]) + len(numberGroups[2])
+			return len(numberGroups[2]) + len(numberGroups[3])
 		}
 	}
 	return len(numberGroups[2])
@@ -1413,10 +1413,10 @@ func FormatNumberForMobileDialing(
 			// format, but don't have it when used for display. The reverse
 			// is true for mobile numbers. As a result, we output them in
 			// the international format to make it work.
-			if regionCode == REGION_CODE_FOR_NON_GEO_ENTITY ||
+			if (regionCode == REGION_CODE_FOR_NON_GEO_ENTITY ||
 				((regionCode == "MX" || regionCode == "CL" || regionCode == "UZ") &&
-					isFixedLineOrMobile) &&
-					canBeInternationallyDialled(numberNoExt) {
+					isFixedLineOrMobile)) &&
+				canBeInternationallyDialled(numberNoExt) {
 				formattedNumber = Format(numberNoExt, INTERNATIONAL)
 			} else {
 				formattedNumber = Format(numberNoExt, NATIONAL)
@@ -1761,6 +1761,8 @@ func FormatOutOfCountryKeepingAlphaChars(
 	regionCode := GetRegionCodeForCountryCode(countryCode)
 	// Metadata cannot be null because the country calling code is valid.
 	var metadataForRegion *PhoneMetadata = getMetadataForRegionOrCallingCode(countryCode, regionCode)
+	// Strip any extension from the raw input before appending the formatted extension.
+	maybeStripExtension(formattedNumber)
 	maybeAppendFormattedExtension(number, metadataForRegion,
 		INTERNATIONAL, formattedNumber)
 	if len(internationalPrefixForFormatting) > 0 {
@@ -1939,7 +1941,7 @@ func formatNsnUsingPatternWithCarrier(
 				}
 				return s
 			})
-		formattedNationalNumber = m.ReplaceAllString(numberFormatRule, nationalNumber)
+		formattedNationalNumber = m.ReplaceAllString(nationalNumber, numberFormatRule)
 	} else {
 		// Use the national prefix formatting rule instead.
 		nationalPrefixFormattingRule :=
@@ -2768,7 +2770,7 @@ func maybeStripNationalPrefixAndCarrierCode(
 					number.String()[groups[1]:]) { // groups[1] == last match idx
 				return false
 			}
-			if len(carrierCode.Bytes()) != 0 &&
+			if carrierCode != nil &&
 				numOfGroups > 0 &&
 				groups[numOfGroups*2] > 0 { // Negative idx means subgroup did not match
 				carrierCode.Write(number.Bytes()[groups[numOfGroups*2]:groups[numOfGroups*2+1]])
@@ -2785,7 +2787,7 @@ func maybeStripNationalPrefixAndCarrierCode(
 				!nationalNumberRule.Match(transformedNumBytes) {
 				return false
 			}
-			if len(carrierCode.Bytes()) != 0 && numOfGroups > 1 && groups[2] != -1 { // Check group(1) got a submatch
+			if carrierCode != nil && numOfGroups > 1 && groups[2] != -1 { // Check group(1) got a submatch
 				carrC := numString[groups[2]:groups[3]] // group(1) idxs
 				carrierCode.WriteString(carrC)
 			}
@@ -3060,7 +3062,7 @@ func parseHelper(
 		validationResult := testNumberLength(potentialNationalNumber.String(), regionMetadata, UNKNOWN)
 		if validationResult != TOO_SHORT && validationResult != IS_POSSIBLE_LOCAL_ONLY && validationResult != INVALID_LENGTH {
 			normalizedNationalNumber = potentialNationalNumber
-			if keepRawInput {
+			if keepRawInput && carrierCode.Len() > 0 {
 				phoneNumber.PreferredDomesticCarrierCode =
 					proto.String(carrierCode.String())
 			}
