@@ -1512,7 +1512,7 @@ func TestMaybeStripExtension(t *testing.T) {
 		},
 		// Single comma extension
 		{
-			input:     "+442034000000,,123456789#",
+			input:     "+442034000000,123456789#",
 			number:    2034000000,
 			extension: "123456789",
 			region:    "GB",

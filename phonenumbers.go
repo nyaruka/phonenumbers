@@ -406,13 +406,16 @@ var (
 
 	// Regexp of all possible ways to write extensions, for use when
 	// parsing. This will be run as a case-insensitive regexp match.
-	// Note that there are currently six capturing groups for the
-	// extension itself — if this number is changed,
-	// maybeStripExtension needs to be updated.
+	// maybeStripExtension iterates over all submatches of this pattern
+	// and assumes that every capturing group corresponds to the
+	// extension digits. When modifying this regexp, ensure that any
+	// non-extension grouping uses non-capturing groups (?:...) so as
+	// not to introduce additional capturing groups that would break
+	// extension parsing.
 	//
 	// The first regular expression covers RFC 3966 format, where the
-	// extension is added using ";ext=". The second more generic where
-	// extension is mentioned with explicit labels like "ext:". In both
+	// extension is added using ";ext=". The second is a more generic
+	// expression where the extension is mentioned with explicit labels like "ext:". In both
 	// cases we allow more digits. The third captures when single
 	// character extension labels or less commonly used labels are used,
 	// with fewer extension digits to reduce false positives. The fourth
