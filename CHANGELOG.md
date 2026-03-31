@@ -1,3 +1,8 @@
+v1.6.13 (2026-03-31)
+-------------------------
+ * Update metadata
+ * Change to use slices instead of exp/slices
+
 v1.6.12 (2026-03-17)
 -------------------------
  * Update metadata
