@@ -1,7 +1,7 @@
 package phonenumbers
 
 import (
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"google.golang.org/protobuf/proto"
 )

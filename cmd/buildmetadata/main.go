@@ -5,16 +5,17 @@ import (
 	"compress/gzip"
 	"encoding/binary"
 	"fmt"
+	"maps"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/nyaruka/phonenumbers"
-	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -203,8 +204,7 @@ func buildPrefixMetadata(srcDir, varName, dstDir string) error {
 		languageMappings[filepath.Base(dir)] = mappings
 	}
 
-	langs := maps.Keys(languageMappings)
-	sort.Strings(langs)
+	langs := slices.Sorted(maps.Keys(languageMappings))
 
 	for _, lang := range langs {
 		mappings := languageMappings[lang]
