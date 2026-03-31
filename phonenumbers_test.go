@@ -856,7 +856,7 @@ func TestIsNumberGeographical(t *testing.T) {
 	assert.True(t, isNumberGeographical(getTestNumber("AU_NUMBER")), "Australia should be geographical")
 	assert.False(t, isNumberGeographical(getTestNumber("INTERNATIONAL_TOLL_FREE")), "international toll free should not be geographical")
 
-	// Chinese mobile numbers are geographical (they have area codes)
+	// Chinese mobile numbers are geo-mobile (geographically assigned) but not via distinct mobile area codes
 	cnMobile := newPhoneNumber(86, 18912341234)
 	assert.True(t, isNumberGeographical(cnMobile), "Chinese mobile numbers should be geographical")
 }
