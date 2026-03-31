@@ -380,35 +380,66 @@ var (
 	// overridden by region-specific preferences.
 	DEFAULT_EXTN_PREFIX = " ext. "
 
-	// Pattern to capture digits used in an extension. Places a maximum
-	// length of "7" for an extension.
-	CAPTURING_EXTN_DIGITS = "(" + DIGITS + "{1,7})"
+	// We cap the maximum length of an extension based on the ambiguity of
+	// the way the extension is prefixed. As per ITU, the officially allowed
+	// length for extensions is actually 40, but we don't support this since
+	// we haven't seen real examples and this introduces many false
+	// interpretations as the extension labels are not standardized.
+
+	possibleSeparatorsBetweenNumberAndExtLabel = "[ \u00A0\\t,]*"
+	// Optional full stop (.) or colon, followed by zero or more spaces/tabs/commas.
+	possibleCharsAfterExtLabel = "[:\\.\uFF0E]?[ \u00A0\\t,-]*"
+	optionalExtnSuffix         = "#?"
+
+	// Here the extension is called out in a more explicit way, i.e.
+	// mentioning it with obvious patterns like "ext.".
+	// Canonical-equivalence doesn't seem to be an option with Android
+	// java, so we allow two options for representing the accented o -
+	// the character itself, and one in the unicode decomposed form
+	// with the combining acute accent.
+	explicitExtLabels = "(?:e?xt(?:ensi(?:o\u0301?|\u00F3))?n?|" +
+		"\uFF45?\uFF58\uFF54\uFF4E?|\u0434\u043E\u0431|anexo)"
+	// One-character symbols that can be used to indicate an extension,
+	// and less commonly used or more ambiguous extension labels.
+	ambiguousExtLabels = "(?:[x\uFF58#\uFF03~\uFF5E]|int|\uFF49\uFF4E\uFF54)"
+	ambiguousSeparator = "[- ]+"
 
 	// Regexp of all possible ways to write extensions, for use when
 	// parsing. This will be run as a case-insensitive regexp match.
-	// Wide character versions are also provided after each ASCII version.
-	// There are three regular expressions here. The first covers RFC 3966
-	// format, where the extension is added using ";ext=". The second more
-	// generic one starts with optional white space and ends with an
-	// optional full stop (.), followed by zero or more spaces/tabs and then
-	// the numbers themselves. The other one covers the special case of
-	// American numbers where the extension is written with a hash at the
-	// end, such as "- 503#". Note that the only capturing groups should
-	// be around the digits that you want to capture as part of the
-	// extension, or else parsing will fail! Canonical-equivalence doesn't
-	// seem to be an option with Android java, so we allow two options
-	// for representing the accented o - the character itself, and one in
-	// the unicode decomposed form with the combining acute accent.
-	EXTN_PATTERNS_FOR_PARSING = RFC3966_EXTN_PREFIX + CAPTURING_EXTN_DIGITS + "|" + "[ \u00A0\\t,]*" +
-		"(?:e?xt(?:ensi(?:o\u0301?|\u00F3))?n?|\uFF45?\uFF58\uFF54\uFF4E?|" +
-		"[;,x\uFF58#\uFF03~\uFF5E]|int|anexo|\uFF49\uFF4E\uFF54)" +
-		"[:\\.\uFF0E]?[ \u00A0\\t,-]*" + CAPTURING_EXTN_DIGITS + "#?|" +
-		"[- ]+(" + DIGITS + "{1,5})#"
-	EXTN_PATTERNS_FOR_MATCHING = RFC3966_EXTN_PREFIX + CAPTURING_EXTN_DIGITS + "|" + "[ \u00A0\\t,]*" +
-		"(?:e?xt(?:ensi(?:o\u0301?|\u00F3))?n?|\uFF45?\uFF58\uFF54\uFF4E?|" +
-		"[x\uFF58#\uFF03~\uFF5E]|int|anexo|\uFF49\uFF4E\uFF54)" +
-		"[:\\.\uFF0E]?[ \u00A0\\t,-]*" + CAPTURING_EXTN_DIGITS + "#?|" +
-		"[- ]+(" + DIGITS + "{1,5})#"
+	// maybeStripExtension iterates over all submatches of this pattern
+	// and assumes that every capturing group corresponds to the
+	// extension digits. When modifying this regexp, ensure that any
+	// non-extension grouping uses non-capturing groups (?:...) so as
+	// not to introduce additional capturing groups that would break
+	// extension parsing.
+	//
+	// The first regular expression covers RFC 3966 format, where the
+	// extension is added using ";ext=". The second is a more generic
+	// expression where the extension is mentioned with explicit labels like "ext:". In both
+	// cases we allow more digits. The third captures when single
+	// character extension labels or less commonly used labels are used,
+	// with fewer extension digits to reduce false positives. The fourth
+	// covers American numbers where the extension is written with a
+	// hash at the end, such as "- 503#".
+	EXTN_PATTERNS_FOR_MATCHING = RFC3966_EXTN_PREFIX + "(" + DIGITS + "{1,20})" + "|" +
+		possibleSeparatorsBetweenNumberAndExtLabel + explicitExtLabels +
+		possibleCharsAfterExtLabel + "(" + DIGITS + "{1,20})" + optionalExtnSuffix + "|" +
+		possibleSeparatorsBetweenNumberAndExtLabel + ambiguousExtLabels +
+		possibleCharsAfterExtLabel + "(" + DIGITS + "{1,9})" + optionalExtnSuffix + "|" +
+		ambiguousSeparator + "(" + DIGITS + "{1,6})#"
+
+	// Additional patterns supported when parsing extensions, not when matching.
+	// ",," is commonly used for auto dialling the extension when connected.
+	// Semi-colon works on iPhone and Android to pop up a button with the
+	// extension number following.
+	possibleSeparatorsNumberExtLabelNoComma = "[ \u00A0\\t]*"
+	autoDiallingAndExtLabelsFound           = "(?:,{2}|;)"
+
+	EXTN_PATTERNS_FOR_PARSING = EXTN_PATTERNS_FOR_MATCHING + "|" +
+		possibleSeparatorsNumberExtLabelNoComma + autoDiallingAndExtLabelsFound +
+		possibleCharsAfterExtLabel + "(" + DIGITS + "{1,15})" + optionalExtnSuffix + "|" +
+		possibleSeparatorsNumberExtLabelNoComma + "(?:,)+" +
+		possibleCharsAfterExtLabel + "(" + DIGITS + "{1,9})" + optionalExtnSuffix
 
 	// Regexp of all known extension prefixes used by different regions
 	// followed by 1 or more valid digits, for use when parsing.

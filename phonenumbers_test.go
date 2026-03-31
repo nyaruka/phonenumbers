@@ -1476,6 +1476,89 @@ func TestMaybeStripExtension(t *testing.T) {
 			extension: "123",
 			region:    "US",
 		},
+		// Russian extension label "доб"
+		{
+			input:     "8 (423) 202-25-11, \u0434\u043E\u0431. 100",
+			number:    4232022511,
+			extension: "100",
+			region:    "RU",
+		},
+		{
+			input:     "8 (423) 202-25-11 \u0434\u043E\u0431 100",
+			number:    4232022511,
+			extension: "100",
+			region:    "RU",
+		},
+		// Russian extension label uppercase "ДОБ"
+		{
+			input:     "8 (423) 202-25-11, \u0414\u041E\u0411. 100",
+			number:    4232022511,
+			extension: "100",
+			region:    "RU",
+		},
+		// Auto-dialling with ",,"
+		{
+			input:     "+12679000000,,123456789012345#",
+			number:    2679000000,
+			extension: "123456789012345",
+			region:    "US",
+		},
+		// Auto-dialling with ";"
+		{
+			input:     "+12679000000;123456789012345#",
+			number:    2679000000,
+			extension: "123456789012345",
+			region:    "US",
+		},
+		// Single comma extension
+		{
+			input:     "+442034000000,123456789#",
+			number:    2034000000,
+			extension: "123456789",
+			region:    "GB",
+		},
+		// Explicit label with up to 20 digits
+		{
+			input:     "03 3316005 xtn:12345678901234567890",
+			number:    33316005,
+			extension: "12345678901234567890",
+			region:    "NZ",
+		},
+		// RFC3966 with up to 20 digits
+		{
+			input:     "tel:+6433316005;ext=01234567890123456789",
+			number:    33316005,
+			extension: "01234567890123456789",
+			region:    "NZ",
+		},
+		// Ambiguous char with up to 9 digits
+		{
+			input:     "03 3316005 x 123456789",
+			number:    33316005,
+			extension: "123456789",
+			region:    "NZ",
+		},
+		// Trailing # with up to 6 digits
+		{
+			input:     "+11234567890 666666#",
+			number:    1234567890,
+			extension: "666666",
+			region:    "US",
+		},
+		// extensión with accented o
+		{
+			input:     "(800) 901-3355 ,extensi\u00F3n 7246433",
+			number:    8009013355,
+			extension: "7246433",
+			region:    "US",
+		},
+		// Full-width extension "ｅｘｔｎ"
+		{
+			input:     "+442034567890\uFF45\uFF58\uFF54\uFF4E456",
+			number:    2034567890,
+			extension: "456",
+			region:    "GB",
+		},
 	}
 
 	for i, test := range tests {
