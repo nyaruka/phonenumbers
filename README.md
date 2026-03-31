@@ -1,9 +1,9 @@
 # ☎️ phonenumbers 
 [![Build Status](https://github.com/nyaruka/phonenumbers/workflows/CI/badge.svg)](https://github.com/nyaruka/phonenumbers/actions?query=workflow%3ACI) 
 [![codecov](https://codecov.io/gh/nyaruka/phonenumbers/branch/main/graph/badge.svg)](https://codecov.io/gh/nyaruka/phonenumbers)
-[![GoDoc](https://godoc.org/github.com/nyaruka/phonenumbers?status.svg)](https://godoc.org/github.com/nyaruka/phonenumbers)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nyaruka/phonenumbers.svg)](https://pkg.go.dev/github.com/nyaruka/phonenumbers)
 
-golang port of Google's [libphonenumber](https://github.com/googlei18n/libphonenumber) forked from libphonenumber from [ttacon/libphonenumber](https://github.com/ttacon/libphonenumber). This library is used daily in production for parsing and validation of numbers across the world, so is well maintained. Please open an issue if you encounter any problems, we'll do our best to address them.
+Go port of Google's [libphonenumber](https://github.com/google/libphonenumber), forked from [ttacon/libphonenumber](https://github.com/ttacon/libphonenumber). This library is used daily in production for parsing and validation of numbers worldwide and is well maintained. Please open an issue if you encounter any problems, and we'll do our best to address them.
 
 > [!IMPORTANT]
 > The aim of this project is strictly to be a port and match as closely as possible the functionality in libphonenumber. Please don't submit feature requests for functionality that doesn't exist in libphonenumber.
@@ -40,6 +40,5 @@ It will rebuild the following files:
  * `gen/prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
 
 ```bash
-% go install github.com/nyaruka/phonenumbers/cmd/buildmetadata
-% $GOPATH/bin/buildmetadata
+% go run ./cmd/buildmetadata
 ```
