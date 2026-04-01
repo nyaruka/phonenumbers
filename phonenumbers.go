@@ -1508,10 +1508,10 @@ func FormatOutOfCountryCallingNumber(
 	// a preferred international prefix.
 	internationalPrefixForFormatting := ""
 	metPref := metadataForRegionCallingFrom.GetPreferredInternationalPrefix()
-	if UNIQUE_INTERNATIONAL_PREFIX.MatchString(internationalPrefix) {
-		internationalPrefixForFormatting = internationalPrefix
-	} else if metPref != "" {
+	if metPref != "" {
 		internationalPrefixForFormatting = metPref
+	} else if UNIQUE_INTERNATIONAL_PREFIX.MatchString(internationalPrefix) {
+		internationalPrefixForFormatting = internationalPrefix
 	}
 
 	regionCode := GetRegionCodeForCountryCode(countryCallingCode)
@@ -1546,7 +1546,7 @@ func FormatOutOfCountryCallingNumber(
 // modified as a result of formatting.
 func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) string {
 	rawInput := number.GetRawInput()
-	if len(rawInput) == 0 && !hasFormattingPatternForNumber(number) {
+	if len(rawInput) > 0 && !hasFormattingPatternForNumber(number) {
 		// We check if we have the formatting pattern because without that, we might format the number
 		// as a group without national prefix.
 		return rawInput
@@ -2789,7 +2789,7 @@ func maybeStripNationalPrefixAndCarrierCode(
 			if carrierCode != nil &&
 				numOfGroups > 0 &&
 				groups[numOfGroups*2] > 0 { // Negative idx means subgroup did not match
-				carrierCode.Write(number.Bytes()[groups[numOfGroups*2]:groups[numOfGroups*2+1]])
+				carrierCode.Write(number.Bytes()[groups[2]:groups[3]]) // always extract group(1) as carrier code
 			}
 			number.ResetWith(number.Bytes()[groups[1]:])
 			return true
