@@ -1,3 +1,7 @@
+v1.7.1 (2026-04-01)
+-------------------------
+ * Fix four logic differences with upstream libphonenumber
+
 v1.7.0 (2026-03-31)
 -------------------------
  * Fix behavioral differences with upstream libphonenumber
