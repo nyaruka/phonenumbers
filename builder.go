@@ -612,7 +612,7 @@ type TerritoryE struct {
 	NationalPrefixTransformRule string `xml:"nationalPrefixTransformRule,attr"`
 
 	// <!ATTLIST territory preferredExtnPrefix CDATA #IMPLIED>
-	PreferredExtnPrefix string `xml:"PreferredExtnPrefix"`
+	PreferredExtnPrefix string `xml:"preferredExtnPrefix,attr"`
 
 	// <!ATTLIST territory nationalPrefixOptionalWhenFormatting (true) #IMPLIED>
 	NationalPrefixOptionalWhenFormatting bool `xml:"nationalPrefixOptionalWhenFormatting,attr"`
