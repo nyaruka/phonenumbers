@@ -2461,7 +2461,7 @@ func testNumberLength(number string, metadata *PhoneMetadata, numberType PhoneNu
 
 	actualLength := int32(len(number))
 
-	// This is safe because there is never an overlap beween the possible lengths and the local-only
+	// This is safe because there is never an overlap between the possible lengths and the local-only
 	// lengths; this is checked at build time.
 	for _, l := range localLengths {
 		if l == actualLength {
@@ -3394,7 +3394,7 @@ func IsMobileNumberPortableRegion(regionCode string) bool {
 
 // GetTimezonesForPrefix returns a slice of Timezones corresponding to the number passed
 // or error when it is impossible to convert the string to int
-// The algorythm tries to match the timezones starting from the maximum
+// The algorithm tries to match the timezones starting from the maximum
 // number of phone number digits and decreasing until it finds one or reaches 0
 func GetTimezonesForPrefix(number string) ([]string, error) {
 	var err error

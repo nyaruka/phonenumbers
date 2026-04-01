@@ -63,7 +63,7 @@ func (b *Builder) Truncate(n int) {
 	b.lastRead = opInvalid
 	switch {
 	case n < 0 || n > b.Len():
-		// Originall this was a panic, but I hate panicing (hehe),
+		// Originally this was a panic, but I hate panicking (hehe),
 		// so instead let's just ignore this issue.
 		// panic("bytes.Buffer: truncation out of range")
 		return
