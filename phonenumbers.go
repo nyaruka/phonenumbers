@@ -2788,7 +2788,7 @@ func maybeStripNationalPrefixAndCarrierCode(
 			}
 			if carrierCode != nil &&
 				numOfGroups > 0 &&
-				groups[numOfGroups*2] > 0 { // Negative idx means subgroup did not match
+				groups[2] >= 0 && groups[3] >= 0 { // Ensure group(1) matched before slicing
 				carrierCode.Write(number.Bytes()[groups[2]:groups[3]]) // always extract group(1) as carrier code
 			}
 			number.ResetWith(number.Bytes()[groups[1]:])
