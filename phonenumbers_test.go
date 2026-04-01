@@ -122,7 +122,7 @@ func TestExtractPossibleNumber(t *testing.T) {
 	assert.Equal(t, "530) 583-6985 x302", extractPossibleNumber("(530) 583-6985 x302/x2303")) // yes, the leading '(' is missing
 }
 
-func TestIsViablePhoneNumer(t *testing.T) {
+func TestIsViablePhoneNumber(t *testing.T) {
 	var tests = []struct {
 		input    string
 		isViable bool

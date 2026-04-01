@@ -10,7 +10,7 @@ import (
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Println("usage: phoneparser [number] [two letter coutry]")
+		fmt.Println("usage: phoneparser [number] [two letter country]")
 		os.Exit(1)
 	}
 
