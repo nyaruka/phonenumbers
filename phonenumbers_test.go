@@ -1427,7 +1427,7 @@ func TestGetGeocodingForNumber(t *testing.T) {
 		{num: "+8613702032331", lang: "zh", expected: "天津市"},
 		{num: "+863197785050", lang: "zh", expected: "河北省邢台市"},
 		{num: "+8613323241342", lang: "en", expected: "Baoding, Hebei"},
-		{num: "+917999999543", lang: "en", expected: "Ahmedabad Local, Gujarat"},
+		{num: "+917999499543", lang: "en", expected: "Ahmedabad Local, Gujarat"},
 		{num: "+17047181840", lang: "en", expected: "North Carolina"},
 		{num: "+12542462158", lang: "en", expected: "Texas"},
 		{num: "+16193165996", lang: "en", expected: "California"},
