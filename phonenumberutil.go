@@ -1,10 +1,7 @@
 package phonenumbers
 
 import (
-	"embed"
 	"errors"
-	"fmt"
-	"io/fs"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -12,56 +9,15 @@ import (
 	"sync"
 	"unicode"
 
-	"golang.org/x/text/language"
-	"golang.org/x/text/language/display"
 	"google.golang.org/protobuf/proto"
 )
 
+// init must live in this file: Go runs package init() functions in lexical
+// filename order, and metadata loading depends on the protobuf types having
+// been registered by phonemetadata.pb.go / phonenumber.pb.go first. This
+// filename sorts after both, preserving that ordering.
 func init() {
 	initMetadata()
-}
-
-func initMetadata() {
-	// load our regions
-	regionMap, err := loadIntArrayMap(regionData)
-	if err != nil {
-		panic(err)
-	}
-	countryCodeToRegion = regionMap.Map
-
-	// then our metadata
-	if err = loadMetadataFromFile(); err != nil {
-		panic(err)
-	}
-
-	for eKey, regionCodes := range countryCodeToRegion {
-		// We can assume that if the county calling code maps to the
-		// non-geo entity region code then that's the only region code
-		// it maps to.
-		if len(regionCodes) == 1 && REGION_CODE_FOR_NON_GEO_ENTITY == regionCodes[0] {
-			// This is the subset of all country codes that map to the
-			// non-geo entity region code.
-			countryCodesForNonGeographicalRegion[eKey] = true
-		} else {
-			// The supported regions set does not include the "001"
-			// non-geo entity region code.
-			for _, val := range regionCodes {
-				supportedRegions[val] = true
-			}
-		}
-
-		supportedCallingCodes[eKey] = true
-	}
-	// If the non-geo entity still got added to the set of supported
-	// regions it must be because there are entries that list the non-geo
-	// entity alongside normal regions (which is wrong). If we discover
-	// this, remove the non-geo entity from the set of supported regions
-	// and log (or not log).
-	delete(supportedRegions, REGION_CODE_FOR_NON_GEO_ENTITY)
-
-	for _, val := range countryCodeToRegion[NANPA_COUNTRY_CODE] {
-		writeToNanpaRegions(val, struct{}{})
-	}
 }
 
 const (
@@ -186,31 +142,31 @@ var (
 		'8': '8',
 		'9': '9',
 		'A': '2',
-		'B':       '2',
-		'C':       '2',
-		'D':       '3',
-		'E':       '3',
-		'F':       '3',
-		'G':       '4',
-		'H':       '4',
-		'I':       '4',
-		'J':       '5',
-		'K':       '5',
-		'L':       '5',
-		'M':       '6',
-		'N':       '6',
-		'O':       '6',
-		'P':       '7',
-		'Q':       '7',
-		'R':       '7',
-		'S':       '7',
-		'T':       '8',
-		'U':       '8',
-		'V':       '8',
-		'W':       '9',
-		'X':       '9',
-		'Y':       '9',
-		'Z':       '9',
+		'B': '2',
+		'C': '2',
+		'D': '3',
+		'E': '3',
+		'F': '3',
+		'G': '4',
+		'H': '4',
+		'I': '4',
+		'J': '5',
+		'K': '5',
+		'L': '5',
+		'M': '6',
+		'N': '6',
+		'O': '6',
+		'P': '7',
+		'Q': '7',
+		'R': '7',
+		'S': '7',
+		'T': '8',
+		'U': '8',
+		'V': '8',
+		'W': '9',
+		'X': '9',
+		'Y': '9',
+		'Z': '9',
 	}
 
 	// Separate map of all symbols that we wish to retain when formatting
@@ -512,205 +468,15 @@ var (
 		62: true, // Indonesia: some prefixes only (fixed CMDA wireless)
 		86: true, // China
 	}
-
-	dataLoadMutex = sync.Mutex{}
 )
-
-// INTERNATIONAL and NATIONAL formats are consistent with the definition
-// in ITU-T Recommendation E123. For example, the number of the Google
-// Switzerland office will be written as "+41 44 668 1800" in
-// INTERNATIONAL format, and as "044 668 1800" in NATIONAL format. E164
-// format is as per INTERNATIONAL format but with no formatting applied,
-// e.g. "+41446681800". RFC3966 is as per INTERNATIONAL format, but with
-// all spaces and other separating symbols replaced with a hyphen, and
-// with any phone number extension appended with ";ext=". It also will
-// have a prefix of "tel:" added, e.g. "tel:+41-44-668-1800".
-//
-// Note: If you are considering storing the number in a neutral format,
-// you are highly advised to use the PhoneNumber class.
-
-type PhoneNumberFormat int
-
-const (
-	E164 PhoneNumberFormat = iota
-	INTERNATIONAL
-	NATIONAL
-	RFC3966
-)
-
-type PhoneNumberType int
-
-const (
-	// NOTES:
-	//
-	// FIXED_LINE_OR_MOBILE:
-	//     In some regions (e.g. the USA), it is impossible to distinguish
-	//     between fixed-line and mobile numbers by looking at the phone
-	//     number itself.
-	// SHARED_COST:
-	//     The cost of this call is shared between the caller and the
-	//     recipient, and is hence typically less than PREMIUM_RATE calls.
-	//     See // http://en.wikipedia.org/wiki/Shared_Cost_Service for
-	//     more information.
-	// VOIP:
-	//     Voice over IP numbers. This includes TSoIP (Telephony Service over IP).
-	// PERSONAL_NUMBER:
-	//     A personal number is associated with a particular person, and may
-	//     be routed to either a MOBILE or FIXED_LINE number. Some more
-	//     information can be found here:
-	//     http://en.wikipedia.org/wiki/Personal_Numbers
-	// UAN:
-	//     Used for "Universal Access Numbers" or "Company Numbers". They
-	//     may be further routed to specific offices, but allow one number
-	//     to be used for a company.
-	// VOICEMAIL:
-	//     Used for "Voice Mail Access Numbers".
-	// UNKNOWN:
-	//     A phone number is of type UNKNOWN when it does not fit any of
-	// the known patterns for a specific region.
-	FIXED_LINE PhoneNumberType = iota
-	MOBILE
-	FIXED_LINE_OR_MOBILE
-	TOLL_FREE
-	PREMIUM_RATE
-	SHARED_COST
-	VOIP
-	PERSONAL_NUMBER
-	PAGER
-	UAN
-	VOICEMAIL
-	UNKNOWN
-)
-
-type MatchType int
-
-const (
-	NOT_A_NUMBER MatchType = iota
-	NO_MATCH
-	SHORT_NSN_MATCH
-	NSN_MATCH
-	EXACT_MATCH
-)
-
-type ValidationResult int
-
-const (
-	IS_POSSIBLE ValidationResult = iota
-	INVALID_COUNTRY_CODE
-	TOO_SHORT
-	TOO_LONG
-	IS_POSSIBLE_LOCAL_ONLY
-	INVALID_LENGTH
-)
-
-// TODO(ttacon): leniency comments?
-type Leniency int
-
-const (
-	POSSIBLE Leniency = iota
-	VALID
-	STRICT_GROUPING
-	EXACT_GROUPING
-)
-
-func (l Leniency) Verify(number *PhoneNumber, candidate string) bool {
-
-	switch l {
-	case POSSIBLE:
-		return IsPossibleNumber(number)
-	case VALID:
-		if !IsValidNumber(number) ||
-			!ContainsOnlyValidXChars(number, candidate) {
-			return false
-		}
-		return IsNationalPrefixPresentIfRequired(number)
-	case STRICT_GROUPING:
-		if !IsValidNumber(number) ||
-			!ContainsOnlyValidXChars(number, candidate) ||
-			ContainsMoreThanOneSlashInNationalNumber(number, candidate) ||
-			!IsNationalPrefixPresentIfRequired(number) {
-			return false
-		}
-		return CheckNumberGroupingIsValid(number, candidate,
-			func(number *PhoneNumber,
-				normalizedCandidate string,
-				expectedNumberGroups []string) bool {
-				return AllNumberGroupsRemainGrouped(
-					number, normalizedCandidate, expectedNumberGroups)
-			})
-	case EXACT_GROUPING:
-		if !IsValidNumber(number) ||
-			!ContainsOnlyValidXChars(number, candidate) ||
-			ContainsMoreThanOneSlashInNationalNumber(number, candidate) ||
-			!IsNationalPrefixPresentIfRequired(number) {
-			return false
-		}
-		return CheckNumberGroupingIsValid(number, candidate,
-			func(number *PhoneNumber,
-				normalizedCandidate string,
-				expectedNumberGroups []string) bool {
-				return AllNumberGroupsAreExactlyPresent(
-					number, normalizedCandidate, expectedNumberGroups)
-			})
-	}
-	return false
-}
 
 var (
-	// golang map is not go routine safe. Sometimes process exiting
-	// because of panic. So adding mutex to synchronize the operation.
-
-	// The set of regions that share country calling code 1.
-	// There are roughly 26 regions.
-	nanpaRegions = make(map[string]struct{})
-
-	// A mapping from a region code to the PhoneMetadata for that region.
-	// Note: Synchronization, though only needed for the Android version
-	// of the library, is used in all versions for consistency.
-	regionToMetadataMap = make(map[string]*PhoneMetadata)
-
-	// A mapping from a country calling code for a non-geographical
-	// entity to the PhoneMetadata for that country calling code.
-	// Examples of the country calling codes include 800 (International
-	// Toll Free Service) and 808 (International Shared Cost Service).
-	// Note: Synchronization, though only needed for the Android version
-	// of the library, is used in all versions for consistency.
-	countryCodeToNonGeographicalMetadataMap = make(map[int]*PhoneMetadata)
-
 	// A cache for frequently used region-specific regular expressions.
 	// The initial capacity is set to 100 as this seems to be an optimal
 	// value for Android, based on performance measurements.
 	regexCache    = make(map[string]*regexp.Regexp)
 	regCacheMutex sync.RWMutex
-
-	// The set of regions the library supports.
-	// There are roughly 240 of them and we set the initial capacity of
-	// the HashSet to 320 to offer a load factor of roughly 0.75.
-	supportedRegions = make(map[string]bool, 320)
-
-	// The set of calling codes that map to the non-geo entity
-	// region ("001"). This set currently contains < 12 elements so the
-	// default capacity of 16 (load factor=0.75) is fine.
-	countryCodesForNonGeographicalRegion = make(map[int]bool, 16)
-
-	// These are maps for our prefix to carrier maps
-	carrierPrefixMap = make(map[string]*intStringMap)
-
-	// These are maps for our prefix to geocoding maps
-	geocodingPrefixMap = make(map[string]*intStringMap)
-
-	// All the calling codes we support
-	supportedCallingCodes = make(map[int]bool, 320)
-
-	// Our once and map for prefix to timezone lookups
-	timezoneOnce sync.Once
-	timezoneMap  *intStringArrayMap
-
-	// Our map from country code (as integer) to two letter region codes
-	countryCodeToRegion map[int][]string
 )
-
-var ErrEmptyMetadata = errors.New("empty metadata")
 
 func readFromRegexCache(key string) (*regexp.Regexp, bool) {
 	regCacheMutex.RLock()
@@ -732,79 +498,6 @@ func regexFor(pattern string) *regexp.Regexp {
 		writeToRegexCache(pattern, regex)
 	}
 	return regex
-}
-
-func readFromNanpaRegions(key string) (struct{}, bool) {
-	v, ok := nanpaRegions[key]
-	return v, ok
-}
-
-func writeToNanpaRegions(key string, val struct{}) {
-	nanpaRegions[key] = val
-}
-
-func readFromRegionToMetadataMap(key string) (*PhoneMetadata, bool) {
-	v, ok := regionToMetadataMap[key]
-	return v, ok
-}
-
-func writeToRegionToMetadataMap(key string, val *PhoneMetadata) {
-	regionToMetadataMap[key] = val
-}
-
-func readFromCountryCodeToNonGeographicalMetadataMap(key int) (*PhoneMetadata, bool) {
-	v, ok := countryCodeToNonGeographicalMetadataMap[key]
-	return v, ok
-}
-
-func writeToCountryCodeToNonGeographicalMetadataMap(key int, v *PhoneMetadata) {
-	countryCodeToNonGeographicalMetadataMap[key] = v
-}
-
-func loadMetadataFromFile() error {
-	metadataCollection, err := MetadataCollection()
-	if err != nil {
-		return err
-	} else if currMetadataColl == nil {
-		currMetadataColl = metadataCollection
-	}
-
-	metadataList := metadataCollection.GetMetadata()
-	if len(metadataList) == 0 {
-		return ErrEmptyMetadata
-	}
-
-	for _, meta := range metadataList {
-		region := meta.GetId()
-		if region == "001" {
-			// it's a non geographical entity
-			writeToCountryCodeToNonGeographicalMetadataMap(int(meta.GetCountryCode()), meta)
-		} else {
-			writeToRegionToMetadataMap(region, meta)
-		}
-	}
-	return nil
-}
-
-var (
-	currMetadataColl *PhoneMetadataCollection
-	reloadMetadata   = true
-)
-
-func MetadataCollection() (*PhoneMetadataCollection, error) {
-	if !reloadMetadata {
-		return currMetadataColl, nil
-	}
-
-	rawBytes, err := decodeUnzip(numberData)
-	if err != nil {
-		return nil, err
-	}
-
-	var metadataCollection = &PhoneMetadataCollection{}
-	err = proto.Unmarshal(rawBytes, metadataCollection)
-	reloadMetadata = false
-	return metadataCollection, err
 }
 
 // Attempts to extract a possible number from the string passed in.
@@ -2594,9 +2287,6 @@ func extractCountryCode(fullNumber, nationalNumber *Builder) int {
 	return 0
 }
 
-var ErrTooShortAfterIDD = errors.New("phone number had an IDD, but " +
-	"after this was not long enough to be a viable phone number")
-
 // Tries to extract a country calling code from a number. This method will
 // return zero if no country calling code is considered to be present.
 // Country calling codes are extracted in the following ways:
@@ -3098,8 +2788,6 @@ func parseHelper(
 	return nil
 }
 
-var ErrNumTooLong = errors.New("the string supplied is too long to be a phone number")
-
 // Extracts the value of the phone-context parameter of numberToExtractFrom where the index of
 // ";phone-context=" is the parameter indexOfPhoneContext, following the syntax defined in
 // RFC3966.
@@ -3390,156 +3078,4 @@ func IsMobileNumberPortableRegion(regionCode string) bool {
 		return false
 	}
 	return metadata.GetMobileNumberPortableRegion()
-}
-
-// GetTimezonesForPrefix returns a slice of Timezones corresponding to the number passed
-// or error when it is impossible to convert the string to int
-// The algorithm tries to match the timezones starting from the maximum
-// number of phone number digits and decreasing until it finds one or reaches 0
-func GetTimezonesForPrefix(number string) ([]string, error) {
-	var err error
-	timezoneOnce.Do(func() {
-		timezoneMap, err = loadIntArrayMap(timezoneData)
-	})
-
-	if timezoneMap == nil {
-		return nil, fmt.Errorf("error loading timezone map: %v", err)
-	}
-
-	// strip any leading +
-	number = strings.TrimLeft(number, "+")
-
-	matchLength := min(len(number), timezoneMap.MaxLength)
-
-	for i := matchLength; i > 0; i-- {
-		index, err := strconv.Atoi(number[0:i])
-		if err != nil {
-			return nil, err
-		}
-		tzs, found := timezoneMap.Map[index]
-		if found {
-			return tzs, nil
-		}
-	}
-	return []string{UNKNOWN_TIMEZONE}, nil
-}
-
-// GetTimezonesForNumber returns the names of timezones which we believe maps to the
-// passed in number.
-func GetTimezonesForNumber(number *PhoneNumber) ([]string, error) {
-	e164 := Format(number, E164)
-	return GetTimezonesForPrefix(e164)
-}
-
-func lazyLoadPrefixes(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string) (*intStringMap, error) {
-	dataLoadMutex.Lock()
-	defer dataLoadMutex.Unlock()
-
-	// if we already have prefixes (or nil if they don't exist) return that
-	prefixes, ok := langMap[language]
-	if ok {
-		return prefixes, nil
-	}
-
-	// try to load the data file for this language
-	data, err := dataFS.ReadFile(dir + "/" + language + ".txt.gz")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-
-	if data != nil {
-		prefixes, err = loadPrefixMap(data)
-		if err != nil {
-			return nil, err
-		}
-		langMap[language] = prefixes
-	} else {
-		langMap[language] = nil // language doesn't have data
-	}
-
-	return langMap[language], nil
-}
-
-func getValueForNumber(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string, maxLength int, number *PhoneNumber) (string, int, error) {
-	prefixes, err := lazyLoadPrefixes(langMap, dataFS, dir, language)
-	if err != nil || prefixes == nil {
-		return "", 0, err
-	}
-
-	e164 := Format(number, E164)
-
-	l := len(e164)
-	if maxLength > l {
-		maxLength = l
-	}
-	for i := maxLength; i > 1; i-- {
-		index, err := strconv.Atoi(e164[0:i])
-		if err != nil {
-			return "", 0, err
-		}
-		if value, has := prefixes.Map[index]; has {
-			return value, index, nil
-		}
-	}
-	return "", 0, nil
-}
-
-// GetCarrierForNumber returns the carrier we believe the number belongs to. Note due
-// to number porting this is only a guess, there is no guarantee to its accuracy.
-func GetCarrierForNumber(number *PhoneNumber, lang string) (string, error) {
-	carrier, _, err := GetCarrierWithPrefixForNumber(number, lang)
-	return carrier, err
-}
-
-// GetSafeCarrierDisplayNameForNumber Gets the name of the carrier for the given phone number
-// only when it is 'safe' to display to users.
-// A carrier name is considered safe if the number is valid and
-// for a region that doesn't support mobile number portability .
-func GetSafeCarrierDisplayNameForNumber(phoneNumber *PhoneNumber, lang string) (string, error) {
-	if IsMobileNumberPortableRegion(GetRegionCodeForNumber(phoneNumber)) {
-		return "", nil
-	}
-	return GetCarrierForNumber(phoneNumber, lang)
-}
-
-// GetCarrierWithPrefixForNumber returns the carrier we believe the number belongs to, as well as
-// its prefix. Note due to number porting this is only a guess, there is no guarantee to its accuracy.
-func GetCarrierWithPrefixForNumber(number *PhoneNumber, lang string) (string, int, error) {
-	carrier, prefix, err := getValueForNumber(carrierPrefixMap, carrierData, carrierDataPath, lang, 10, number)
-	if err != nil {
-		return "", 0, err
-	}
-	if carrier != "" {
-		return carrier, prefix, nil
-	}
-
-	// fallback to english
-	return getValueForNumber(carrierPrefixMap, carrierData, carrierDataPath, "en", 10, number)
-}
-
-// GetGeocodingForNumber returns the location we think the number was first acquired in. This is
-// just our best guess, there is no guarantee to its accuracy.
-func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
-	geocoding, _, err := getValueForNumber(geocodingPrefixMap, geocodingData, geocodingDataPath, lang, 10, number)
-	if err != nil || geocoding != "" {
-		return geocoding, err
-	}
-
-	// fallback to english
-	geocoding, _, err = getValueForNumber(geocodingPrefixMap, geocodingData, geocodingDataPath, "en", 10, number)
-	if err != nil || geocoding != "" {
-		return geocoding, err
-	}
-
-	// fallback to locale
-	var reg language.Region
-	if reg, err = language.ParseRegion(GetRegionCodeForNumber(number)); err != nil {
-		return "", err
-	}
-
-	var langT language.Tag
-	if langT, err = language.Parse(lang); err != nil {
-		langT = language.English // fallback to english
-	}
-	return display.Regions(langT).Name(reg), nil
 }
