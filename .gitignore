@@ -10,3 +10,6 @@ geocoding
 functions/*
 dist/
 _build
+
+# Claude Code agent worktrees
+.claude/worktrees/

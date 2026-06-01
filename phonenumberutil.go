@@ -1495,7 +1495,9 @@ func GetNationalSignificantNumber(number *PhoneNumber) string {
 	// If leading zero(s) have been set, we prefix this now. Note this
 	// is not a national prefix.
 	nationalNumber := NewBuilder(nil)
-	if number.GetItalianLeadingZero() {
+	// Guard GetNumberOfLeadingZeros() > 0 to match upstream and to avoid a
+	// make([]byte, n) panic on a negative count (an invalid but possible input).
+	if number.GetItalianLeadingZero() && number.GetNumberOfLeadingZeros() > 0 {
 		zeros := make([]byte, number.GetNumberOfLeadingZeros())
 		for i := range zeros {
 			zeros[i] = '0'

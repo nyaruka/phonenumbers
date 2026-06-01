@@ -634,7 +634,7 @@ type TerritoryE struct {
 	GeneralDesc *PhoneNumberDescE `xml:"generalDesc"`
 
 	// <!ELEMENT noInternationalDialling (nationalNumberPattern, possibleLengths, exampleNumber)>
-	NoInternationalDialing *PhoneNumberDescE `xml:"noInternationalDialing"`
+	NoInternationalDialing *PhoneNumberDescE `xml:"noInternationalDialling"`
 
 	// <!ELEMENT fixedLine (nationalNumberPattern, possibleLengths, exampleNumber)>
 	FixedLine *PhoneNumberDescE `xml:"fixedLine"`
