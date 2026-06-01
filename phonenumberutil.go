@@ -964,13 +964,18 @@ func FormatByPattern(number *PhoneNumber,
 			nationalPrefix := metadata.GetNationalPrefix()
 			if len(nationalPrefix) > 0 {
 				// Replace $NP with national prefix and $FG with the
-				// first group ($1).
+				// first group ($1). Java does rule.replace(FG_STRING, "$1"),
+				// inserting the literal characters "$1" so the first group is
+				// substituted later by formatNsnUsingPattern. Use a literal
+				// replacement here because Go's ReplaceAllString would treat
+				// "$1" as a group reference into FG_PATTERN (which has no
+				// groups), leaving a stray backslash instead.
 				nationalPrefixFormattingRule =
 					NP_PATTERN.ReplaceAllString(
 						nationalPrefixFormattingRule, nationalPrefix)
 				nationalPrefixFormattingRule =
-					FG_PATTERN.ReplaceAllString(
-						nationalPrefixFormattingRule, "\\$1")
+					FG_PATTERN.ReplaceAllLiteralString(
+						nationalPrefixFormattingRule, "$1")
 				numFormatCopy.NationalPrefixFormattingRule =
 					&nationalPrefixFormattingRule
 			} else {
@@ -1641,33 +1646,36 @@ func formatNsnUsingPatternWithCarrier(
 					return s
 				})
 		// Now replace the $FG in the formatting rule with the first group
-		// and the carrier code combined in the appropriate way.
-		i = 1
-		numberFormatRule = FIRST_GROUP_PATTERN.ReplaceAllStringFunc(
-			numberFormatRule,
-			func(s string) string {
-				if i > 0 {
-					i -= 1
-					return carrierCodeFormattingRule
-				}
-				return s
-			})
-		formattedNationalNumber = m.ReplaceAllString(nationalNumber, numberFormatRule)
+		// and the carrier code combined in the appropriate way. Mirror Java's
+		// firstGroupMatcher.replaceFirst(rule): replace only the first $-token,
+		// expanding "$1" in the rule to that matched token (FIRST_GROUP_PATTERN's
+		// group 1) rather than inserting the rule literally. So for a format whose
+		// first token is "$2" and a carrier rule of "$CC $1", the "$1" expands to
+		// "$2" rather than being left literal (which would emit the wrong group).
+		fgp := numberFormatRule
+		if loc := FIRST_GROUP_PATTERN.FindStringSubmatchIndex(numberFormatRule); loc != nil {
+			expanded := FIRST_GROUP_PATTERN.ExpandString(
+				nil, carrierCodeFormattingRule, numberFormatRule, loc)
+			fgp = numberFormatRule[:loc[0]] + string(expanded) + numberFormatRule[loc[1]:]
+		}
+		formattedNationalNumber = m.ReplaceAllString(nationalNumber, fgp)
 	} else {
 		// Use the national prefix formatting rule instead.
 		nationalPrefixFormattingRule :=
 			formattingPattern.GetNationalPrefixFormattingRule()
 		if numberFormat == NATIONAL &&
 			len(nationalPrefixFormattingRule) > 0 {
-			i := 1
-			fgp := FIRST_GROUP_PATTERN.ReplaceAllStringFunc(numberFormatRule,
-				func(s string) string {
-					if i > 0 {
-						i -= 1
-						return nationalPrefixFormattingRule
-					}
-					return s
-				})
+			// Mirror Java's firstGroupMatcher.replaceFirst(rule): replace only
+			// the first $-token, expanding "$1" in the rule to that matched
+			// token (FIRST_GROUP_PATTERN's group 1) rather than inserting the
+			// rule literally. So a rule of "$1" leaves the matched token
+			// unchanged, while "0$1" prefixes it with "0".
+			fgp := numberFormatRule
+			if loc := FIRST_GROUP_PATTERN.FindStringSubmatchIndex(numberFormatRule); loc != nil {
+				expanded := FIRST_GROUP_PATTERN.ExpandString(
+					nil, nationalPrefixFormattingRule, numberFormatRule, loc)
+				fgp = numberFormatRule[:loc[0]] + string(expanded) + numberFormatRule[loc[1]:]
+			}
 			formattedNationalNumber = m.ReplaceAllString(nationalNumber, fgp)
 		} else {
 			formattedNationalNumber = m.ReplaceAllString(
