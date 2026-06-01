@@ -37,6 +37,18 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 - Remaining: the 2 Mockito missing-metadata tests, and a couple of
   string-overload possibility cases.
 
+### ShortNumberInfoTest — ported
+- ✅ Faithful port in `shortnumberinfo_test.go`, reconciled against v9.0.32.
+  Open question resolved: upstream has **no** `ShortNumberMetadataForTesting.xml`
+  because `ShortNumberInfo.getInstance()` uses the production short metadata; only
+  its `parse()` uses test metadata. The Go port therefore runs against the
+  embedded short metadata (a real-metadata regression, like upstream).
+- New public API implemented to support the port: `GetExpectedCost` /
+  `GetExpectedCostForRegion` (+ the `ShortNumberCost` type), `IsCarrierSpecific` /
+  `IsCarrierSpecificForRegion`, `IsSmsServiceForRegion`, and the
+  `getExampleShortNumber[ForCost]` helpers.
+- One skipped test: `TestIsSmsService` (see TODO below).
+
 ### Bugs the port surfaced and fixed
 - Builder nil-deref on regions lacking a mobile / fixed-line pattern
 - `GetNationalSignificantNumber` panic on a negative `numberOfLeadingZeros`
@@ -50,20 +62,21 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   unsupported types. `descHasPossibleNumberData` was aligned with upstream
   (empty ⇒ inherits general desc; `[-1]` ⇒ unsupported) while still treating the
   legacy `"NA"` sentinel in the committed embedded metadata as "no data".
+- Short-number builder dropped `<smsServices>`: the short-metadata branch of
+  `setRelevantDescPatterns` never processed the element, so `IsSmsServiceForRegion`
+  could never match. The builder now reads it (verified by
+  `TestBuilderProcessesSmsServices`); the embedded data still needs regenerating
+  for it to carry the data (see TODO).
 
 ## Remaining work (roughly in order)
 
-1. **Port `ShortNumberInfoTest`** (`shortnumberinfo_test.go` is still ad-hoc).
-   Open question: upstream `resources/` has no `ShortNumberMetadataForTesting.xml`
-   — confirm how upstream's `ShortNumberInfoTest` sources its test metadata before
-   porting.
-2. **Implement `AsYouTypeFormatter`** (currently absent) and port
+1. **Implement `AsYouTypeFormatter`** (currently absent) and port
    `AsYouTypeFormatterTest`.
-3. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
+2. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
    `phonenumbermatcher.go`) and port `PhoneNumberMatcherTest`.
-4. **Add `ExampleNumbersTest`** — a real-metadata regression that validates every
+3. **Add `ExampleNumbersTest`** — a real-metadata regression that validates every
    shipped region's example numbers parse and validate.
-5. **Automate**: a scheduled task that detects new upstream releases, regenerates
+4. **Automate**: a scheduled task that detects new upstream releases, regenerates
    metadata, runs the (now-stable) synthetic tests, opens a PR for data-only
    deltas, and flags logic-touching changes for manual porting. See
    `docs/2.0-restructure.md`.
@@ -76,7 +89,11 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   marks absent types with an `"NA"` national pattern. `descHasData` /
   `descHasPossibleNumberData` handle both representations, so behaviour is
   correct; the `"NA"` special-cases become dead code only once the embedded
-  metadata is regenerated (a separate data-refresh concern — see item 5).
+  metadata is regenerated (a separate data-refresh concern — see the automate item).
+- **`TestIsSmsService` is skipped.** `IsSmsServiceForRegion` is implemented and the
+  builder now reads `<smsServices>`, but the committed embedded short metadata was
+  generated before that builder support, so it carries no smsServices data and the
+  test would always see `false`. Un-skips once the short metadata is regenerated.
 - **Parsing edge cases:** `normalizeDigits` doesn't map non-ASCII / non-Arabic
   unicode digits (e.g. Mongolian) to ASCII; the extension regex doesn't tolerate
   trailing whitespace after the extension digits. Both are characterized in the
