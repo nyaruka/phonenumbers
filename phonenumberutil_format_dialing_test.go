@@ -9,8 +9,28 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
+
+// mustParseAndKeepRawInput parses and fails the test on error, mirroring the
+// Java tests where parseAndKeepRawInput throws (and the test method declares
+// "throws Exception"), so a parse regression surfaces as a clear failure rather
+// than a nil dereference downstream.
+func mustParseAndKeepRawInput(t *testing.T, input, region string) *PhoneNumber {
+	t.Helper()
+	num, err := ParseAndKeepRawInput(input, region)
+	require.NoError(t, err)
+	return num
+}
+
+// mustParse parses and fails the test on error (see mustParseAndKeepRawInput).
+func mustParse(t *testing.T, input, region string) *PhoneNumber {
+	t.Helper()
+	num, err := Parse(input, region)
+	require.NoError(t, err)
+	return num
+}
 
 func TestFormatNumberForMobileDialing(t *testing.T) {
 	useTestMetadata(t)
@@ -110,8 +130,7 @@ func TestFormatOutOfCountryKeepingAlphaChars(t *testing.T) {
 	assert.Equal(t, "1 800 SIX-FLAG", FormatOutOfCountryKeepingAlphaChars(alphaNumericNumber, regionCode.BS))
 
 	// Testing a number with extension.
-	alphaNumericNumberWithExtn, err := ParseAndKeepRawInput("800 SIX-flag ext. 1234", regionCode.US)
-	assert.NoError(t, err)
+	alphaNumericNumberWithExtn := mustParseAndKeepRawInput(t, "800 SIX-flag ext. 1234", regionCode.US)
 	assert.Equal(t, "0011 1 800 SIX-FLAG extn. 1234", FormatOutOfCountryKeepingAlphaChars(alphaNumericNumberWithExtn, regionCode.AU))
 
 	// Testing that if the raw input doesn't exist, it is formatted using
@@ -169,93 +188,92 @@ func TestFormatOutOfCountryKeepingAlphaChars(t *testing.T) {
 func TestFormatInOriginalFormat(t *testing.T) {
 	useTestMetadata(t)
 
-	number1, err := ParseAndKeepRawInput("+442087654321", regionCode.GB)
-	assert.NoError(t, err)
+	number1 := mustParseAndKeepRawInput(t, "+442087654321", regionCode.GB)
 	assert.Equal(t, "+44 20 8765 4321", FormatInOriginalFormat(number1, regionCode.GB))
 
-	number2, _ := ParseAndKeepRawInput("02087654321", regionCode.GB)
+	number2 := mustParseAndKeepRawInput(t, "02087654321", regionCode.GB)
 	assert.Equal(t, "(020) 8765 4321", FormatInOriginalFormat(number2, regionCode.GB))
 
-	number3, _ := ParseAndKeepRawInput("011442087654321", regionCode.US)
+	number3 := mustParseAndKeepRawInput(t, "011442087654321", regionCode.US)
 	assert.Equal(t, "011 44 20 8765 4321", FormatInOriginalFormat(number3, regionCode.US))
 
-	number4, _ := ParseAndKeepRawInput("442087654321", regionCode.GB)
+	number4 := mustParseAndKeepRawInput(t, "442087654321", regionCode.GB)
 	assert.Equal(t, "44 20 8765 4321", FormatInOriginalFormat(number4, regionCode.GB))
 
-	number5, _ := Parse("+442087654321", regionCode.GB)
+	number5 := mustParse(t, "+442087654321", regionCode.GB)
 	assert.Equal(t, "(020) 8765 4321", FormatInOriginalFormat(number5, regionCode.GB))
 
 	// Invalid numbers that we have a formatting pattern for should be formatted properly. Note area
 	// codes starting with 7 are intentionally excluded in the test metadata for testing purposes.
-	number6, _ := ParseAndKeepRawInput("7345678901", regionCode.US)
+	number6 := mustParseAndKeepRawInput(t, "7345678901", regionCode.US)
 	assert.Equal(t, "734 567 8901", FormatInOriginalFormat(number6, regionCode.US))
 
 	// US is not a leading zero country, and the presence of the leading zero leads us to format the
 	// number using raw_input.
-	number7, _ := ParseAndKeepRawInput("0734567 8901", regionCode.US)
+	number7 := mustParseAndKeepRawInput(t, "0734567 8901", regionCode.US)
 	assert.Equal(t, "0734567 8901", FormatInOriginalFormat(number7, regionCode.US))
 
 	// This number is valid, but we don't have a formatting pattern for it. Fall back to the raw
 	// input.
-	number8, _ := ParseAndKeepRawInput("02-4567-8900", regionCode.KR)
+	number8 := mustParseAndKeepRawInput(t, "02-4567-8900", regionCode.KR)
 	assert.Equal(t, "02-4567-8900", FormatInOriginalFormat(number8, regionCode.KR))
 
-	number9, _ := ParseAndKeepRawInput("01180012345678", regionCode.US)
+	number9 := mustParseAndKeepRawInput(t, "01180012345678", regionCode.US)
 	assert.Equal(t, "011 800 1234 5678", FormatInOriginalFormat(number9, regionCode.US))
 
-	number10, _ := ParseAndKeepRawInput("+80012345678", regionCode.KR)
+	number10 := mustParseAndKeepRawInput(t, "+80012345678", regionCode.KR)
 	assert.Equal(t, "+800 1234 5678", FormatInOriginalFormat(number10, regionCode.KR))
 
 	// US local numbers are formatted correctly, as we have formatting patterns for them.
-	localNumberUS, _ := ParseAndKeepRawInput("2530000", regionCode.US)
+	localNumberUS := mustParseAndKeepRawInput(t, "2530000", regionCode.US)
 	assert.Equal(t, "253 0000", FormatInOriginalFormat(localNumberUS, regionCode.US))
 
-	numberWithNationalPrefixUS, _ := ParseAndKeepRawInput("18003456789", regionCode.US)
+	numberWithNationalPrefixUS := mustParseAndKeepRawInput(t, "18003456789", regionCode.US)
 	assert.Equal(t, "1 800 345 6789", FormatInOriginalFormat(numberWithNationalPrefixUS, regionCode.US))
 
-	numberWithoutNationalPrefixGB, _ := ParseAndKeepRawInput("2087654321", regionCode.GB)
+	numberWithoutNationalPrefixGB := mustParseAndKeepRawInput(t, "2087654321", regionCode.GB)
 	assert.Equal(t, "20 8765 4321", FormatInOriginalFormat(numberWithoutNationalPrefixGB, regionCode.GB))
 	// Make sure no metadata is modified as a result of the previous function call.
 	assert.Equal(t, "(020) 8765 4321", FormatInOriginalFormat(number5, regionCode.GB))
 
-	numberWithNationalPrefixMX, _ := ParseAndKeepRawInput("013312345678", regionCode.MX)
+	numberWithNationalPrefixMX := mustParseAndKeepRawInput(t, "013312345678", regionCode.MX)
 	assert.Equal(t, "01 33 1234 5678", FormatInOriginalFormat(numberWithNationalPrefixMX, regionCode.MX))
 
-	numberWithoutNationalPrefixMX, _ := ParseAndKeepRawInput("3312345678", regionCode.MX)
+	numberWithoutNationalPrefixMX := mustParseAndKeepRawInput(t, "3312345678", regionCode.MX)
 	assert.Equal(t, "33 1234 5678", FormatInOriginalFormat(numberWithoutNationalPrefixMX, regionCode.MX))
 
-	italianFixedLineNumber, _ := ParseAndKeepRawInput("0212345678", regionCode.IT)
+	italianFixedLineNumber := mustParseAndKeepRawInput(t, "0212345678", regionCode.IT)
 	assert.Equal(t, "02 1234 5678", FormatInOriginalFormat(italianFixedLineNumber, regionCode.IT))
 
-	numberWithNationalPrefixJP, _ := ParseAndKeepRawInput("00777012", regionCode.JP)
+	numberWithNationalPrefixJP := mustParseAndKeepRawInput(t, "00777012", regionCode.JP)
 	assert.Equal(t, "0077-7012", FormatInOriginalFormat(numberWithNationalPrefixJP, regionCode.JP))
 
-	numberWithoutNationalPrefixJP, _ := ParseAndKeepRawInput("0777012", regionCode.JP)
+	numberWithoutNationalPrefixJP := mustParseAndKeepRawInput(t, "0777012", regionCode.JP)
 	assert.Equal(t, "0777012", FormatInOriginalFormat(numberWithoutNationalPrefixJP, regionCode.JP))
 
-	numberWithCarrierCodeBR, _ := ParseAndKeepRawInput("012 3121286979", regionCode.BR)
+	numberWithCarrierCodeBR := mustParseAndKeepRawInput(t, "012 3121286979", regionCode.BR)
 	assert.Equal(t, "012 3121286979", FormatInOriginalFormat(numberWithCarrierCodeBR, regionCode.BR))
 
 	// The default national prefix used in this case is 045. When a number with national prefix 044
 	// is entered, we return the raw input as we don't want to change the number entered.
-	numberWithNationalPrefixMX1, _ := ParseAndKeepRawInput("044(33)1234-5678", regionCode.MX)
+	numberWithNationalPrefixMX1 := mustParseAndKeepRawInput(t, "044(33)1234-5678", regionCode.MX)
 	assert.Equal(t, "044(33)1234-5678", FormatInOriginalFormat(numberWithNationalPrefixMX1, regionCode.MX))
 
-	numberWithNationalPrefixMX2, _ := ParseAndKeepRawInput("045(33)1234-5678", regionCode.MX)
+	numberWithNationalPrefixMX2 := mustParseAndKeepRawInput(t, "045(33)1234-5678", regionCode.MX)
 	assert.Equal(t, "045 33 1234 5678", FormatInOriginalFormat(numberWithNationalPrefixMX2, regionCode.MX))
 
 	// The default international prefix used in this case is 0011. When a number with international
 	// prefix 0012 is entered, we return the raw input as we don't want to change the number entered.
-	outOfCountryNumberFromAU1, _ := ParseAndKeepRawInput("0012 16502530000", regionCode.AU)
+	outOfCountryNumberFromAU1 := mustParseAndKeepRawInput(t, "0012 16502530000", regionCode.AU)
 	assert.Equal(t, "0012 16502530000", FormatInOriginalFormat(outOfCountryNumberFromAU1, regionCode.AU))
 
-	outOfCountryNumberFromAU2, _ := ParseAndKeepRawInput("0011 16502530000", regionCode.AU)
+	outOfCountryNumberFromAU2 := mustParseAndKeepRawInput(t, "0011 16502530000", regionCode.AU)
 	assert.Equal(t, "0011 1 650 253 0000", FormatInOriginalFormat(outOfCountryNumberFromAU2, regionCode.AU))
 
 	// Test the star sign is not removed from or added to the original input by this method.
-	starNumber, _ := ParseAndKeepRawInput("*1234", regionCode.JP)
+	starNumber := mustParseAndKeepRawInput(t, "*1234", regionCode.JP)
 	assert.Equal(t, "*1234", FormatInOriginalFormat(starNumber, regionCode.JP))
-	numberWithoutStar, _ := ParseAndKeepRawInput("1234", regionCode.JP)
+	numberWithoutStar := mustParseAndKeepRawInput(t, "1234", regionCode.JP)
 	assert.Equal(t, "1234", FormatInOriginalFormat(numberWithoutStar, regionCode.JP))
 
 	// Test an invalid national number without raw input is just formatted as the national number.
