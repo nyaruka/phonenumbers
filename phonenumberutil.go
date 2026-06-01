@@ -827,6 +827,63 @@ func GetSupportedGlobalNetworkCallingCodes() map[int]bool {
 	return currentMetadata.countryCodesForNonGeographicalRegion
 }
 
+// allPhoneNumberTypes lists every PhoneNumberType, used to iterate types like
+// Java's PhoneNumberType.values().
+var allPhoneNumberTypes = []PhoneNumberType{
+	FIXED_LINE, MOBILE, FIXED_LINE_OR_MOBILE, TOLL_FREE, PREMIUM_RATE,
+	SHARED_COST, VOIP, PERSONAL_NUMBER, PAGER, UAN, VOICEMAIL, UNKNOWN,
+}
+
+// descHasData returns true if there is any data set for a particular
+// PhoneNumberDesc. Note: our builder represents an absent descriptor with the
+// "NA" sentinel pattern (see builder.go), so a pattern of "NA" counts as no data.
+func descHasData(desc *PhoneNumberDesc) bool {
+	if desc == nil {
+		return false
+	}
+	return len(desc.GetExampleNumber()) > 0 ||
+		descHasPossibleNumberData(desc) ||
+		(desc.NationalNumberPattern != nil && desc.GetNationalNumberPattern() != "NA")
+}
+
+// getSupportedTypesForMetadata returns the types we have metadata for based on
+// the given PhoneMetadata, excluding FIXED_LINE_OR_MOBILE and UNKNOWN.
+func getSupportedTypesForMetadata(metadata *PhoneMetadata) map[PhoneNumberType]bool {
+	types := make(map[PhoneNumberType]bool)
+	for _, typ := range allPhoneNumberTypes {
+		// Never return FIXED_LINE_OR_MOBILE (a convenience type) or UNKNOWN.
+		if typ == FIXED_LINE_OR_MOBILE || typ == UNKNOWN {
+			continue
+		}
+		if descHasData(getNumberDescByType(metadata, typ)) {
+			types[typ] = true
+		}
+	}
+	return types
+}
+
+// GetSupportedTypesForRegion returns the types for a given region which the
+// library has metadata for. Will not include FIXED_LINE_OR_MOBILE or UNKNOWN.
+// No types are returned for invalid or unknown region codes.
+func GetSupportedTypesForRegion(regionCode string) map[PhoneNumberType]bool {
+	if !isValidRegionCode(regionCode) {
+		return map[PhoneNumberType]bool{}
+	}
+	return getSupportedTypesForMetadata(getMetadataForRegion(regionCode))
+}
+
+// GetSupportedTypesForNonGeoEntity returns the types for a country-code
+// belonging to a non-geographical entity which the library has metadata for.
+// Will not include FIXED_LINE_OR_MOBILE or UNKNOWN. No types are returned for
+// country calling codes that do not map to a known non-geographical entity.
+func GetSupportedTypesForNonGeoEntity(countryCallingCode int) map[PhoneNumberType]bool {
+	metadata := getMetadataForNonGeographicalRegion(countryCallingCode)
+	if metadata == nil {
+		return map[PhoneNumberType]bool{}
+	}
+	return getSupportedTypesForMetadata(metadata)
+}
+
 // Helper function to check if the national prefix formatting rule has the
 // first group only, i.e., does not start with the national prefix.
 func formattingRuleHasFirstGroupOnly(nationalPrefixFormattingRule string) bool {
@@ -1705,6 +1762,34 @@ func GetExampleNumber(regionCode string) *PhoneNumber {
 	return GetExampleNumberForType(regionCode, FIXED_LINE)
 }
 
+// GetInvalidExampleNumber returns an invalid number for the specified region.
+// This is useful for unit-testing purposes, where you want to test what happens
+// with an invalid number. Returns nil when an unsupported region or the region
+// 001 (Earth) is passed in.
+func GetInvalidExampleNumber(regionCode string) *PhoneNumber {
+	if !isValidRegionCode(regionCode) {
+		return nil
+	}
+	// We start off with a valid fixed-line number since every country supports
+	// this, then try to make it invalid by shortening it.
+	desc := getNumberDescByType(getMetadataForRegion(regionCode), FIXED_LINE)
+	exampleNumber := desc.GetExampleNumber()
+	if exampleNumber == "" {
+		// This shouldn't happen; we have a test for this.
+		return nil
+	}
+	for phoneNumberLength := len(exampleNumber) - 1; phoneNumberLength >= MIN_LENGTH_FOR_NSN; phoneNumberLength-- {
+		numberToTry := exampleNumber[:phoneNumberLength]
+		possiblyValidNumber, err := Parse(numberToTry, regionCode)
+		// Shouldn't error: we already checked the length and the region code.
+		if err == nil && !IsValidNumber(possiblyValidNumber) {
+			return possiblyValidNumber
+		}
+	}
+	// We have a test to check that this doesn't happen for any of our supported regions.
+	return nil
+}
+
 // Gets a valid number for the specified region and number type.
 func GetExampleNumberForType(regionCode string, typ PhoneNumberType) *PhoneNumber {
 	// Check the region code is valid.
@@ -2239,6 +2324,31 @@ func IsPossibleNumberWithReason(number *PhoneNumber) ValidationResult {
 		}
 	}
 	return testNumberLength(nationalNumber, metadata, UNKNOWN)
+}
+
+// IsPossibleNumberForTypeWithReason checks whether a phone number is a possible
+// number of a particular type. For most number types, this is the same result
+// as IsPossibleNumberWithReason. See that method for details.
+func IsPossibleNumberForTypeWithReason(number *PhoneNumber, numberType PhoneNumberType) ValidationResult {
+	nationalNumber := GetNationalSignificantNumber(number)
+	countryCode := int(number.GetCountryCode())
+	// Note: For regions that share a country calling code, like NANPA numbers, we
+	// just use the rules from the default region since getRegionCodeForNumber will
+	// not work if the number is possible but not valid.
+	if !hasValidCountryCallingCode(countryCode) {
+		return INVALID_COUNTRY_CODE
+	}
+	regionCode := GetRegionCodeForCountryCode(countryCode)
+	// Metadata cannot be nil because the country calling code is valid.
+	metadata := getMetadataForRegionOrCallingCode(countryCode, regionCode)
+	return testNumberLength(nationalNumber, metadata, numberType)
+}
+
+// IsPossibleNumberForType returns true if the number is a possible number of the
+// given type (a more lenient check than IsValidNumberForRegion).
+func IsPossibleNumberForType(number *PhoneNumber, numberType PhoneNumberType) bool {
+	result := IsPossibleNumberForTypeWithReason(number, numberType)
+	return result == IS_POSSIBLE || result == IS_POSSIBLE_LOCAL_ONLY
 }
 
 // Attempts to extract a valid number from a phone number that is too long
