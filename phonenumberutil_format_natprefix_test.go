@@ -66,14 +66,14 @@ func TestFormatByPatternFGProdMetadata(t *testing.T) {
 	assert.Equal(t, "020 7031 3000", FormatByPattern(num, NATIONAL, formats))
 }
 
-// TestFormatWithCarrierCodeTestMetadata mirrors upstream PhoneNumberUtilTest.
+// TestFormatWithCarrierCode is the faithful port of upstream PhoneNumberUtilTest.
 // testFormatWithCarrierCode against the synthetic test metadata. AR mobile
 // numbers exercise a carrier format whose first $-token is "$2" and whose
 // domesticCarrierCodeFormattingRule is "$NP$FG $CC" -> "0$1 $CC"; the "$1" must
 // expand to the matched first token ("$2"), not be left literal (which would
 // resolve to format group 1 and emit the wrong digit). This guards the
 // carrier-code branch of formatNsnUsingPatternWithCarrier.
-func TestFormatWithCarrierCodeTestMetadata(t *testing.T) {
+func TestFormatWithCarrierCode(t *testing.T) {
 	useTestMetadata(t)
 
 	arMobile := newPhoneNumber(54, 92234654321)
@@ -84,4 +84,8 @@ func TestFormatWithCarrierCodeTestMetadata(t *testing.T) {
 	assert.Equal(t, "02234 65-4321", FormatNationalNumberWithCarrierCode(arMobile, ""))
 	// E164 ignores national/carrier formatting, so no carrier code is present.
 	assert.Equal(t, "+5492234654321", Format(arMobile, E164))
+	// We don't support this for the US so there should be no change.
+	assert.Equal(t, "650 253 0000", FormatNationalNumberWithCarrierCode(usNumber(), "15"))
+	// Invalid country code should just get the NSN.
+	assert.Equal(t, "12345", FormatNationalNumberWithCarrierCode(unknownCountryCodeNoRawInput(), "89"))
 }
