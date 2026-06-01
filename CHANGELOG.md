@@ -1,3 +1,8 @@
+v1.8.0 (2026-06-01)
+-------------------------
+ * Update metadata (regenerated against upstream libphonenumber 9.0.32-SNAPSHOT)
+ * Refactoring to allow easier syncing with upstream code
+
 v1.7.5 (2026-05-25)
 -------------------------
  * Update metadata
