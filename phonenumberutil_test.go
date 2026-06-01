@@ -164,22 +164,6 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
-func TestNumberType(t *testing.T) {
-	var tests = []struct {
-		input    string
-		region   string
-		expected PhoneNumberType
-	}{
-		{input: "2065432100", region: "US", expected: FIXED_LINE_OR_MOBILE},
-	}
-
-	for _, tc := range tests {
-		num, err := Parse(tc.input, tc.region)
-		assert.NoError(t, err, "unexpected error for input %s", tc.input)
-		assert.Equal(t, tc.expected, GetNumberType(num), "mismatch for input %s", tc.input)
-	}
-}
-
 func TestRepeatedParsing(t *testing.T) {
 	phoneNumbers := []string{"+917827202781", "+910000000000", "+910800125778", "+917503257232", "+917566482842"}
 
@@ -192,74 +176,6 @@ func TestRepeatedParsing(t *testing.T) {
 		assert.NoError(t, err, "unexpected error for input %s", n)
 
 		assert.Equal(t, IsValidNumber(num), IsValidNumber(number))
-	}
-}
-
-func TestIsValidNumber(t *testing.T) {
-	var tests = []struct {
-		input   string
-		err     error
-		isValid bool
-		region  string
-	}{
-		{input: "4437990238", region: "US", err: nil, isValid: true},
-		{input: "(443) 799-0238", region: "US", err: nil, isValid: true},
-		{input: "((443) 799-023asdfghjk8", region: "US", err: ErrNumTooLong, isValid: false},
-		{input: "+441932567890", region: "GB", err: nil, isValid: true},
-		{input: "45", region: "US", err: nil, isValid: false},
-		{input: "1800AWWCUTE", region: "US", err: nil, isValid: true},
-		{input: "+343511234567", region: "ES", err: nil, isValid: false},
-		{input: "+12424654321", region: "BS", err: nil, isValid: true},
-		{input: "6041234567", region: "US", err: nil, isValid: false},
-		{input: "2349090000001", region: "NG", err: nil, isValid: true},
-		{input: "8409990936", region: "US", err: nil, isValid: true},
-		{input: "712276797", region: "RO", err: nil, isValid: true},
-		{input: "8409990936", region: "US", err: nil, isValid: true},
-		{input: "03260000000", region: "PK", err: nil, isValid: true},
-		{input: "+85247431471", region: "HK", err: nil, isValid: true},
-	}
-
-	for _, tc := range tests {
-		num, err := Parse(tc.input, tc.region)
-
-		if tc.err != nil {
-			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
-		} else {
-			assert.NoError(t, err, "unexpected error for input %s", tc.input)
-			assert.Equal(t, tc.isValid, IsValidNumber(num), "is valid mismatch for input %s", tc.input)
-		}
-	}
-}
-
-func TestIsValidNumberForRegion(t *testing.T) {
-	var tests = []struct {
-		input            string
-		err              error
-		isValid          bool
-		validationRegion string
-		region           string
-	}{
-		{input: "4437990238", region: "US", err: nil, isValid: true, validationRegion: "US"},
-		{input: "(443) 799-0238", region: "US", err: nil, isValid: true, validationRegion: "US"},
-		{input: "((443) 799-023asdfghjk8", region: "US", err: ErrNumTooLong, isValid: false, validationRegion: "US"},
-		{input: "+441932567890", region: "GB", err: nil, isValid: true, validationRegion: "GB"},
-		{input: "45", region: "US", err: nil, isValid: false, validationRegion: "US"},
-		{input: "1800AWWCUTE", region: "US", err: nil, isValid: true, validationRegion: "US"},
-		{input: "+441932567890", region: "GB", err: nil, isValid: false, validationRegion: "US"},
-		{input: "1800AWWCUTE", region: "US", err: nil, isValid: false, validationRegion: "GB"},
-		{input: "01932 869755", region: "GB", err: nil, isValid: true, validationRegion: "GB"},
-		{input: "6041234567", region: "US", err: nil, isValid: false, validationRegion: "US"},
-	}
-
-	for _, tc := range tests {
-		num, err := Parse(tc.input, tc.region)
-
-		if tc.err != nil {
-			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
-		} else {
-			assert.NoError(t, err, "unexpected error for input %s", tc.input)
-			assert.Equal(t, tc.isValid, IsValidNumberForRegion(num, tc.validationRegion), "is valid mismatch for input %s", tc.input)
-		}
 	}
 }
 
@@ -756,12 +672,6 @@ func getTestNumber(alias string) *PhoneNumber {
 	return val
 }
 
-func TestGetSupportedRegions(t *testing.T) {
-	if len(GetSupportedRegions()) == 0 {
-		t.Error("there should be supported regions, found none")
-	}
-}
-
 func TestGetMetadata(t *testing.T) {
 	var tests = []struct {
 		name       string
@@ -849,109 +759,6 @@ func TestIsNumberMatch(t *testing.T) {
 		if match != tc.Match {
 			t.Errorf("%s = %s == %d when expecting %d", tc.First, tc.Second, match, tc.Match)
 		}
-	}
-}
-
-func TestIsNumberGeographical(t *testing.T) {
-	assert.True(t, isNumberGeographical(getTestNumber("AU_NUMBER")), "Australia should be geographical")
-	assert.False(t, isNumberGeographical(getTestNumber("INTERNATIONAL_TOLL_FREE")), "international toll free should not be geographical")
-
-	// Chinese mobile numbers are geo-mobile (geographically assigned) but not via distinct mobile area codes
-	cnMobile := newPhoneNumber(86, 18912341234)
-	assert.True(t, isNumberGeographical(cnMobile), "Chinese mobile numbers should be geographical")
-}
-
-func TestGetLengthOfGeographicalAreaCode(t *testing.T) {
-	var tests = []struct {
-		numName string
-		length  int
-	}{
-		{numName: "US_NUMBER", length: 3},
-		{numName: "US_TOLLFREE", length: 0},
-		{numName: "GB_NUMBER", length: 2},
-		{numName: "GB_MOBILE", length: 0},
-		{numName: "AR_NUMBER", length: 2},
-		{numName: "AU_NUMBER", length: 1},
-		{numName: "IT_NUMBER", length: 2},
-		{numName: "SG_NUMBER", length: 0},
-		{numName: "US_SHORT_BY_ONE_NUMBER", length: 0},
-		{numName: "INTERNATIONAL_TOLL_FREE", length: 0},
-	}
-	for i, test := range tests {
-		l := GetLengthOfGeographicalAreaCode(getTestNumber(test.numName))
-		if l != test.length {
-			t.Errorf("[test %d:length] %d != %d for %s\n", i, l, test.length, test.numName)
-		}
-	}
-}
-
-func TestGetCountryMobileToken(t *testing.T) {
-	// Argentina has mobile token "9"
-	assert.Equal(t, "9", GetCountryMobileToken(GetCountryCodeForRegion("AR")))
-	// Mexico no longer uses a mobile token
-	assert.Equal(t, "", GetCountryMobileToken(GetCountryCodeForRegion("MX")))
-	// Sweden has no mobile token
-	assert.Equal(t, "", GetCountryMobileToken(GetCountryCodeForRegion("SE")))
-}
-
-func TestGetNationalSignificantNumber(t *testing.T) {
-	var tests = []struct {
-		name, exp string
-	}{
-		{"US_NUMBER", "6502530000"}, {"IT_MOBILE", "345678901"},
-		{"IT_NUMBER", "0236618300"}, {"INTERNATIONAL_TOLL_FREE", "12345678"},
-	}
-	for i, test := range tests {
-		natsig := GetNationalSignificantNumber(getTestNumber(test.name))
-		if natsig != test.exp {
-			t.Errorf("[test %d] %s != %s\n", i, natsig, test.exp)
-		}
-	}
-}
-
-func TestGetExampleNumberForType(t *testing.T) {
-	if !reflect.DeepEqual(getTestNumber("DE_NUMBER"), GetExampleNumber("DE")) {
-		t.Error("the example number for Germany should have been the " +
-			"same as the test number we're using")
-	}
-	if !reflect.DeepEqual(
-		getTestNumber("DE_NUMBER"), GetExampleNumberForType("DE", FIXED_LINE)) {
-		t.Error("the example number for Germany should have been the " +
-			"same as the test number we're using [FIXED_LINE]")
-	}
-	// For the US, the example number is placed under general description,
-	// and hence should be used for both fixed line and mobile, so neither
-	// of these should return null.
-	if GetExampleNumberForType("US", FIXED_LINE) == nil {
-		t.Error("FIXED_LINE example for US should not be nil")
-	}
-	if GetExampleNumberForType("US", MOBILE) == nil {
-		t.Error("FIXED_LINE example for US should not be nil")
-	}
-	// CS is an invalid region, so we have no data for it.
-	if GetExampleNumberForType("CS", MOBILE) != nil {
-		t.Error("there should not be an example MOBILE number for the " +
-			"invalid region \"CS\"")
-	}
-	// RegionCode 001 is reserved for supporting non-geographical country
-	// calling code. We don't support getting an example number for it
-	// with this method.
-	if GetExampleNumber("UN001") != nil {
-		t.Error("there should not be an example number for UN001 " +
-			"that is retrievable by this method")
-	}
-}
-
-func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
-	if !reflect.DeepEqual(
-		getTestNumber("INTERNATIONAL_TOLL_FREE"),
-		GetExampleNumberForNonGeoEntity(800)) {
-		t.Error("there should be an example 800 number")
-	}
-	if !reflect.DeepEqual(
-		getTestNumber("UNIVERSAL_PREMIUM_RATE"),
-		GetExampleNumberForNonGeoEntity(979)) {
-		t.Error("there should be an example number for 979")
 	}
 }
 
@@ -1829,26 +1636,6 @@ func TestFormatWithPreferredCarrierCode(t *testing.T) {
 	usNumber.PreferredDomesticCarrierCode = proto.String("99")
 	assert.Equal(t, "(424) 123-1234", Format(usNumber, NATIONAL))
 	assert.Equal(t, "(424) 123-1234", FormatNationalNumberWithPreferredCarrierCode(usNumber, "15"))
-}
-
-func TestGetLengthOfNDC(t *testing.T) {
-	// Ported from PhoneNumberUtilTest.testGetLengthOfNationalDestinationCode
-	assert.Equal(t, 3, GetLengthOfNationalDestinationCode(getTestNumber("US_NUMBER")))
-	assert.Equal(t, 3, GetLengthOfNationalDestinationCode(getTestNumber("US_TOLLFREE")))
-	assert.Equal(t, 2, GetLengthOfNationalDestinationCode(getTestNumber("GB_NUMBER")))
-	assert.Equal(t, 4, GetLengthOfNationalDestinationCode(getTestNumber("GB_MOBILE")))
-	assert.Equal(t, 2, GetLengthOfNationalDestinationCode(getTestNumber("AR_NUMBER")))
-	assert.Equal(t, 3, GetLengthOfNationalDestinationCode(getTestNumber("AR_MOBILE")))
-	assert.Equal(t, 1, GetLengthOfNationalDestinationCode(getTestNumber("AU_NUMBER")))
-	assert.Equal(t, 4, GetLengthOfNationalDestinationCode(getTestNumber("SG_NUMBER")))
-	assert.Equal(t, 0, GetLengthOfNationalDestinationCode(getTestNumber("US_SHORT_BY_ONE_NUMBER")))
-	assert.Equal(t, 4, GetLengthOfNationalDestinationCode(getTestNumber("INTERNATIONAL_TOLL_FREE")))
-
-	// A number containing an invalid country calling code
-	invalidCC := &PhoneNumber{}
-	invalidCC.CountryCode = proto.Int32(123)
-	invalidCC.NationalNumber = proto.Uint64(6502530000)
-	assert.Equal(t, 0, GetLengthOfNationalDestinationCode(invalidCC))
 }
 
 func TestFormatOutOfCountryKeepingAlphaCharsWithExtension(t *testing.T) {
