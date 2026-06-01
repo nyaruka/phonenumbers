@@ -34,8 +34,8 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   invalid-number error table, keep-raw, phone-context)
 - ✅ Formatting (per-country, by-pattern, out-of-country, carrier, mobile-dialing,
   in-original-format)
-- Remaining: 2 skipped absent-type tests (see TODO below), the 2 Mockito
-  missing-metadata tests, and a couple of string-overload possibility cases.
+- Remaining: the 2 Mockito missing-metadata tests, and a couple of
+  string-overload possibility cases.
 
 ### Bugs the port surfaced and fixed
 - Builder nil-deref on regions lacking a mobile / fixed-line pattern
@@ -44,38 +44,39 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   dropped for every region)
 - `$FG` / national-prefix formatting-rule application
 - `UNIQUE_INTERNATIONAL_PREFIX` unanchored (out-of-country IDD prefix resolution)
+- Absent-type metadata representation: the builder now marks a type with no
+  numbers using `possibleLength = [-1]` (matching upstream) instead of an `"NA"`
+  national pattern, so `testNumberLength` reports `INVALID_LENGTH` for
+  unsupported types. `descHasPossibleNumberData` was aligned with upstream
+  (empty ⇒ inherits general desc; `[-1]` ⇒ unsupported) while still treating the
+  legacy `"NA"` sentinel in the committed embedded metadata as "no data".
 
 ## Remaining work (roughly in order)
 
-1. **Absent-type metadata representation** (see TODO). Small; unblocks 2 tests and
-   removes a divergence.
-2. **Port `ShortNumberInfoTest`** (`shortnumberinfo_test.go` is still ad-hoc).
+1. **Port `ShortNumberInfoTest`** (`shortnumberinfo_test.go` is still ad-hoc).
    Open question: upstream `resources/` has no `ShortNumberMetadataForTesting.xml`
    — confirm how upstream's `ShortNumberInfoTest` sources its test metadata before
    porting.
-3. **Implement `AsYouTypeFormatter`** (currently absent) and port
+2. **Implement `AsYouTypeFormatter`** (currently absent) and port
    `AsYouTypeFormatterTest`.
-4. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
+3. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
    `phonenumbermatcher.go`) and port `PhoneNumberMatcherTest`.
-5. **Add `ExampleNumbersTest`** — a real-metadata regression that validates every
+4. **Add `ExampleNumbersTest`** — a real-metadata regression that validates every
    shipped region's example numbers parse and validate.
-6. **Automate**: a scheduled task that detects new upstream releases, regenerates
+5. **Automate**: a scheduled task that detects new upstream releases, regenerates
    metadata, runs the (now-stable) synthetic tests, opens a PR for data-only
    deltas, and flags logic-touching changes for manual porting. See
    `docs/2.0-restructure.md`.
 
 ## Known TODOs / documented divergences
 
-- **Absent-type representation.** Upstream marks a type with no numbers using
-  `possibleLength = [-1]` (so `testNumberLength` returns `INVALID_LENGTH`); this
-  builder instead leaves `possibleLength` empty with an `"NA"` pattern, so
-  unsupported types fall back to the general desc's lengths. Aligning it un-skips
-  `testIsPossibleNumberForType[WithReason]_NumberTypeNotSupportedForRegion` in
-  `phonenumberutil_types_test.go` and removes the `"NA"` assertion in
-  `TestGetInstanceLoadUSMetadata`. A naive fix (set `[-1]` in
-  `processPhoneNumberDescElement` for absent elements) has subtle
-  `FIXED_LINE_OR_MOBILE`-merge interactions in `testNumberLength`; it needs care
-  plus full-suite verification.
+- **Embedded metadata still uses the legacy `"NA"` sentinel.** The builder now
+  emits `possibleLength = [-1]` for absent types (matching upstream), but the
+  committed `data/metadata.xml.gz` was generated before that change and still
+  marks absent types with an `"NA"` national pattern. `descHasData` /
+  `descHasPossibleNumberData` handle both representations, so behaviour is
+  correct; the `"NA"` special-cases become dead code only once the embedded
+  metadata is regenerated (a separate data-refresh concern — see item 5).
 - **Parsing edge cases:** `normalizeDigits` doesn't map non-ASCII / non-Arabic
   unicode digits (e.g. Mongolian) to ASCII; the extension regex doesn't tolerate
   trailing whitespace after the extension digits. Both are characterized in the

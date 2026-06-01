@@ -128,13 +128,9 @@ func TestGetInstanceLoadUSMetadata(t *testing.T) {
 	// separately in the toll free element as well.
 	assert.Len(t, metadata.GetTollFree().GetPossibleLength(), 0)
 	assert.Equal(t, `900\d{7}`, metadata.GetPremiumRate().GetNationalNumberPattern())
-	// No shared-cost data is available for US. Upstream leaves the descriptor
-	// unset (hasNationalNumberPattern() == false); our builder instead emits the
-	// legacy "NA" sentinel (matches nothing) for an absent descriptor — a known,
-	// functionally-equivalent divergence in metadata generation.
-	// TODO: align the builder's "NA" convention with upstream and restore
-	// assert.Empty here.
-	assert.Equal(t, "NA", metadata.GetSharedCost().GetNationalNumberPattern())
+	// No shared-cost data is available for US, so its national number data should
+	// not be set (the builder marks the absent descriptor with possibleLength [-1]).
+	assert.Nil(t, metadata.GetSharedCost().NationalNumberPattern) // hasNationalNumberPattern() == false
 }
 
 func TestGetInstanceLoadDEMetadata(t *testing.T) {
