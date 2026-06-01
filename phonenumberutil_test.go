@@ -80,6 +80,12 @@ func internationalTollFreeTooLong() *PhoneNumber { return pn(800, 123456789) }
 func universalPremiumRate() *PhoneNumber         { return pn(979, 123456789) }
 func unknownCountryCodeNoRawInput() *PhoneNumber { return pn(2, 12345) }
 
+// testGetSupportedRegions (PhoneNumberUtilTest.java:135-137)
+func TestGetSupportedRegions(t *testing.T) {
+	useTestMetadata(t)
+	assert.Greater(t, len(GetSupportedRegions()), 0)
+}
+
 func TestGetSupportedGlobalNetworkCallingCodes(t *testing.T) {
 	useTestMetadata(t)
 	globalNetworkCallingCodes := GetSupportedGlobalNetworkCallingCodes()
@@ -157,90 +163,6 @@ func TestGetInstanceLoadDEMetadata(t *testing.T) {
 	assert.Equal(t, `900([135]\d{6}|9\d{7})`, metadata.GetPremiumRate().GetNationalNumberPattern())
 }
 
-// testGetSupportedRegions (PhoneNumberUtilTest.java:135-137)
-func TestGetSupportedRegions(t *testing.T) {
-	useTestMetadata(t)
-	assert.Greater(t, len(GetSupportedRegions()), 0)
-}
-
-// testGetRegionCodeForCountryCode (PhoneNumberUtilTest.java:1312-1318)
-func TestGetRegionCodeForCountryCode(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, regionCode.US, GetRegionCodeForCountryCode(1))
-	assert.Equal(t, regionCode.GB, GetRegionCodeForCountryCode(44))
-	assert.Equal(t, regionCode.DE, GetRegionCodeForCountryCode(49))
-	assert.Equal(t, regionCode.UN001, GetRegionCodeForCountryCode(800))
-	assert.Equal(t, regionCode.UN001, GetRegionCodeForCountryCode(979))
-}
-
-// testGetRegionCodeForNumber (PhoneNumberUtilTest.java:1320-1326)
-func TestGetRegionCodeForNumber(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, regionCode.BS, GetRegionCodeForNumber(bsNumber()))
-	assert.Equal(t, regionCode.US, GetRegionCodeForNumber(usNumber()))
-	assert.Equal(t, regionCode.GB, GetRegionCodeForNumber(gbMobile()))
-	assert.Equal(t, regionCode.UN001, GetRegionCodeForNumber(internationalTollFree()))
-	assert.Equal(t, regionCode.UN001, GetRegionCodeForNumber(universalPremiumRate()))
-}
-
-// testGetRegionCodesForCountryCode (PhoneNumberUtilTest.java:1328-1337)
-func TestGetRegionCodesForCountryCode(t *testing.T) {
-	useTestMetadata(t)
-	regionCodesForNANPA := GetRegionCodesForCountryCode(1)
-	assert.Contains(t, regionCodesForNANPA, regionCode.US)
-	assert.Contains(t, regionCodesForNANPA, regionCode.BS)
-	assert.Contains(t, GetRegionCodesForCountryCode(44), regionCode.GB)
-	assert.Contains(t, GetRegionCodesForCountryCode(49), regionCode.DE)
-	assert.Contains(t, GetRegionCodesForCountryCode(800), regionCode.UN001)
-	// Test with invalid country calling code.
-	assert.Empty(t, GetRegionCodesForCountryCode(-1))
-}
-
-// testGetCountryCodeForRegion (PhoneNumberUtilTest.java:1339-1347)
-func TestGetCountryCodeForRegion(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, 1, GetCountryCodeForRegion(regionCode.US))
-	assert.Equal(t, 64, GetCountryCodeForRegion(regionCode.NZ))
-	// Java passes a null region; Go uses the empty string as the no-region case.
-	assert.Equal(t, 0, GetCountryCodeForRegion(""))
-	assert.Equal(t, 0, GetCountryCodeForRegion(regionCode.ZZ))
-	assert.Equal(t, 0, GetCountryCodeForRegion(regionCode.UN001))
-	// CS is already deprecated so the library doesn't support it.
-	assert.Equal(t, 0, GetCountryCodeForRegion("CS"))
-}
-
-// testGetNationalDiallingPrefixForRegion (PhoneNumberUtilTest.java:1349-1364)
-func TestGetNationalDiallingPrefixForRegion(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, "1", GetNddPrefixForRegion(regionCode.US, false))
-	// Test non-main country to see it gets the national dialling prefix for the
-	// main country with that country calling code.
-	assert.Equal(t, "1", GetNddPrefixForRegion(regionCode.BS, false))
-	assert.Equal(t, "0", GetNddPrefixForRegion(regionCode.NZ, false))
-	// Test case with non digit in the national prefix.
-	assert.Equal(t, "0~0", GetNddPrefixForRegion(regionCode.AO, false))
-	assert.Equal(t, "00", GetNddPrefixForRegion(regionCode.AO, true))
-	// Test cases with invalid regions. Java returns null; our API returns the
-	// empty string for an invalid/unknown region.
-	assert.Equal(t, "", GetNddPrefixForRegion("", false))
-	assert.Equal(t, "", GetNddPrefixForRegion(regionCode.ZZ, false))
-	assert.Equal(t, "", GetNddPrefixForRegion(regionCode.UN001, false))
-	// CS is already deprecated so the library doesn't support it.
-	assert.Equal(t, "", GetNddPrefixForRegion("CS", false))
-}
-
-// testIsNANPACountry (PhoneNumberUtilTest.java:1366-1373)
-func TestIsNANPACountry(t *testing.T) {
-	useTestMetadata(t)
-	assert.True(t, IsNANPACountry(regionCode.US))
-	assert.True(t, IsNANPACountry(regionCode.BS))
-	assert.False(t, IsNANPACountry(regionCode.DE))
-	assert.False(t, IsNANPACountry(regionCode.ZZ))
-	assert.False(t, IsNANPACountry(regionCode.UN001))
-	// Java passes a null region; Go uses the empty string as the no-region case.
-	assert.False(t, IsNANPACountry(""))
-}
-
 // testGetInstanceLoadARMetadata (PhoneNumberUtilTest.java:248-262)
 func TestGetInstanceLoadARMetadata(t *testing.T) {
 	useTestMetadata(t)
@@ -270,138 +192,15 @@ func TestGetInstanceLoadInternationalTollFreeMetadata(t *testing.T) {
 	assert.Equal(t, "12345678", metadata.GetTollFree().GetExampleNumber())
 }
 
-// testGetMetadataForRegionForNonGeoEntity_shouldBeNull (PhoneNumberUtilTest.java:3249-3251)
-func TestGetMetadataForRegionForNonGeoEntityShouldBeNull(t *testing.T) {
+func TestIsNumberGeographical(t *testing.T) {
 	useTestMetadata(t)
-	assert.Nil(t, getMetadataForRegion(regionCode.UN001))
-}
-
-// testGetMetadataForRegionForUnknownRegion_shouldBeNull (PhoneNumberUtilTest.java:3253-3255)
-func TestGetMetadataForRegionForUnknownRegionShouldBeNull(t *testing.T) {
-	useTestMetadata(t)
-	assert.Nil(t, getMetadataForRegion(regionCode.ZZ))
-}
-
-// testGetMetadataForNonGeographicalRegionForGeoRegion_shouldBeNull (PhoneNumberUtilTest.java:3257-3259)
-func TestGetMetadataForNonGeographicalRegionForGeoRegionShouldBeNull(t *testing.T) {
-	useTestMetadata(t)
-	assert.Nil(t, getMetadataForNonGeographicalRegion(1))
-}
-
-func TestIsPremiumRate(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, PREMIUM_RATE, GetNumberType(usPremium()))
-
-	premiumRateNumber := &PhoneNumber{CountryCode: proto.Int32(39), NationalNumber: proto.Uint64(892123)}
-	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
-
-	premiumRateNumber = &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(9187654321)}
-	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
-
-	premiumRateNumber = &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(9001654321)}
-	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
-
-	premiumRateNumber = &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(90091234567)}
-	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
-
-	assert.Equal(t, PREMIUM_RATE, GetNumberType(universalPremiumRate()))
-}
-
-func TestIsTollFree(t *testing.T) {
-	useTestMetadata(t)
-
-	tollFreeNumber := &PhoneNumber{CountryCode: proto.Int32(1), NationalNumber: proto.Uint64(8881234567)}
-	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
-
-	tollFreeNumber = &PhoneNumber{CountryCode: proto.Int32(39), NationalNumber: proto.Uint64(803123)}
-	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
-
-	tollFreeNumber = &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(8012345678)}
-	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
-
-	tollFreeNumber = &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(8001234567)}
-	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
-
-	assert.Equal(t, TOLL_FREE, GetNumberType(internationalTollFree()))
-}
-
-func TestIsMobile(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, MOBILE, GetNumberType(bsMobile()))
-	assert.Equal(t, MOBILE, GetNumberType(gbMobile()))
-	assert.Equal(t, MOBILE, GetNumberType(itMobile()))
-	assert.Equal(t, MOBILE, GetNumberType(arMobile()))
-
-	mobileNumber := &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(15123456789)}
-	assert.Equal(t, MOBILE, GetNumberType(mobileNumber))
-}
-
-func TestIsFixedLine(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, FIXED_LINE, GetNumberType(bsNumber()))
-	assert.Equal(t, FIXED_LINE, GetNumberType(itNumber()))
-	assert.Equal(t, FIXED_LINE, GetNumberType(gbNumber()))
-	assert.Equal(t, FIXED_LINE, GetNumberType(deNumber()))
-}
-
-func TestIsFixedLineAndMobile(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, FIXED_LINE_OR_MOBILE, GetNumberType(usNumber()))
-
-	fixedLineAndMobileNumber := &PhoneNumber{CountryCode: proto.Int32(54), NationalNumber: proto.Uint64(1987654321)}
-	assert.Equal(t, FIXED_LINE_OR_MOBILE, GetNumberType(fixedLineAndMobileNumber))
-}
-
-func TestIsSharedCost(t *testing.T) {
-	useTestMetadata(t)
-	gbNumber := &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(8431231234)}
-	assert.Equal(t, SHARED_COST, GetNumberType(gbNumber))
-}
-
-func TestIsVoip(t *testing.T) {
-	useTestMetadata(t)
-	gbNumber := &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(5631231234)}
-	assert.Equal(t, VOIP, GetNumberType(gbNumber))
-}
-
-func TestIsPersonalNumber(t *testing.T) {
-	useTestMetadata(t)
-	gbNumber := &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(7031231234)}
-	assert.Equal(t, PERSONAL_NUMBER, GetNumberType(gbNumber))
-}
-
-func TestIsUnknown(t *testing.T) {
-	useTestMetadata(t)
-	// Invalid numbers should be of type UNKNOWN.
-	assert.Equal(t, UNKNOWN, GetNumberType(usLocalNumber()))
-}
-
-func TestGetNationalSignificantNumber(t *testing.T) {
-	useTestMetadata(t)
-	assert.Equal(t, "6502530000", GetNationalSignificantNumber(usNumber()))
-
-	// An Italian mobile number.
-	assert.Equal(t, "345678901", GetNationalSignificantNumber(itMobile()))
-
-	// An Italian fixed line number.
-	assert.Equal(t, "0236618300", GetNationalSignificantNumber(itNumber()))
-
-	assert.Equal(t, "12345678", GetNationalSignificantNumber(internationalTollFree()))
-}
-
-func TestGetNationalSignificantNumberManyLeadingZeros(t *testing.T) {
-	useTestMetadata(t)
-	number := &PhoneNumber{
-		CountryCode:          proto.Int32(1),
-		NationalNumber:       proto.Uint64(650),
-		ItalianLeadingZero:   proto.Bool(true),
-		NumberOfLeadingZeros: proto.Int32(2),
-	}
-	assert.Equal(t, "00650", GetNationalSignificantNumber(number))
-
-	// Set a bad value; we shouldn't crash, we shouldn't output any leading zeros at all.
-	number.NumberOfLeadingZeros = proto.Int32(-3)
-	assert.Equal(t, "650", GetNationalSignificantNumber(number))
+	assert.False(t, isNumberGeographical(bsMobile()))              // Bahamas, mobile phone number.
+	assert.True(t, isNumberGeographical(auNumber()))               // Australian fixed line number.
+	assert.False(t, isNumberGeographical(internationalTollFree())) // International toll free number.
+	// We test that mobile phone numbers in relevant regions are indeed considered geographical.
+	assert.True(t, isNumberGeographical(arMobile()))  // Argentina, mobile phone number.
+	assert.True(t, isNumberGeographical(mxMobile1())) // Mexico, mobile phone number.
+	assert.True(t, isNumberGeographical(mxMobile2())) // Mexico, another mobile phone number.
 }
 
 func TestGetLengthOfGeographicalAreaCode(t *testing.T) {
@@ -498,15 +297,168 @@ func TestGetCountryMobileToken(t *testing.T) {
 	assert.Equal(t, "", GetCountryMobileToken(GetCountryCodeForRegion(regionCode.SE)))
 }
 
-func TestIsNumberGeographical(t *testing.T) {
+func TestGetNationalSignificantNumber(t *testing.T) {
 	useTestMetadata(t)
-	assert.False(t, isNumberGeographical(bsMobile()))              // Bahamas, mobile phone number.
-	assert.True(t, isNumberGeographical(auNumber()))               // Australian fixed line number.
-	assert.False(t, isNumberGeographical(internationalTollFree())) // International toll free number.
-	// We test that mobile phone numbers in relevant regions are indeed considered geographical.
-	assert.True(t, isNumberGeographical(arMobile()))  // Argentina, mobile phone number.
-	assert.True(t, isNumberGeographical(mxMobile1())) // Mexico, mobile phone number.
-	assert.True(t, isNumberGeographical(mxMobile2())) // Mexico, another mobile phone number.
+	assert.Equal(t, "6502530000", GetNationalSignificantNumber(usNumber()))
+
+	// An Italian mobile number.
+	assert.Equal(t, "345678901", GetNationalSignificantNumber(itMobile()))
+
+	// An Italian fixed line number.
+	assert.Equal(t, "0236618300", GetNationalSignificantNumber(itNumber()))
+
+	assert.Equal(t, "12345678", GetNationalSignificantNumber(internationalTollFree()))
+}
+
+func TestGetNationalSignificantNumberManyLeadingZeros(t *testing.T) {
+	useTestMetadata(t)
+	number := &PhoneNumber{
+		CountryCode:          proto.Int32(1),
+		NationalNumber:       proto.Uint64(650),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(2),
+	}
+	assert.Equal(t, "00650", GetNationalSignificantNumber(number))
+
+	// Set a bad value; we shouldn't crash, we shouldn't output any leading zeros at all.
+	number.NumberOfLeadingZeros = proto.Int32(-3)
+	assert.Equal(t, "650", GetNationalSignificantNumber(number))
+}
+
+func TestGetExampleNumber(t *testing.T) {
+	useTestMetadata(t)
+	assert.True(t, proto.Equal(deNumber(), GetExampleNumber(regionCode.DE)))
+
+	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForType(regionCode.DE, FIXED_LINE)))
+	// Should return the same response if asked for FIXED_LINE_OR_MOBILE too.
+	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForType(regionCode.DE, FIXED_LINE_OR_MOBILE)))
+	assert.NotNil(t, GetExampleNumberForType(regionCode.US, FIXED_LINE))
+	assert.NotNil(t, GetExampleNumberForType(regionCode.US, MOBILE))
+
+	// We have data for the US, but no data for VOICEMAIL, so return null.
+	assert.Nil(t, GetExampleNumberForType(regionCode.US, VOICEMAIL))
+	// CS is an invalid region, so we have no data for it.
+	assert.Nil(t, GetExampleNumberForType("CS", MOBILE))
+	// RegionCode 001 is reserved for supporting non-geographical country calling code. We don't
+	// support getting an example number for it with this method.
+	assert.Nil(t, GetExampleNumber(regionCode.UN001))
+}
+
+func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
+	useTestMetadata(t)
+	assert.True(t, proto.Equal(internationalTollFree(), GetExampleNumberForNonGeoEntity(800)))
+	assert.True(t, proto.Equal(universalPremiumRate(), GetExampleNumberForNonGeoEntity(979)))
+}
+
+func TestGetExampleNumberWithoutRegion(t *testing.T) {
+	useTestMetadata(t)
+	// In our test metadata we don't cover all types: in our real metadata, we do.
+	// NOTE: the Go API has no region-less GetExampleNumberForType overload (an
+	// upstream API gap, tracked separately), so this mirrors the Java intent by
+	// iterating the supported regions and returning the first example for the type.
+	assert.NotNil(t, exampleNumberForTypeAnyRegion(FIXED_LINE))
+	assert.NotNil(t, exampleNumberForTypeAnyRegion(MOBILE))
+	assert.NotNil(t, exampleNumberForTypeAnyRegion(PREMIUM_RATE))
+}
+
+// exampleNumberForTypeAnyRegion is the test-local stand-in for upstream's
+// getExampleNumberForType(PhoneNumberType) no-region overload: it iterates every
+// supported region and returns the first example number found for the given type.
+func exampleNumberForTypeAnyRegion(typ PhoneNumberType) *PhoneNumber {
+	for regionCode := range GetSupportedRegions() {
+		if example := GetExampleNumberForType(regionCode, typ); example != nil {
+			return example
+		}
+	}
+	return nil
+}
+
+func TestIsPremiumRate(t *testing.T) {
+	useTestMetadata(t)
+	assert.Equal(t, PREMIUM_RATE, GetNumberType(usPremium()))
+
+	premiumRateNumber := &PhoneNumber{CountryCode: proto.Int32(39), NationalNumber: proto.Uint64(892123)}
+	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
+
+	premiumRateNumber = &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(9187654321)}
+	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
+
+	premiumRateNumber = &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(9001654321)}
+	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
+
+	premiumRateNumber = &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(90091234567)}
+	assert.Equal(t, PREMIUM_RATE, GetNumberType(premiumRateNumber))
+
+	assert.Equal(t, PREMIUM_RATE, GetNumberType(universalPremiumRate()))
+}
+
+func TestIsTollFree(t *testing.T) {
+	useTestMetadata(t)
+
+	tollFreeNumber := &PhoneNumber{CountryCode: proto.Int32(1), NationalNumber: proto.Uint64(8881234567)}
+	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
+
+	tollFreeNumber = &PhoneNumber{CountryCode: proto.Int32(39), NationalNumber: proto.Uint64(803123)}
+	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
+
+	tollFreeNumber = &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(8012345678)}
+	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
+
+	tollFreeNumber = &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(8001234567)}
+	assert.Equal(t, TOLL_FREE, GetNumberType(tollFreeNumber))
+
+	assert.Equal(t, TOLL_FREE, GetNumberType(internationalTollFree()))
+}
+
+func TestIsMobile(t *testing.T) {
+	useTestMetadata(t)
+	assert.Equal(t, MOBILE, GetNumberType(bsMobile()))
+	assert.Equal(t, MOBILE, GetNumberType(gbMobile()))
+	assert.Equal(t, MOBILE, GetNumberType(itMobile()))
+	assert.Equal(t, MOBILE, GetNumberType(arMobile()))
+
+	mobileNumber := &PhoneNumber{CountryCode: proto.Int32(49), NationalNumber: proto.Uint64(15123456789)}
+	assert.Equal(t, MOBILE, GetNumberType(mobileNumber))
+}
+
+func TestIsFixedLine(t *testing.T) {
+	useTestMetadata(t)
+	assert.Equal(t, FIXED_LINE, GetNumberType(bsNumber()))
+	assert.Equal(t, FIXED_LINE, GetNumberType(itNumber()))
+	assert.Equal(t, FIXED_LINE, GetNumberType(gbNumber()))
+	assert.Equal(t, FIXED_LINE, GetNumberType(deNumber()))
+}
+
+func TestIsFixedLineAndMobile(t *testing.T) {
+	useTestMetadata(t)
+	assert.Equal(t, FIXED_LINE_OR_MOBILE, GetNumberType(usNumber()))
+
+	fixedLineAndMobileNumber := &PhoneNumber{CountryCode: proto.Int32(54), NationalNumber: proto.Uint64(1987654321)}
+	assert.Equal(t, FIXED_LINE_OR_MOBILE, GetNumberType(fixedLineAndMobileNumber))
+}
+
+func TestIsSharedCost(t *testing.T) {
+	useTestMetadata(t)
+	gbNumber := &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(8431231234)}
+	assert.Equal(t, SHARED_COST, GetNumberType(gbNumber))
+}
+
+func TestIsVoip(t *testing.T) {
+	useTestMetadata(t)
+	gbNumber := &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(5631231234)}
+	assert.Equal(t, VOIP, GetNumberType(gbNumber))
+}
+
+func TestIsPersonalNumber(t *testing.T) {
+	useTestMetadata(t)
+	gbNumber := &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(7031231234)}
+	assert.Equal(t, PERSONAL_NUMBER, GetNumberType(gbNumber))
+}
+
+func TestIsUnknown(t *testing.T) {
+	useTestMetadata(t)
+	// Invalid numbers should be of type UNKNOWN.
+	assert.Equal(t, UNKNOWN, GetNumberType(usLocalNumber()))
 }
 
 func TestIsValidNumber(t *testing.T) {
@@ -595,52 +547,82 @@ func TestIsNotValidNumber(t *testing.T) {
 	assert.False(t, IsValidNumber(internationalTollFreeTooLong()))
 }
 
-func TestGetExampleNumber(t *testing.T) {
+// testGetRegionCodeForCountryCode (PhoneNumberUtilTest.java:1312-1318)
+func TestGetRegionCodeForCountryCode(t *testing.T) {
 	useTestMetadata(t)
-	assert.True(t, proto.Equal(deNumber(), GetExampleNumber(regionCode.DE)))
-
-	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForType(regionCode.DE, FIXED_LINE)))
-	// Should return the same response if asked for FIXED_LINE_OR_MOBILE too.
-	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForType(regionCode.DE, FIXED_LINE_OR_MOBILE)))
-	assert.NotNil(t, GetExampleNumberForType(regionCode.US, FIXED_LINE))
-	assert.NotNil(t, GetExampleNumberForType(regionCode.US, MOBILE))
-
-	// We have data for the US, but no data for VOICEMAIL, so return null.
-	assert.Nil(t, GetExampleNumberForType(regionCode.US, VOICEMAIL))
-	// CS is an invalid region, so we have no data for it.
-	assert.Nil(t, GetExampleNumberForType("CS", MOBILE))
-	// RegionCode 001 is reserved for supporting non-geographical country calling code. We don't
-	// support getting an example number for it with this method.
-	assert.Nil(t, GetExampleNumber(regionCode.UN001))
+	assert.Equal(t, regionCode.US, GetRegionCodeForCountryCode(1))
+	assert.Equal(t, regionCode.GB, GetRegionCodeForCountryCode(44))
+	assert.Equal(t, regionCode.DE, GetRegionCodeForCountryCode(49))
+	assert.Equal(t, regionCode.UN001, GetRegionCodeForCountryCode(800))
+	assert.Equal(t, regionCode.UN001, GetRegionCodeForCountryCode(979))
 }
 
-func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
+// testGetRegionCodeForNumber (PhoneNumberUtilTest.java:1320-1326)
+func TestGetRegionCodeForNumber(t *testing.T) {
 	useTestMetadata(t)
-	assert.True(t, proto.Equal(internationalTollFree(), GetExampleNumberForNonGeoEntity(800)))
-	assert.True(t, proto.Equal(universalPremiumRate(), GetExampleNumberForNonGeoEntity(979)))
+	assert.Equal(t, regionCode.BS, GetRegionCodeForNumber(bsNumber()))
+	assert.Equal(t, regionCode.US, GetRegionCodeForNumber(usNumber()))
+	assert.Equal(t, regionCode.GB, GetRegionCodeForNumber(gbMobile()))
+	assert.Equal(t, regionCode.UN001, GetRegionCodeForNumber(internationalTollFree()))
+	assert.Equal(t, regionCode.UN001, GetRegionCodeForNumber(universalPremiumRate()))
 }
 
-func TestGetExampleNumberWithoutRegion(t *testing.T) {
+// testGetRegionCodesForCountryCode (PhoneNumberUtilTest.java:1328-1337)
+func TestGetRegionCodesForCountryCode(t *testing.T) {
 	useTestMetadata(t)
-	// In our test metadata we don't cover all types: in our real metadata, we do.
-	// NOTE: the Go API has no region-less GetExampleNumberForType overload (an
-	// upstream API gap, tracked separately), so this mirrors the Java intent by
-	// iterating the supported regions and returning the first example for the type.
-	assert.NotNil(t, exampleNumberForTypeAnyRegion(FIXED_LINE))
-	assert.NotNil(t, exampleNumberForTypeAnyRegion(MOBILE))
-	assert.NotNil(t, exampleNumberForTypeAnyRegion(PREMIUM_RATE))
+	regionCodesForNANPA := GetRegionCodesForCountryCode(1)
+	assert.Contains(t, regionCodesForNANPA, regionCode.US)
+	assert.Contains(t, regionCodesForNANPA, regionCode.BS)
+	assert.Contains(t, GetRegionCodesForCountryCode(44), regionCode.GB)
+	assert.Contains(t, GetRegionCodesForCountryCode(49), regionCode.DE)
+	assert.Contains(t, GetRegionCodesForCountryCode(800), regionCode.UN001)
+	// Test with invalid country calling code.
+	assert.Empty(t, GetRegionCodesForCountryCode(-1))
 }
 
-// exampleNumberForTypeAnyRegion is the test-local stand-in for upstream's
-// getExampleNumberForType(PhoneNumberType) no-region overload: it iterates every
-// supported region and returns the first example number found for the given type.
-func exampleNumberForTypeAnyRegion(typ PhoneNumberType) *PhoneNumber {
-	for regionCode := range GetSupportedRegions() {
-		if example := GetExampleNumberForType(regionCode, typ); example != nil {
-			return example
-		}
-	}
-	return nil
+// testGetCountryCodeForRegion (PhoneNumberUtilTest.java:1339-1347)
+func TestGetCountryCodeForRegion(t *testing.T) {
+	useTestMetadata(t)
+	assert.Equal(t, 1, GetCountryCodeForRegion(regionCode.US))
+	assert.Equal(t, 64, GetCountryCodeForRegion(regionCode.NZ))
+	// Java passes a null region; Go uses the empty string as the no-region case.
+	assert.Equal(t, 0, GetCountryCodeForRegion(""))
+	assert.Equal(t, 0, GetCountryCodeForRegion(regionCode.ZZ))
+	assert.Equal(t, 0, GetCountryCodeForRegion(regionCode.UN001))
+	// CS is already deprecated so the library doesn't support it.
+	assert.Equal(t, 0, GetCountryCodeForRegion("CS"))
+}
+
+// testGetNationalDiallingPrefixForRegion (PhoneNumberUtilTest.java:1349-1364)
+func TestGetNationalDiallingPrefixForRegion(t *testing.T) {
+	useTestMetadata(t)
+	assert.Equal(t, "1", GetNddPrefixForRegion(regionCode.US, false))
+	// Test non-main country to see it gets the national dialling prefix for the
+	// main country with that country calling code.
+	assert.Equal(t, "1", GetNddPrefixForRegion(regionCode.BS, false))
+	assert.Equal(t, "0", GetNddPrefixForRegion(regionCode.NZ, false))
+	// Test case with non digit in the national prefix.
+	assert.Equal(t, "0~0", GetNddPrefixForRegion(regionCode.AO, false))
+	assert.Equal(t, "00", GetNddPrefixForRegion(regionCode.AO, true))
+	// Test cases with invalid regions. Java returns null; our API returns the
+	// empty string for an invalid/unknown region.
+	assert.Equal(t, "", GetNddPrefixForRegion("", false))
+	assert.Equal(t, "", GetNddPrefixForRegion(regionCode.ZZ, false))
+	assert.Equal(t, "", GetNddPrefixForRegion(regionCode.UN001, false))
+	// CS is already deprecated so the library doesn't support it.
+	assert.Equal(t, "", GetNddPrefixForRegion("CS", false))
+}
+
+// testIsNANPACountry (PhoneNumberUtilTest.java:1366-1373)
+func TestIsNANPACountry(t *testing.T) {
+	useTestMetadata(t)
+	assert.True(t, IsNANPACountry(regionCode.US))
+	assert.True(t, IsNANPACountry(regionCode.BS))
+	assert.False(t, IsNANPACountry(regionCode.DE))
+	assert.False(t, IsNANPACountry(regionCode.ZZ))
+	assert.False(t, IsNANPACountry(regionCode.UN001))
+	// Java passes a null region; Go uses the empty string as the no-region case.
+	assert.False(t, IsNANPACountry(""))
 }
 
 func TestCanBeInternationallyDialled(t *testing.T) {
@@ -679,4 +661,22 @@ func TestIsMobileNumberPortableRegion(t *testing.T) {
 	assert.True(t, IsMobileNumberPortableRegion(regionCode.GB))
 	assert.False(t, IsMobileNumberPortableRegion(regionCode.AE))
 	assert.False(t, IsMobileNumberPortableRegion(regionCode.BS))
+}
+
+// testGetMetadataForRegionForNonGeoEntity_shouldBeNull (PhoneNumberUtilTest.java:3249-3251)
+func TestGetMetadataForRegionForNonGeoEntityShouldBeNull(t *testing.T) {
+	useTestMetadata(t)
+	assert.Nil(t, getMetadataForRegion(regionCode.UN001))
+}
+
+// testGetMetadataForRegionForUnknownRegion_shouldBeNull (PhoneNumberUtilTest.java:3253-3255)
+func TestGetMetadataForRegionForUnknownRegionShouldBeNull(t *testing.T) {
+	useTestMetadata(t)
+	assert.Nil(t, getMetadataForRegion(regionCode.ZZ))
+}
+
+// testGetMetadataForNonGeographicalRegionForGeoRegion_shouldBeNull (PhoneNumberUtilTest.java:3257-3259)
+func TestGetMetadataForNonGeographicalRegionForGeoRegionShouldBeNull(t *testing.T) {
+	useTestMetadata(t)
+	assert.Nil(t, getMetadataForNonGeographicalRegion(1))
 }
