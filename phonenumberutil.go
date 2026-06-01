@@ -835,8 +835,10 @@ var allPhoneNumberTypes = []PhoneNumberType{
 }
 
 // descHasData returns true if there is any data set for a particular
-// PhoneNumberDesc. Note: our builder represents an absent descriptor with the
-// "NA" sentinel pattern (see builder.go), so a pattern of "NA" counts as no data.
+// PhoneNumberDesc. The builder marks an absent descriptor with possibleLength
+// [-1] (matching upstream), but the committed embedded metadata still uses the
+// legacy "NA" national-number-pattern sentinel, so a pattern of "NA" also counts
+// as no data.
 func descHasData(desc *PhoneNumberDesc) bool {
 	if desc == nil {
 		return false
@@ -2171,8 +2173,17 @@ func IsPossibleNumber(number *PhoneNumber) bool {
 	return possible == IS_POSSIBLE || possible == IS_POSSIBLE_LOCAL_ONLY
 }
 
+// descHasPossibleNumberData returns true if there is any possible-length data
+// set for a PhoneNumberDesc. An empty possibleLength means numbers of this type
+// inherit from the general desc (so the type is supported); a single -1 entry
+// means no numbers exist for the type. The committed embedded metadata still
+// marks absent types with the legacy "NA" national-number pattern (and an empty
+// possibleLength) instead, so we treat that as no data too.
 func descHasPossibleNumberData(desc *PhoneNumberDesc) bool {
-	return len(desc.PossibleLength) > 0 && desc.PossibleLength[0] != -1
+	if desc.GetNationalNumberPattern() == "NA" {
+		return false
+	}
+	return len(desc.PossibleLength) != 1 || desc.PossibleLength[0] != -1
 }
 
 func mergeLengths(l1 []int32, l2 []int32) []int32 {

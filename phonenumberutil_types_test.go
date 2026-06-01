@@ -112,14 +112,6 @@ func TestIsPossibleNumberForTypeDataMissingForSizeReasons(t *testing.T) {
 }
 
 func TestIsPossibleNumberForTypeNumberTypeNotSupportedForRegion(t *testing.T) {
-	// SKIP: depends on the absent-type metadata representation. Upstream marks a
-	// type with no numbers using possibleLength [-1] so testNumberLength returns
-	// INVALID_LENGTH; our builder instead leaves possibleLength empty (with an "NA"
-	// pattern), so unsupported types fall back to the general desc's lengths. This
-	// needs the builder's absent-type convention aligned with upstream (a separate,
-	// metadata-representation change). The IsPossibleNumberForType API itself is
-	// exercised by the other (passing) tests in this file.
-	t.Skip("blocked on absent-type metadata representation (NA vs possibleLength[-1])")
 	useTestMetadata(t)
 	number := &PhoneNumber{CountryCode: proto.Int32(55), NationalNumber: proto.Uint64(12345678)}
 	// There are *no* mobile numbers for this region at all, so we return false.
@@ -192,11 +184,6 @@ func TestIsPossibleNumberForTypeWithReasonDataMissingForSizeReasons(t *testing.T
 }
 
 func TestIsPossibleNumberForTypeWithReasonNumberTypeNotSupportedForRegion(t *testing.T) {
-	// SKIP: same underlying divergence as TestIsPossibleNumberForTypeNumberType
-	// NotSupportedForRegion — our builder represents an absent type with an empty
-	// possibleLength (+ "NA" pattern) rather than upstream's possibleLength [-1],
-	// so testNumberLength can't return INVALID_LENGTH for unsupported types.
-	t.Skip("blocked on absent-type metadata representation (NA vs possibleLength[-1])")
 	useTestMetadata(t)
 	// There are *no* mobile numbers for this region at all, so we return INVALID_LENGTH.
 	number := &PhoneNumber{CountryCode: proto.Int32(55), NationalNumber: proto.Uint64(12345678)}
