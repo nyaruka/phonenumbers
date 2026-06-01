@@ -263,7 +263,11 @@ var (
 	// region, they will be represented as a regex string that always
 	// contains character(s) other than ASCII digits.
 	// Note this regex also includes tilde, which signals waiting for the tone.
-	UNIQUE_INTERNATIONAL_PREFIX = regexp.MustCompile("[\\d]+(?:[~\u2053\u223C\uFF5E][\\d]+)?")
+	// Anchored to require a full match, mirroring Java's Pattern.matches(): Go's
+	// MatchString is a partial (unanchored) match, which would wrongly treat a
+	// regex IDD prefix like "0[0-3][0-9]" as a unique prefix (matching its leading
+	// "0") instead of falling back to international "+" formatting.
+	UNIQUE_INTERNATIONAL_PREFIX = regexp.MustCompile("^(?:[\\d]+(?:[~\u2053\u223C\uFF5E][\\d]+)?)$")
 
 	PLUS_CHARS_PATTERN      = regexp.MustCompile("[" + PLUS_CHARS + "]+")
 	SEPARATOR_PATTERN       = regexp.MustCompile("[" + VALID_PUNCTUATION + "]+")

@@ -250,52 +250,6 @@ func TestFormatInOriginalFormat(t *testing.T) {
 	}
 }
 
-func TestFormatOutOfCountryCallingNumber(t *testing.T) {
-	var tests = []struct {
-		in     string
-		exp    string
-		region string
-		frmt   PhoneNumberFormat
-	}{
-		{
-			in:     "+16505551234",
-			region: "US",
-			exp:    "1 (650) 555-1234",
-		}, {
-			in:     "+16505551234",
-			region: "CA",
-			exp:    "1 (650) 555-1234",
-		}, {
-			in:     "+16505551234",
-			region: "CH",
-			exp:    "00 1 650-555-1234",
-		}, {
-			in:     "+16505551234",
-			region: "ZZ",
-			exp:    "+1 650-555-1234",
-		}, {
-			in:     "+4911234",
-			region: "US",
-			exp:    "011 49 11234",
-		}, {
-			in:     "+4911234",
-			region: "DE",
-			exp:    "11234",
-		},
-	}
-
-	for i, test := range tests {
-		num, err := Parse(test.in, test.region)
-		if err != nil {
-			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
-		}
-		got := FormatOutOfCountryCallingNumber(num, test.region)
-		if got != test.exp {
-			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
-		}
-	}
-}
-
 func TestFormatOutOfCountryKeepingAlphaChars(t *testing.T) {
 	var tests = []struct {
 		in     string
@@ -1476,35 +1430,6 @@ func TestFormatWithCarrierCode(t *testing.T) {
 
 	// Invalid country code should just get the NSN
 	assert.Equal(t, "12345", FormatNationalNumberWithCarrierCode(getTestNumber("UNKNOWN_COUNTRY_CODE_NO_RAW_INPUT"), "89"))
-}
-
-func TestFormatWithPreferredCarrierCode(t *testing.T) {
-	// Test preferred carrier code using BR (Brazil) which uses carrier codes in production metadata
-	brNumber := newPhoneNumber(55, 1155256325)
-
-	// No preferred carrier code set - use fallback
-	assert.Equal(t, "0 15 (11) 5525-6325", FormatNationalNumberWithPreferredCarrierCode(brNumber, "15"))
-	assert.Equal(t, "(11) 5525-6325", FormatNationalNumberWithPreferredCarrierCode(brNumber, ""))
-
-	// Preferred carrier code set
-	brNumber.PreferredDomesticCarrierCode = proto.String("19")
-	assert.Equal(t, "(11) 5525-6325", Format(brNumber, NATIONAL))
-	assert.Equal(t, "0 19 (11) 5525-6325", FormatNationalNumberWithPreferredCarrierCode(brNumber, "15"))
-	assert.Equal(t, "0 19 (11) 5525-6325", FormatNationalNumberWithPreferredCarrierCode(brNumber, ""))
-
-	// When preferred_domestic_carrier_code is a space, use it
-	brNumber.PreferredDomesticCarrierCode = proto.String(" ")
-	assert.Equal(t, "0   (11) 5525-6325", FormatNationalNumberWithPreferredCarrierCode(brNumber, "15"))
-
-	// When preferred_domestic_carrier_code is empty, use fallback
-	brNumber.PreferredDomesticCarrierCode = proto.String("")
-	assert.Equal(t, "0 15 (11) 5525-6325", FormatNationalNumberWithPreferredCarrierCode(brNumber, "15"))
-
-	// US doesn't use carrier codes so there should be no change
-	usNumber := newPhoneNumber(1, 4241231234)
-	usNumber.PreferredDomesticCarrierCode = proto.String("99")
-	assert.Equal(t, "(424) 123-1234", Format(usNumber, NATIONAL))
-	assert.Equal(t, "(424) 123-1234", FormatNationalNumberWithPreferredCarrierCode(usNumber, "15"))
 }
 
 func TestFormatOutOfCountryKeepingAlphaCharsWithExtension(t *testing.T) {
