@@ -571,6 +571,7 @@ func setRelevantDescPatterns(metadata *PhoneMetadata, element *TerritoryE, isSho
 		metadata.Emergency = processPhoneNumberDescElement(generalDesc, element.Emergency)
 		metadata.TollFree = processPhoneNumberDescElement(generalDesc, element.TollFree)
 		metadata.PremiumRate = processPhoneNumberDescElement(generalDesc, element.PremiumRate)
+		metadata.SmsServices = processPhoneNumberDescElement(generalDesc, element.SMSServices)
 	}
 }
 
@@ -680,6 +681,9 @@ type TerritoryE struct {
 
 	// <!ELEMENT voicemail (nationalNumberPattern, possibleLengths, exampleNumber)>
 	CarrierSpecific *PhoneNumberDescE `xml:"carrierSpecific"`
+
+	// <!ELEMENT smsServices (nationalNumberPattern, possibleLengths, exampleNumber)>
+	SMSServices *PhoneNumberDescE `xml:"smsServices"`
 }
 
 // <!ELEMENT numberFormat (leadingDigits*, format, intlFormat*)>
