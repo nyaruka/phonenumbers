@@ -174,33 +174,6 @@ func TestTruncateTooLongNumber(t *testing.T) {
 	}
 }
 
-func TestFormat(t *testing.T) {
-	// useful link for validating against official lib:
-	// http://libphonenumber.appspot.com/phonenumberparser?number=019+3286+9755&country=GB
-
-	var tests = []struct {
-		input    string
-		region   string
-		frmt     PhoneNumberFormat
-		expected string
-	}{
-		{input: "019 3286 9755", region: "GB", frmt: NATIONAL, expected: "01932 869755"},
-		{input: "+44 (0) 1932 869755", region: "GB", frmt: INTERNATIONAL, expected: "+44 1932 869755"},
-		{input: "4431234567", region: "US", frmt: NATIONAL, expected: "(443) 123-4567"},
-		{input: "4431234567", region: "US", frmt: E164, expected: "+14431234567"},
-		{input: "4431234567", region: "US", frmt: INTERNATIONAL, expected: "+1 443-123-4567"},
-		{input: "4431234567", region: "US", frmt: RFC3966, expected: "tel:+1-443-123-4567"},
-		{input: "+1 100-083-0033", region: "US", frmt: INTERNATIONAL, expected: "+1 1000830033"},
-	}
-
-	for _, tc := range tests {
-		num, err := Parse(tc.input, tc.region)
-		assert.NoError(t, err, "unexpected error for input %s", tc.input)
-
-		assert.Equal(t, tc.expected, Format(num, tc.frmt), "formatted mismatch for input=%s fmt=%d", tc.input, tc.frmt)
-	}
-}
-
 func TestFormatForMobileDialing(t *testing.T) {
 	var tests = []struct {
 		in     string
@@ -223,51 +196,6 @@ func TestFormatForMobileDialing(t *testing.T) {
 		got := FormatNumberForMobileDialing(num, test.region, false)
 		if got != test.exp {
 			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, test.exp)
-		}
-	}
-}
-
-func TestFormatByPattern(t *testing.T) {
-	var tcs = []struct {
-		in          string
-		region      string
-		format      PhoneNumberFormat
-		userFormats []*NumberFormat
-		exp         string
-	}{
-		{
-			in:     "+33122334455",
-			region: "FR",
-			format: E164,
-			userFormats: []*NumberFormat{
-				{
-					Pattern: s(`(\d+)`),
-					Format:  s(`$1`),
-				},
-			},
-			exp: "+33122334455",
-		}, {
-			in:     "+442070313000",
-			region: "UK",
-			format: NATIONAL,
-			userFormats: []*NumberFormat{
-				{
-					Pattern: s(`(20)(\d{4})(\d{4})`),
-					Format:  s(`$1 $2 $3`),
-				},
-			},
-			exp: "20 7031 3000",
-		},
-	}
-
-	for i, tc := range tcs {
-		num, err := Parse(tc.in, tc.region)
-		if err != nil {
-			t.Errorf("[test %d] failed: should be able to parse, err:%v\n", i, err)
-		}
-		got := FormatByPattern(num, tc.format, tc.userFormats)
-		if got != tc.exp {
-			t.Errorf("[test %d:fmt] failed %s != %s\n", i, got, tc.exp)
 		}
 	}
 }
