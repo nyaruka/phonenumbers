@@ -500,3 +500,48 @@ func TestParseNumberTooShortIfNationalPrefixStripped(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, proto.Equal(byNumber, got))
 }
+
+// TestMaybeStripNationalPrefixAndCarrierCode is the faithful port of upstream
+// PhoneNumberUtilTest.testMaybeStripNationalPrefix. It builds its own metadata,
+// so it doesn't need useTestMetadata.
+func TestMaybeStripNationalPrefixAndCarrierCode(t *testing.T) {
+	// Test basic national prefix stripping
+	metadata := &PhoneMetadata{}
+	metadata.NationalPrefixForParsing = proto.String("34")
+	metadata.GeneralDesc = &PhoneNumberDesc{NationalNumberPattern: proto.String("\\d{4,8}")}
+
+	number := NewBuilder([]byte("34356778"))
+	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "356778", number.String())
+
+	// Retry - should not strip again
+	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "356778", number.String())
+
+	// No national prefix
+	metadata.NationalPrefixForParsing = proto.String("")
+	number = NewBuilder([]byte("356778"))
+	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "356778", number.String())
+
+	// If stripping doesn't match national rule, don't strip
+	metadata.NationalPrefixForParsing = proto.String("3")
+	number = NewBuilder([]byte("3123"))
+	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "3123", number.String())
+
+	// Test extracting carrier code
+	metadata.NationalPrefixForParsing = proto.String("0(81)?")
+	number = NewBuilder([]byte("08122123456"))
+	carrierCode := NewBuilder(nil)
+	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, carrierCode))
+	assert.Equal(t, "81", carrierCode.String())
+	assert.Equal(t, "22123456", number.String())
+
+	// Test with transform rule
+	metadata.NationalPrefixTransformRule = proto.String("5${1}5")
+	metadata.NationalPrefixForParsing = proto.String("0(\\d{2})")
+	number = NewBuilder([]byte("031123"))
+	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "5315123", number.String())
+}

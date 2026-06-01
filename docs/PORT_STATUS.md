@@ -29,13 +29,23 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 
 ### PhoneNumberUtilTest — substantially ported
 - ✅ Metadata loading, region / country-code lookup, number type, validation,
-  example numbers, normalize / alpha, supported-types, possibility-by-type
+  example numbers, supported-types, possibility-by-type
 - ✅ Parsing (national, international prefixes, non-ASCII, extensions, the
-  invalid-number error table, keep-raw, phone-context)
+  invalid-number error table, keep-raw, phone-context, Italian leading zeros,
+  national-prefix stripping)
 - ✅ Formatting (per-country, by-pattern, out-of-country, carrier, mobile-dialing,
   in-original-format)
-- Remaining: the 2 Mockito missing-metadata tests, and a couple of
-  string-overload possibility cases.
+- ⚠️ Still only covered by the **ad-hoc** tests (real embedded metadata, not
+  faithful synthetic-metadata ports — see `phonenumberutil_adhoc_test.go`), so a
+  faithful port is still owed for:
+  - `testIsNumberMatch*` (9 upstream methods; 3 ad-hoc tests today)
+  - `testIsPossibleNumber` / `testIsNotPossibleNumber` /
+    `testIsPossibleNumberWithReason` (the non-by-type possibility checks)
+  - `testTruncateTooLongNumber`, `testIsViablePhoneNumber` (+ `NonAscii`),
+    `testExtractPossibleNumber`
+  - the `testNormalise*` family and `testConvertAlphaCharactersInNumber`
+- Not ported at all yet: `testMaybeStripInternationalPrefix`,
+  `testMaybeExtractCountryCode`, and the 2 Mockito missing-metadata tests.
 
 ### ShortNumberInfoTest — ported
 - ✅ Faithful port in `shortnumberinfo_test.go`, reconciled against v9.0.32.

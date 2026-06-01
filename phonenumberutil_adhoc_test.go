@@ -5,10 +5,10 @@ package phonenumbers
 // data, they break whenever upstream refreshes metadata.
 //
 // MIGRATION: these are being replaced by faithful ports of upstream's own tests
-// (the *_upstream_test.go files), which run against the frozen synthetic test
-// metadata and so never go stale. As each upstream test method is ported, delete
-// the corresponding ad-hoc test below. The goal is for this file to shrink to
-// (near) nothing.
+// (in phonenumberutil_test.go and the _types_/_format_/_parse_ split files), which
+// run against the frozen synthetic test metadata and so never go stale. As each
+// upstream test method is ported, delete the corresponding ad-hoc test below. The
+// goal is for this file to shrink to (near) nothing.
 //
 // Residue that has no upstream equivalent in PhoneNumberUtilTest and will linger
 // until/unless upstream's other test modules are ported: the geocoding/carrier/
@@ -312,81 +312,11 @@ func TestIsNumberMatchWithOneNumber(t *testing.T) {
 	}
 }
 
-// //////// Copied from java-libphonenumber
-/**
- * Unit tests for PhoneNumberUtil.java
- *
- * Note that these tests use the test metadata, not the normal metadata
- * file, so should not be used for regression test purposes - these tests
- * are illustrative only and test functionality.
- *
- * @author Shaopeng Jia
- */
-
-// TODO(ttacon): use the test metadata and not the normal metadata
-
-var testPhoneNumbers = map[string]*PhoneNumber{
-	"ALPHA_NUMERIC_NUMBER": newPhoneNumber(1, 80074935247),
-	"AE_UAN":               newPhoneNumber(971, 600123456),
-	"AR_MOBILE":            newPhoneNumber(54, 91187654321),
-	"AR_NUMBER":            newPhoneNumber(54, 1157774533),
-	"AU_NUMBER":            newPhoneNumber(61, 236618300),
-	"BS_MOBILE":            newPhoneNumber(1, 2423570000),
-	"BS_NUMBER":            newPhoneNumber(1, 2423651234),
-	// Note that this is the same as the example number for DE in the metadata.
-	"DE_NUMBER":       newPhoneNumber(49, 30123456),
-	"DE_SHORT_NUMBER": newPhoneNumber(49, 1234),
-	"GB_MOBILE":       newPhoneNumber(44, 7912345678),
-	"GB_NUMBER":       newPhoneNumber(44, 2070313000),
-	"IT_MOBILE":       newPhoneNumber(39, 345678901),
-	"IT_NUMBER": func() *PhoneNumber {
-		p := newPhoneNumber(39, 236618300)
-		p.ItalianLeadingZero = proto.Bool(true)
-		return p
-	}(),
-	"JP_STAR_NUMBER": newPhoneNumber(81, 2345),
-	// Numbers to test the formatting rules from Mexico.
-	"MX_MOBILE1": newPhoneNumber(52, 12345678900),
-	"MX_MOBILE2": newPhoneNumber(52, 15512345678),
-	"MX_NUMBER1": newPhoneNumber(52, 3312345678),
-	"MX_NUMBER2": newPhoneNumber(52, 8211234567),
-	"NZ_NUMBER":  newPhoneNumber(64, 33316005),
-	"SG_NUMBER":  newPhoneNumber(65, 65218000),
-	// A too-long and hence invalid US number.
-	"US_LONG_NUMBER": newPhoneNumber(1, 65025300001),
-	"US_NUMBER":      newPhoneNumber(1, 6502530000),
-	"US_PREMIUM":     newPhoneNumber(1, 9002530000),
-	// Too short, but still possible US numbers.
-	"US_LOCAL_NUMBER":        newPhoneNumber(1, 2530000),
-	"US_SHORT_BY_ONE_NUMBER": newPhoneNumber(1, 650253000),
-	"US_TOLLFREE":            newPhoneNumber(1, 8002530000),
-	"US_SPOOF":               newPhoneNumber(1, 0),
-	"US_SPOOF_WITH_RAW_INPUT": func() *PhoneNumber {
-		p := newPhoneNumber(1, 0)
-		p.RawInput = proto.String("000-000-0000")
-		return p
-	}(),
-	"INTERNATIONAL_TOLL_FREE": newPhoneNumber(800, 12345678),
-	// We set this to be the same length as numbers for the other
-	// non-geographical country prefix that we have in our test metadata.
-	// However, this is not considered valid because they differ in
-	// their country calling code.
-	"INTERNATIONAL_TOLL_FREE_TOO_LONG":  newPhoneNumber(800, 123456789),
-	"UNIVERSAL_PREMIUM_RATE":            newPhoneNumber(979, 123456789),
-	"UNKNOWN_COUNTRY_CODE_NO_RAW_INPUT": newPhoneNumber(2, 12345),
-}
-
 func newPhoneNumber(cc int, natNum uint64) *PhoneNumber {
 	p := &PhoneNumber{}
 	p.CountryCode = proto.Int32(int32(cc))
 	p.NationalNumber = proto.Uint64(natNum)
 	return p
-}
-
-func getTestNumber(alias string) *PhoneNumber {
-	// there should never not be a valid number
-	val := testPhoneNumbers[alias]
-	return val
 }
 
 func TestGetMetadata(t *testing.T) {
@@ -1185,7 +1115,7 @@ func TestMaybeSeparateExtensionFromPhone(t *testing.T) {
 }
 
 // TestGetSupportedCallingCodes was migrated to the faithful upstream port in
-// phonenumberutil_upstream_test.go (run against synthetic test metadata).
+// phonenumberutil_test.go (run against synthetic test metadata).
 
 func TestMergeLengths(t *testing.T) {
 	var tests = []struct {
@@ -1307,36 +1237,6 @@ func TestGetSafeCarrierDisplayNameForNumber(t *testing.T) {
 	}
 }
 
-// Tests ported from upstream Java PhoneNumberUtilTest to verify parity with libphonenumber.
-
-func TestFormatWithCarrierCode(t *testing.T) {
-	// Test carrier code formatting using BR (Brazil) which uses carrier codes in production metadata
-	brNumber := newPhoneNumber(55, 1155256325)
-
-	assert.Equal(t, "(11) 5525-6325", Format(brNumber, NATIONAL))
-	assert.Equal(t, "0 12 (11) 5525-6325", FormatNationalNumberWithCarrierCode(brNumber, "12"))
-	assert.Equal(t, "0 15 (11) 5525-6325", FormatNationalNumberWithCarrierCode(brNumber, "15"))
-	assert.Equal(t, "(11) 5525-6325", FormatNationalNumberWithCarrierCode(brNumber, ""))
-	assert.Equal(t, "+551155256325", Format(brNumber, E164))
-
-	// US doesn't use carrier codes so there should be no change
-	assert.Equal(t, "(650) 253-0000", FormatNationalNumberWithCarrierCode(getTestNumber("US_NUMBER"), "15"))
-
-	// Invalid country code should just get the NSN
-	assert.Equal(t, "12345", FormatNationalNumberWithCarrierCode(getTestNumber("UNKNOWN_COUNTRY_CODE_NO_RAW_INPUT"), "89"))
-}
-
-func TestFormatOutOfCountryKeepingAlphaCharsWithExtension(t *testing.T) {
-	// Test that extension text in raw input is stripped before appending formatted extension.
-	// Uses DE as calling region (simple international prefix "00") to avoid the separate
-	// UNIQUE_INTERNATIONAL_PREFIX matching issue with complex prefix patterns like AU's.
-	alphaNumericNumberWithExtn, err := ParseAndKeepRawInput("800 SIX-flag ext. 1234", "US")
-	assert.NoError(t, err)
-	// The extension should appear only once, not duplicated from raw input + formatted extension
-	assert.Equal(t, "00 1 800 SIX-FLAG ext. 1234",
-		FormatOutOfCountryKeepingAlphaChars(alphaNumericNumberWithExtn, "DE"))
-}
-
 func TestFormattingRuleHasFirstGroupOnly(t *testing.T) {
 	// Verify the fix: formattingRuleHasFirstGroupOnly should do a full match
 	assert.True(t, formattingRuleHasFirstGroupOnly("$1"))
@@ -1345,73 +1245,6 @@ func TestFormattingRuleHasFirstGroupOnly(t *testing.T) {
 	assert.False(t, formattingRuleHasFirstGroupOnly("0$1"))
 	assert.False(t, formattingRuleHasFirstGroupOnly("0($1)"))
 	assert.False(t, formattingRuleHasFirstGroupOnly("$1 suffix"))
-}
-
-func TestMaybeStripNationalPrefixAndCarrierCode(t *testing.T) {
-	// Ported from PhoneNumberUtilTest.testMaybeStripNationalPrefix
-
-	// Test basic national prefix stripping
-	metadata := &PhoneMetadata{}
-	metadata.NationalPrefixForParsing = proto.String("34")
-	metadata.GeneralDesc = &PhoneNumberDesc{NationalNumberPattern: proto.String("\\d{4,8}")}
-
-	number := NewBuilder([]byte("34356778"))
-	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "356778", number.String())
-
-	// Retry - should not strip again
-	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "356778", number.String())
-
-	// No national prefix
-	metadata.NationalPrefixForParsing = proto.String("")
-	number = NewBuilder([]byte("356778"))
-	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "356778", number.String())
-
-	// If stripping doesn't match national rule, don't strip
-	metadata.NationalPrefixForParsing = proto.String("3")
-	number = NewBuilder([]byte("3123"))
-	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "3123", number.String())
-
-	// Test extracting carrier code
-	metadata.NationalPrefixForParsing = proto.String("0(81)?")
-	number = NewBuilder([]byte("08122123456"))
-	carrierCode := NewBuilder(nil)
-	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, carrierCode))
-	assert.Equal(t, "81", carrierCode.String())
-	assert.Equal(t, "22123456", number.String())
-
-	// Test with transform rule
-	metadata.NationalPrefixTransformRule = proto.String("5${1}5")
-	metadata.NationalPrefixForParsing = proto.String("0(\\d{2})")
-	number = NewBuilder([]byte("031123"))
-	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "5315123", number.String())
-}
-
-func TestParseAndKeepRawWithCarrierCode(t *testing.T) {
-	// Ported from PhoneNumberUtilTest.testParseAndKeepRaw - Korean number with carrier code
-	koreanNumber, err := ParseAndKeepRawInput("08122123456", "KR")
-	assert.NoError(t, err)
-	assert.Equal(t, int32(82), koreanNumber.GetCountryCode())
-	assert.Equal(t, uint64(22123456), koreanNumber.GetNationalNumber())
-	assert.Equal(t, "08122123456", koreanNumber.GetRawInput())
-	assert.Equal(t, "81", koreanNumber.GetPreferredDomesticCarrierCode())
-}
-
-func TestParseAndKeepRawDoesNotSetEmptyCarrierCode(t *testing.T) {
-	// Verify that PreferredDomesticCarrierCode is not set to empty string
-	// when there is no carrier code
-	usNumber, err := ParseAndKeepRawInput("+16502530000", "US")
-	assert.NoError(t, err)
-	assert.Equal(t, "", usNumber.GetPreferredDomesticCarrierCode())
-	assert.Nil(t, usNumber.PreferredDomesticCarrierCode, "should not be set when no carrier code")
-}
-
-func s(str string) *string {
-	return &str
 }
 
 func BenchmarkLoadMetadata(b *testing.B) {
