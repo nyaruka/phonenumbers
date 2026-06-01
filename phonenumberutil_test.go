@@ -1660,36 +1660,8 @@ func TestMaybeSeparateExtensionFromPhone(t *testing.T) {
 	}
 }
 
-func TestGetSupportedCallingCodes(t *testing.T) {
-	var tests = []struct {
-		code    int
-		present bool
-	}{
-		{
-			1,
-			true,
-		}, {
-			800,
-			true,
-		}, {
-			593,
-			true,
-		}, {
-			44,
-			true,
-		}, {
-			999,
-			false,
-		},
-	}
-
-	supported := GetSupportedCallingCodes()
-	for i, tc := range tests {
-		if supported[tc.code] != tc.present {
-			t.Errorf("[test %d:num] failed for code %d: %v != %v\n", i, tc.code, tc.present, supported[tc.code])
-		}
-	}
-}
+// TestGetSupportedCallingCodes was migrated to the faithful upstream port in
+// phonenumberutil_upstream_test.go (run against synthetic test metadata).
 
 func TestMergeLengths(t *testing.T) {
 	var tests = []struct {

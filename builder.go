@@ -550,7 +550,10 @@ func setRelevantDescPatterns(metadata *PhoneMetadata, element *TerritoryE, isSho
 		metadata.Voicemail = processPhoneNumberDescElement(generalDesc, element.VoiceMail)
 		metadata.NoInternationalDialling = processPhoneNumberDescElement(generalDesc, element.NoInternationalDialing)
 
-		mobileAndFixedAreSame := *metadata.Mobile.NationalNumberPattern == *metadata.FixedLine.NationalNumberPattern
+		// Use the nil-safe getters (which return "" for an absent pattern) to
+		// match upstream: a region may legitimately have no mobile or fixed-line
+		// pattern, in which case the values compare as empty rather than panic.
+		mobileAndFixedAreSame := metadata.GetMobile().GetNationalNumberPattern() == metadata.GetFixedLine().GetNationalNumberPattern()
 		if metadata.GetSameMobileAndFixedLinePattern() != mobileAndFixedAreSame {
 			metadata.SameMobileAndFixedLinePattern = bp(mobileAndFixedAreSame)
 		}
@@ -575,8 +578,8 @@ type PhoneNumberMetadataE struct {
 }
 
 // <!ELEMENT territory (references?, availableFormats?, generalDesc, noInternationalDialling?,
-//fixedLine?, mobile?, pager?, tollFree?, premiumRate?,
-//sharedCost?, personalNumber?, voip?, uan?, voicemail?)>
+// fixedLine?, mobile?, pager?, tollFree?, premiumRate?,
+// sharedCost?, personalNumber?, voip?, uan?, voicemail?)>
 type TerritoryE struct {
 	// <!ATTLIST territory id CDATA #REQUIRED>
 	ID string `xml:"id,attr"`
