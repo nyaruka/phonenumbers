@@ -1,5 +1,21 @@
 package phonenumbers
 
+// Ad-hoc tests against the REAL embedded metadata, inherited from before the
+// upstream test suite was adopted. Because they assert on real-world numbering
+// data, they break whenever upstream refreshes metadata.
+//
+// MIGRATION: these are being replaced by faithful ports of upstream's own tests
+// (the *_upstream_test.go files), which run against the frozen synthetic test
+// metadata and so never go stale. As each upstream test method is ported, delete
+// the corresponding ad-hoc test below. The goal is for this file to shrink to
+// (near) nothing.
+//
+// Residue that has no upstream equivalent in PhoneNumberUtilTest and will linger
+// until/unless upstream's other test modules are ported: the geocoding/carrier/
+// timezone lookups (upstream java/geocoder + java/carrier test modules), the
+// RegexCache tests (upstream internal/), and a handful of Go-port-specific
+// real-world parsing regressions (e.g. TestBurkinaFaso, TestMexico).
+
 import (
 	"reflect"
 	"regexp"
