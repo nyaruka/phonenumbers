@@ -61,6 +61,10 @@ func TestMetadataInjectionSeam(t *testing.T) {
 	mc, err := newMetadataContainer(coll, ccToRegion)
 	require.NoError(t, err)
 	restore := useMetadata(mc)
+	// Guarantee restoration even if an assertion below panics, so the synthetic
+	// metadata can't leak into other tests in the package. restore is
+	// idempotent, so the explicit restore() check further down stays valid.
+	t.Cleanup(restore)
 
 	// The public API now sees ONLY the synthetic region.
 	assert.Equal(t, map[string]bool{"XX": true}, GetSupportedRegions())
