@@ -49,6 +49,21 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   `getExampleShortNumber[ForCost]` helpers.
 - One skipped test: `TestIsSmsService` (see TODO below).
 
+### ExampleNumbersTest — ported
+- ✅ Faithful port in `examplenumbers_test.go`, reconciled against v9.0.32. A
+  real-metadata regression (upstream uses the production singletons), so it runs
+  against the embedded metadata: every supported region's per-type example numbers
+  parse, validate, and classify correctly; every region has example / invalid-
+  example numbers; every type has an example; non-geo and short-number (cost,
+  emergency, carrier-specific, SMS) examples check out. Exercises all 245 regions.
+- Test names mirror the upstream method names. The sole exception is
+  `TestCanBeInternationallyDialledExampleNumbers`: `testCanBeInternationallyDialled`
+  exists in both `ExampleNumbersTest` and `PhoneNumberUtilTest`, and the latter is
+  already ported as `TestCanBeInternationallyDialled`, so this one is suffixed to
+  disambiguate within the flat Go package.
+- `getExampleNumberForType` still has no region-less overload, so the
+  every-type test uses a local helper (`getExampleNumberForTypeAnyRegion`).
+
 ### Bugs the port surfaced and fixed
 - Builder nil-deref on regions lacking a mobile / fixed-line pattern
 - `GetNationalSignificantNumber` panic on a negative `numberOfLeadingZeros`
@@ -74,9 +89,7 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
    `AsYouTypeFormatterTest`.
 2. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
    `phonenumbermatcher.go`) and port `PhoneNumberMatcherTest`.
-3. **Add `ExampleNumbersTest`** — a real-metadata regression that validates every
-   shipped region's example numbers parse and validate.
-4. **Automate**: a scheduled task that detects new upstream releases, regenerates
+3. **Automate**: a scheduled task that detects new upstream releases, regenerates
    metadata, runs the (now-stable) synthetic tests, opens a PR for data-only
    deltas, and flags logic-touching changes for manual porting. See
    `docs/2.0-restructure.md`.
