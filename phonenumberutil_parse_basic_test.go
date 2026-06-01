@@ -13,6 +13,51 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// TestMaybeStripNationalPrefixAndCarrierCode is the faithful port of upstream
+// PhoneNumberUtilTest.testMaybeStripNationalPrefix. It builds its own metadata,
+// so it doesn't need useTestMetadata.
+func TestMaybeStripNationalPrefixAndCarrierCode(t *testing.T) {
+	// Test basic national prefix stripping
+	metadata := &PhoneMetadata{}
+	metadata.NationalPrefixForParsing = proto.String("34")
+	metadata.GeneralDesc = &PhoneNumberDesc{NationalNumberPattern: proto.String("\\d{4,8}")}
+
+	number := NewBuilder([]byte("34356778"))
+	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "356778", number.String())
+
+	// Retry - should not strip again
+	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "356778", number.String())
+
+	// No national prefix
+	metadata.NationalPrefixForParsing = proto.String("")
+	number = NewBuilder([]byte("356778"))
+	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "356778", number.String())
+
+	// If stripping doesn't match national rule, don't strip
+	metadata.NationalPrefixForParsing = proto.String("3")
+	number = NewBuilder([]byte("3123"))
+	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "3123", number.String())
+
+	// Test extracting carrier code
+	metadata.NationalPrefixForParsing = proto.String("0(81)?")
+	number = NewBuilder([]byte("08122123456"))
+	carrierCode := NewBuilder(nil)
+	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, carrierCode))
+	assert.Equal(t, "81", carrierCode.String())
+	assert.Equal(t, "22123456", number.String())
+
+	// Test with transform rule
+	metadata.NationalPrefixTransformRule = proto.String("5${1}5")
+	metadata.NationalPrefixForParsing = proto.String("0(\\d{2})")
+	number = NewBuilder([]byte("031123"))
+	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
+	assert.Equal(t, "5315123", number.String())
+}
+
 func TestParseNationalNumber(t *testing.T) {
 	useTestMetadata(t)
 
@@ -376,53 +421,6 @@ func TestParseNumbersMexico(t *testing.T) {
 	assert.True(t, proto.Equal(mxNumber, got))
 }
 
-func TestParseItalianLeadingZeros(t *testing.T) {
-	useTestMetadata(t)
-
-	// Test the number "011".
-	oneZero := &PhoneNumber{
-		CountryCode:        proto.Int32(61),
-		NationalNumber:     proto.Uint64(11),
-		ItalianLeadingZero: proto.Bool(true),
-	}
-	got, err := Parse("011", regionCode.AU)
-	assert.NoError(t, err)
-	assert.True(t, proto.Equal(oneZero, got))
-
-	// Test the number "001".
-	twoZeros := &PhoneNumber{
-		CountryCode:          proto.Int32(61),
-		NationalNumber:       proto.Uint64(1),
-		ItalianLeadingZero:   proto.Bool(true),
-		NumberOfLeadingZeros: proto.Int32(2),
-	}
-	got, err = Parse("001", regionCode.AU)
-	assert.NoError(t, err)
-	assert.True(t, proto.Equal(twoZeros, got))
-
-	// Test the number "000". This number has 2 leading zeros.
-	stillTwoZeros := &PhoneNumber{
-		CountryCode:          proto.Int32(61),
-		NationalNumber:       proto.Uint64(0),
-		ItalianLeadingZero:   proto.Bool(true),
-		NumberOfLeadingZeros: proto.Int32(2),
-	}
-	got, err = Parse("000", regionCode.AU)
-	assert.NoError(t, err)
-	assert.True(t, proto.Equal(stillTwoZeros, got))
-
-	// Test the number "0000". This number has 3 leading zeros.
-	threeZeros := &PhoneNumber{
-		CountryCode:          proto.Int32(61),
-		NationalNumber:       proto.Uint64(0),
-		ItalianLeadingZero:   proto.Bool(true),
-		NumberOfLeadingZeros: proto.Int32(3),
-	}
-	got, err = Parse("0000", regionCode.AU)
-	assert.NoError(t, err)
-	assert.True(t, proto.Equal(threeZeros, got))
-}
-
 func TestParseNumbersWithPlusWithNoRegion(t *testing.T) {
 	useTestMetadata(t)
 
@@ -501,47 +499,49 @@ func TestParseNumberTooShortIfNationalPrefixStripped(t *testing.T) {
 	assert.True(t, proto.Equal(byNumber, got))
 }
 
-// TestMaybeStripNationalPrefixAndCarrierCode is the faithful port of upstream
-// PhoneNumberUtilTest.testMaybeStripNationalPrefix. It builds its own metadata,
-// so it doesn't need useTestMetadata.
-func TestMaybeStripNationalPrefixAndCarrierCode(t *testing.T) {
-	// Test basic national prefix stripping
-	metadata := &PhoneMetadata{}
-	metadata.NationalPrefixForParsing = proto.String("34")
-	metadata.GeneralDesc = &PhoneNumberDesc{NationalNumberPattern: proto.String("\\d{4,8}")}
+func TestParseItalianLeadingZeros(t *testing.T) {
+	useTestMetadata(t)
 
-	number := NewBuilder([]byte("34356778"))
-	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "356778", number.String())
+	// Test the number "011".
+	oneZero := &PhoneNumber{
+		CountryCode:        proto.Int32(61),
+		NationalNumber:     proto.Uint64(11),
+		ItalianLeadingZero: proto.Bool(true),
+	}
+	got, err := Parse("011", regionCode.AU)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(oneZero, got))
 
-	// Retry - should not strip again
-	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "356778", number.String())
+	// Test the number "001".
+	twoZeros := &PhoneNumber{
+		CountryCode:          proto.Int32(61),
+		NationalNumber:       proto.Uint64(1),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(2),
+	}
+	got, err = Parse("001", regionCode.AU)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(twoZeros, got))
 
-	// No national prefix
-	metadata.NationalPrefixForParsing = proto.String("")
-	number = NewBuilder([]byte("356778"))
-	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "356778", number.String())
+	// Test the number "000". This number has 2 leading zeros.
+	stillTwoZeros := &PhoneNumber{
+		CountryCode:          proto.Int32(61),
+		NationalNumber:       proto.Uint64(0),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(2),
+	}
+	got, err = Parse("000", regionCode.AU)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(stillTwoZeros, got))
 
-	// If stripping doesn't match national rule, don't strip
-	metadata.NationalPrefixForParsing = proto.String("3")
-	number = NewBuilder([]byte("3123"))
-	assert.False(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "3123", number.String())
-
-	// Test extracting carrier code
-	metadata.NationalPrefixForParsing = proto.String("0(81)?")
-	number = NewBuilder([]byte("08122123456"))
-	carrierCode := NewBuilder(nil)
-	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, carrierCode))
-	assert.Equal(t, "81", carrierCode.String())
-	assert.Equal(t, "22123456", number.String())
-
-	// Test with transform rule
-	metadata.NationalPrefixTransformRule = proto.String("5${1}5")
-	metadata.NationalPrefixForParsing = proto.String("0(\\d{2})")
-	number = NewBuilder([]byte("031123"))
-	assert.True(t, maybeStripNationalPrefixAndCarrierCode(number, metadata, nil))
-	assert.Equal(t, "5315123", number.String())
+	// Test the number "0000". This number has 3 leading zeros.
+	threeZeros := &PhoneNumber{
+		CountryCode:          proto.Int32(61),
+		NationalNumber:       proto.Uint64(0),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(3),
+	}
+	got, err = Parse("0000", regionCode.AU)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(threeZeros, got))
 }
