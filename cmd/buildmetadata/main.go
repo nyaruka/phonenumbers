@@ -49,6 +49,12 @@ func buildMetadata() error {
 		return err
 	}
 
+	fmt.Print("OK\nBuilding alternate formats metadata...")
+
+	if err := buildAlternateFormatsMetadata("resources/PhoneNumberAlternateFormats.xml", "AlternateFormatsData", "alternateformats_metadata.xml.gz"); err != nil {
+		return err
+	}
+
 	fmt.Print("OK\nBuilding region metadata...")
 
 	if err := buildRegionMetadata(metadata, "RegionData", "countrycode_to_region.xml.gz"); err != nil {
@@ -108,6 +114,29 @@ func buildNumberMetadata(srcFile, varName, dstFile string, short bool) (*phonenu
 	}
 
 	return collection, nil
+}
+
+func buildAlternateFormatsMetadata(srcFile, varName, dstFile string) error {
+	body, err := os.ReadFile("_build/" + srcFile)
+	if err != nil {
+		return fmt.Errorf("error reading %s: %w", srcFile, err)
+	}
+
+	collection, err := phonenumbers.BuildAlternateFormatsMetadataCollection(body)
+	if err != nil {
+		return fmt.Errorf("error parsing %s: %w", srcFile, err)
+	}
+
+	data, err := proto.Marshal(collection)
+	if err != nil {
+		return fmt.Errorf("error marshaling metadata as protobuf: %w", err)
+	}
+
+	if err := os.WriteFile(distPath+"/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
+		return fmt.Errorf("error writing %s: %w", dstFile, err)
+	}
+
+	return nil
 }
 
 func buildRegionMetadata(metadata *phonenumbers.PhoneMetadataCollection, varName, dstFile string) error {

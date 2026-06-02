@@ -2,6 +2,8 @@ package phonenumbers
 
 import (
 	"errors"
+	"iter"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -2746,25 +2748,35 @@ func ParseAndKeepRawInputToNumber(
 	return parseHelper(numberToParse, defaultRegion, true, true, phoneNumber)
 }
 
-// Returns an iterable over all PhoneNumberMatch PhoneNumberMatches in text.
-// This is a shortcut for findNumbers(CharSequence, String, Leniency, long)
-// getMatcher(text, defaultRegion, Leniency.VALID, Long.MAX_VALUE)}.
-// public Iterable<PhoneNumberMatch> findNumbers(CharSequence text, String defaultRegion) {
-//    return findNumbers(text, defaultRegion, Leniency.VALID, Long.MAX_VALUE);
-// }
-
-// Returns an iterable over all PhoneNumberMatch PhoneNumberMatches in text.
-// public Iterable<PhoneNumberMatch> findNumbers(
-//	final CharSequence text, final String defaultRegion, final Leniency leniency,
-//	final long maxTries) {
+// FindNumbers returns an iterator over all phone-number matches in text. It is a
+// shortcut for FindNumbersWithLeniency with VALID leniency and no limit on the
+// number of invalid candidates tried. defaultRegion is the region to assume for
+// numbers not written in international format; pass "" or "ZZ" to only consider
+// numbers with a leading plus.
 //
-//		return new Iterable<PhoneNumberMatch>() {
-//			public Iterator<PhoneNumberMatch> iterator() {
-//				return new PhoneNumberMatcher(
-//					PhoneNumberUtil.this, text, defaultRegion, leniency, maxTries);
-//			}
-//		};
+// Range over the result with for/range:
+//
+//	for m := range phonenumbers.FindNumbers(text, "US") {
+//		fmt.Println(m.RawString(), m.Start(), m.End())
 //	}
+func FindNumbers(text, defaultRegion string) iter.Seq[*PhoneNumberMatch] {
+	return FindNumbersWithLeniency(text, defaultRegion, VALID, math.MaxInt)
+}
+
+// FindNumbersWithLeniency returns an iterator over all phone-number matches in
+// text at the given leniency. maxTries caps the number of invalid candidates
+// tried before giving up, to bound degenerate inputs with many false positives
+// (use math.MaxInt for no practical limit). Must be >= 0.
+func FindNumbersWithLeniency(text, defaultRegion string, leniency Leniency, maxTries int) iter.Seq[*PhoneNumberMatch] {
+	return func(yield func(*PhoneNumberMatch) bool) {
+		m := newPhoneNumberMatcher(text, defaultRegion, leniency, maxTries)
+		for m.hasNext() {
+			if !yield(m.next()) {
+				return
+			}
+		}
+	}
+}
 
 // A helper function to set the values related to leading zeros in a
 // PhoneNumber.

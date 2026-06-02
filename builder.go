@@ -39,6 +39,19 @@ func BuildPhoneMetadataCollection(inputXML []byte, liteBuild bool, specialBuild 
 	return buildPhoneMetadataFromElement(metadata, liteBuild, specialBuild, isShortNumberMetadata, isAlternateFormatsMetadata)
 }
 
+// BuildAlternateFormatsMetadataCollection compiles PhoneNumberAlternateFormats.xml. The alternate
+// formats provide additional formatting patterns keyed by country calling code (the territory
+// elements carry no region id), used by PhoneNumberMatcher's grouping leniency checks. No
+// PhoneNumberDesc patterns are processed for this metadata.
+func BuildAlternateFormatsMetadataCollection(inputXML []byte) (*PhoneMetadataCollection, error) {
+	metadata := &PhoneNumberMetadataE{}
+	err := xml.Unmarshal(inputXML, metadata)
+	if err != nil {
+		panic(fmt.Sprintf("Error unmarshalling XML: %s", err))
+	}
+	return buildPhoneMetadataFromElement(metadata, false, false, false, true)
+}
+
 func buildPhoneMetadataFromElement(document *PhoneNumberMetadataE, liteBuild bool, specialBuild bool, isShortNumberMetadata bool, isAlternateFormatsMetadata bool) (*PhoneMetadataCollection, error) {
 	collection := PhoneMetadataCollection{}
 	numOfTerritories := len(document.Territories)
@@ -47,6 +60,13 @@ func buildPhoneMetadataFromElement(document *PhoneNumberMetadataE, liteBuild boo
 		regionCode := territoryElement.ID
 
 		metadata := loadCountryMetadata(regionCode, &territoryElement, isShortNumberMetadata, isAlternateFormatsMetadata)
+		if isAlternateFormatsMetadata && metadata.Id == nil {
+			// Alternate-formats territories carry no region id; upstream still sets
+			// the (required) id field to the empty string. sp() maps "" to nil, so
+			// set it explicitly to keep the proto's required field present.
+			empty := ""
+			metadata.Id = &empty
+		}
 		collection.Metadata = append(collection.Metadata, metadata)
 	}
 	return &collection, nil
