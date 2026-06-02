@@ -35,10 +35,11 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   national-prefix stripping)
 - ✅ Formatting (per-country, by-pattern, out-of-country, carrier, mobile-dialing,
   in-original-format)
+- ✅ Number matching — the full `testIsNumberMatch*` family (8 methods) in
+  `phonenumberutil_isnumbermatch_test.go`
 - ⚠️ Still only covered by the **ad-hoc** tests (real embedded metadata, not
   faithful synthetic-metadata ports — see `phonenumberutil_adhoc_test.go`), so a
   faithful port is still owed for:
-  - `testIsNumberMatch*` (9 upstream methods; 3 ad-hoc tests today)
   - `testIsPossibleNumber` / `testIsNotPossibleNumber` /
     `testIsPossibleNumberWithReason` (the non-by-type possibility checks)
   - `testTruncateTooLongNumber`, `testIsViablePhoneNumber` (+ `NonAscii`),
@@ -75,6 +76,17 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   every-type test uses a local helper (`getExampleNumberForTypeAnyRegion`).
 
 ### Bugs the port surfaced and fixed
+- `IsNumberMatch` leading-zeros equality: the matcher compared the two numbers
+  with `reflect.DeepEqual` on the raw protos instead of upstream's
+  `copyCoreFieldsOnly` value comparison, so a `numberOfLeadingZeros` that was the
+  proto default (1) on one side but unset on the other — or set at all when
+  `italianLeadingZero` is false — wrongly demoted an `EXACT_MATCH` to
+  `SHORT_NSN_MATCH`. Added `copyCoreFieldsOnly` and compare with `proto.Equal`.
+- `IsNumberMatchWithOneNumber` nil-pointer panic: when the first number's country
+  calling code maps to no region, the fallback branch passed a nil `*PhoneNumber`
+  into `parseHelper` (which writes into an out-param, unlike upstream's
+  return-value form). The branch had no test coverage until the port added the
+  `randomNumber` (cc 41) case. Now allocates the proto first.
 - Builder nil-deref on regions lacking a mobile / fixed-line pattern
 - `GetNationalSignificantNumber` panic on a negative `numberOfLeadingZeros`
 - `noInternationalDialling` XML struct-tag typo (the descriptor was silently
