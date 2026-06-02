@@ -397,7 +397,8 @@ func AllNumberGroupsRemainGrouped(
 			// itself, as we don't need to distinguish between different countries
 			// with the same country calling code and this is faster.
 			region := GetRegionCodeForCountryCode(int(number.GetCountryCode()))
-			if GetNddPrefixForRegion(region, true) != "" && unicode.IsDigit(rune(normalizedCandidate[fromIndex])) {
+			nextChar, _ := utf8.DecodeRuneInString(normalizedCandidate[fromIndex:])
+			if GetNddPrefixForRegion(region, true) != "" && unicode.IsDigit(nextChar) {
 				// There is no formatting symbol after the NDC. In this case we
 				// only accept the number if there is no formatting symbol at all
 				// in the number, except for extensions. Only important for
