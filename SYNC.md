@@ -11,26 +11,25 @@ across the tree and can't go stale file-by-file.
 
 ## Baseline
 
-- **Code reconciled against:** `9.0.32-SNAPSHOT` (upstream `master`, post-`v9.0.31`)
-- **Metadata built from:** `9.0.32-SNAPSHOT` (regenerated 2026-06-01, v1.8.0)
+- **Code reconciled against:** `v9.0.31`
 
-> `9.0.32-SNAPSHOT` is upstream's *in-development* version on `master` after the
-> `v9.0.31` release — there is no `v9.0.32` tag (yet). This baseline predates pinning:
-> it was synced from an untagged `master` commit, so it is not exactly reproducible.
-> From the next sync onward, `cmd/buildmetadata` pins to a release **tag** (see below),
-> so each future baseline is a real, reproducible `vX.Y.Z`. Until then, the embedded
-> metadata sits slightly *ahead* of the pinned tag.
+The **metadata** version isn't tracked here — `cmd/buildmetadata` records the upstream
+release it built `data/` from in the generated
+[`metadataversion.go`](metadataversion.go) (the exported `MetadataVersion` constant).
 
-## Pinning
+## Building metadata
 
-`cmd/buildmetadata` clones a pinned upstream **release tag** (`git clone --branch`),
-set by the `upstreamVersion` constant in [`cmd/buildmetadata/main.go`](cmd/buildmetadata/main.go)
-(currently `v9.0.31`). To sync to a newer release:
+`cmd/buildmetadata` regenerates the embedded `data/` from upstream libphonenumber:
 
-1. Bump `upstreamVersion` to the new tag.
-2. `go run ./cmd/buildmetadata` to regenerate the embedded metadata.
-3. `go test ./...` and fix any reconciliation differences.
-4. Update the **Baseline** and **Reconcile status** below, and add a **Sync log** entry.
+1. `go run ./cmd/buildmetadata` — resolves the **latest** libphonenumber release tag,
+   clones it, rebuilds `data/`, and records the tag in the generated
+   [`metadataversion.go`](metadataversion.go). To rebuild from a specific release
+   instead (e.g. to reproduce older embedded data), pass the tag:
+   `go run ./cmd/buildmetadata v9.0.31`.
+2. `go test ./...` and fix any reconciliation differences.
+3. Review the `data/` and `metadataversion.go` diff. Reconciling the *code* against the
+   new release is a human judgment, so it isn't automated: update the **Reconcile
+   status** below and add a **Sync log** entry.
 
 ## Reconcile status
 
@@ -40,20 +39,20 @@ version as the code they exercise.
 
 | Go file | Upstream Java source | Reconciled @ |
 | --- | --- | --- |
-| `phonenumberutil.go` | `PhoneNumberUtil.java` | 9.0.32-SNAPSHOT |
-| `enums.go` | `PhoneNumberUtil.java` (enums) | 9.0.32-SNAPSHOT |
-| `errors.go` | `NumberParseException.java` | 9.0.32-SNAPSHOT |
-| `shortnumberinfo.go` | `ShortNumberInfo.java` | 9.0.32-SNAPSHOT |
-| `asyoutypeformatter.go` | `AsYouTypeFormatter.java` | 9.0.32-SNAPSHOT |
-| `phonenumbermatch.go` | `PhoneNumberMatch.java` | 9.0.32-SNAPSHOT |
-| `phonenumbermatcher.go` | `PhoneNumberMatcher.java` | 9.0.32-SNAPSHOT |
-| `carrier.go` | `carrier/PhoneNumberToCarrierMapper.java` | 9.0.32-SNAPSHOT |
-| `geocoding.go` | `geocoder/geocoding/PhoneNumberOfflineGeocoder.java` | 9.0.32-SNAPSHOT |
-| `timezone.go` | `geocoder/PhoneNumberToTimeZonesMapper.java` | 9.0.32-SNAPSHOT |
-| `prefixmapper.go` | `internal/prefixmapper/*` | 9.0.32-SNAPSHOT |
-| `metadatasource.go` | `metadata/source/*` + `MetadataLoader` | 9.0.32-SNAPSHOT |
-| `alternateformats.go` | `metadata/source/*` (alternate formats) | 9.0.32-SNAPSHOT |
-| `builder.go` | `tools/.../BuildMetadataFromXml.java` | 9.0.32-SNAPSHOT |
+| `phonenumberutil.go` | `PhoneNumberUtil.java` | v9.0.31 |
+| `enums.go` | `PhoneNumberUtil.java` (enums) | v9.0.31 |
+| `errors.go` | `NumberParseException.java` | v9.0.31 |
+| `shortnumberinfo.go` | `ShortNumberInfo.java` | v9.0.31 |
+| `asyoutypeformatter.go` | `AsYouTypeFormatter.java` | v9.0.31 |
+| `phonenumbermatch.go` | `PhoneNumberMatch.java` | v9.0.31 |
+| `phonenumbermatcher.go` | `PhoneNumberMatcher.java` | v9.0.31 |
+| `carrier.go` | `carrier/PhoneNumberToCarrierMapper.java` | v9.0.31 |
+| `geocoding.go` | `geocoder/geocoding/PhoneNumberOfflineGeocoder.java` | v9.0.31 |
+| `timezone.go` | `geocoder/PhoneNumberToTimeZonesMapper.java` | v9.0.31 |
+| `prefixmapper.go` | `internal/prefixmapper/*` | v9.0.31 |
+| `metadatasource.go` | `metadata/source/*` + `MetadataLoader` | v9.0.31 |
+| `alternateformats.go` | `metadata/source/*` (alternate formats) | v9.0.31 |
+| `builder.go` | `tools/.../BuildMetadataFromXml.java` | v9.0.31 |
 
 Generated or built, not hand-ported:
 
@@ -84,9 +83,10 @@ Places where this port intentionally differs from upstream:
 
 Newest first. Each entry: what was reconciled or pulled, and the upstream version.
 
-- **2026-06-02** — Established this file; moved per-file version headers here; pinned
-  `cmd/buildmetadata` to release tags. Baseline `9.0.32-SNAPSHOT`.
-- **2026-06-01** (v1.8.0) — Regenerated all metadata against `9.0.32-SNAPSHOT`;
-  refactored to ease upstream syncing.
-- Ported `PhoneNumberMatcher` + `PhoneNumberMatch` and their tests against
-  `9.0.32-SNAPSHOT`.
+- **2026-06-02** — Established this file; moved per-file version headers here.
+  `cmd/buildmetadata` now resolves the latest upstream release tag itself (pass a tag to
+  pin a specific release) and records it in the generated `metadataversion.go`, so the
+  embedded metadata's version is no longer hand-maintained here. `go test ./...` green.
+- **2026-06-01** (v1.8.0) — Regenerated all metadata against `v9.0.31`; refactored to
+  ease upstream syncing.
+- Ported `PhoneNumberMatcher` + `PhoneNumberMatch` and their tests against `v9.0.31`.

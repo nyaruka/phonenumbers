@@ -34,9 +34,8 @@ formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 
 ## Updating Metadata
 
-The `buildmetadata` command clones a pinned upstream libphonenumber release (set by the
-`upstreamVersion` constant in `cmd/buildmetadata/main.go`) and rebuilds the embedded
-metadata into the gzipped files under `data/`:
+The `buildmetadata` command clones an upstream libphonenumber release and rebuilds the
+embedded metadata into the gzipped files under `data/`:
 
  * `data/metadata.xml.gz` - core territory metadata (number formats, validation rules, etc.)
  * `data/shortnumber_metadata.xml.gz` - short-number metadata
@@ -46,10 +45,19 @@ metadata into the gzipped files under `data/`:
  * `data/prefix_to_geocodings/*.gz` - maps a phone number prefix to a geographic area
  * `data/prefix_to_timezone.xml.gz` - maps a phone number prefix to a timezone
 
+By default it resolves the **latest** upstream release tag, rebuilds `data/`, and records
+the release it used in the generated `metadataversion.go` (the exported `MetadataVersion`
+constant):
+
 ```bash
 % go run ./cmd/buildmetadata
 ```
 
-To sync to a newer upstream release, bump `upstreamVersion`, re-run the command, run the
-tests, then update [SYNC.md](SYNC.md) — which records the upstream version each part of
-the port is currently reconciled against.
+To rebuild from a specific release instead, pass the tag:
+
+```bash
+% go run ./cmd/buildmetadata v9.0.31
+```
+
+After syncing, run the tests and update [SYNC.md](SYNC.md) — which records the upstream
+version each part of the port is currently reconciled against.
