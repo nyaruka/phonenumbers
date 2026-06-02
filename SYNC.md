@@ -31,41 +31,6 @@ release it built `data/` from in the generated
    new release is a human judgment, so it isn't automated: bump **Code reconciled
    against** in **Baseline** above and add a **Sync log** entry.
 
-## Ported files
-
-Each hand-ported Go file and the upstream Java source it mirrors. The whole port tracks
-a single upstream version (see **Baseline** above) — it isn't synced file-by-file or with
-mixed versions, so there's no per-file version here. Test files mirror the corresponding
-upstream tests and aren't listed separately.
-
-| Go file | Upstream Java source |
-| --- | --- |
-| `phonenumberutil.go` | `PhoneNumberUtil.java` |
-| `enums.go` | `PhoneNumberUtil.java` (enums) |
-| `errors.go` | `NumberParseException.java` |
-| `shortnumberinfo.go` | `ShortNumberInfo.java` |
-| `asyoutypeformatter.go` | `AsYouTypeFormatter.java` |
-| `phonenumbermatch.go` | `PhoneNumberMatch.java` |
-| `phonenumbermatcher.go` | `PhoneNumberMatcher.java` |
-| `carrier.go` | `carrier/PhoneNumberToCarrierMapper.java` |
-| `geocoding.go` | `geocoder/geocoding/PhoneNumberOfflineGeocoder.java` |
-| `timezone.go` | `geocoder/PhoneNumberToTimeZonesMapper.java` |
-| `prefixmapper.go` | `internal/prefixmapper/*` |
-| `metadatasource.go` | `metadata/source/*` + `MetadataLoader` |
-| `alternateformats.go` | `metadata/source/*` (alternate formats) |
-| `builder.go` | `tools/.../BuildMetadataFromXml.java` |
-
-Generated or built, not hand-ported:
-
-| Go file / dir | Source |
-| --- | --- |
-| `phonemetadata.pb.go` | `protoc` from `phonemetadata.proto` |
-| `phonenumber.pb.go` | `protoc` from `phonenumber.proto` |
-| `data/*.gz` | `cmd/buildmetadata`, from upstream `resources/` |
-
-Go-specific glue with no single upstream source (not tracked above): `doc.go`,
-`metadata.go`, `metadata_util.go`, `serialize.go`, `stringbuilder.go`.
-
 ## Deliberate divergences
 
 Places where this port intentionally differs from upstream:
