@@ -14,7 +14,6 @@ package phonenumbers
 // PhoneNumberUtilTest, and the latter is already ported as
 // TestCanBeInternationallyDialled in phonenumberutil_test.go, so this variant
 // carries a suffix to disambiguate within the flat Go package.
-// Last reconciled against: v9.0.32
 
 import (
 	"strconv"

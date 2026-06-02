@@ -2,8 +2,7 @@ package phonenumbers
 
 // Faithful port of upstream libphonenumber's PhoneNumberUtilTest.java
 // out-of-country / preferred-carrier formatting tests, run against the synthetic
-// test metadata. Method names and assertions mirror the Java. Last reconciled
-// against: v9.0.32
+// test metadata. Method names and assertions mirror the Java.
 
 import (
 	"testing"

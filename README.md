@@ -34,18 +34,22 @@ formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 
 ## Updating Metadata
 
-The `buildmetadata` command will fetch the latest XML file from the official Google repo and rebuild the go source files 
-containing all the territory metadata, timezone and region maps.
+The `buildmetadata` command clones a pinned upstream libphonenumber release (set by the
+`upstreamVersion` constant in `cmd/buildmetadata/main.go`) and rebuilds the embedded
+metadata into the gzipped files under `data/`:
 
-It will rebuild the following files:
-
- * `gen/metadata_bin.go` - protocol buffer definitions for all the various formats across countries etc..
- * `gen/shortnumber_metadata_bin.go` - protocol buffer definitions for ShortNumberMetadata.xml
- * `gen/countrycode_to_region_bin.go` - information needed to map a country code to a region
- * `gen/prefix_to_carrier_bin.go` - information needed to map a phone number prefix to a carrier
- * `gen/prefix_to_geocoding_bin.go` - information needed to map a phone number prefix to a city or region
- * `gen/prefix_to_timezone_bin.go` - information needed to map a phone number prefix to a city or region
+ * `data/metadata.xml.gz` - core territory metadata (number formats, validation rules, etc.)
+ * `data/shortnumber_metadata.xml.gz` - short-number metadata
+ * `data/alternateformats_metadata.xml.gz` - alternate format patterns used when matching
+ * `data/countrycode_to_region.xml.gz` - maps a country code to its region(s)
+ * `data/prefix_to_carriers/*.gz` - maps a phone number prefix to a carrier
+ * `data/prefix_to_geocodings/*.gz` - maps a phone number prefix to a geographic area
+ * `data/prefix_to_timezone.xml.gz` - maps a phone number prefix to a timezone
 
 ```bash
 % go run ./cmd/buildmetadata
 ```
+
+To sync to a newer upstream release, bump `upstreamVersion`, re-run the command, run the
+tests, then update [SYNC.md](SYNC.md) — which records the upstream version each part of
+the port is currently reconciled against.

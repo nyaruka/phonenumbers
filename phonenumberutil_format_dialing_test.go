@@ -2,8 +2,7 @@ package phonenumbers
 
 // Faithful port of upstream libphonenumber's PhoneNumberUtilTest.java mobile-
 // dialing, keep-alpha-chars, and in-original-format tests, run against the
-// synthetic test metadata. Method names and assertions mirror the Java. Last
-// reconciled against: v9.0.32
+// synthetic test metadata. Method names and assertions mirror the Java.
 
 import (
 	"testing"

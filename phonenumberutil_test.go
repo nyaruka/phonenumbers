@@ -3,7 +3,6 @@ package phonenumbers
 // Faithful port of upstream libphonenumber's PhoneNumberUtilTest.java, run
 // against the synthetic test metadata (see testmetadata_test.go). Method names
 // and assertions mirror the Java so this file can be kept in sync with upstream.
-// Last reconciled against: v9.0.32
 //
 // This is an in-progress migration of PhoneNumberUtilTest. The remaining ad-hoc,
 // real-metadata tests live in phonenumberutil_adhoc_test.go and are deleted from

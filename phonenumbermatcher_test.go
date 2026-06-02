@@ -1,7 +1,7 @@
 package phonenumbers
 
-// Faithful port of upstream libphonenumber's PhoneNumberMatcherTest.java,
-// reconciled against v9.0.32. Runs against the synthetic test metadata via
+// Faithful port of upstream libphonenumber's PhoneNumberMatcherTest.java. Runs
+// against the synthetic test metadata via
 // useTestMetadata(t) (so it must not run with t.Parallel()), the analogue of
 // upstream's TestMetadataTestCase.
 //

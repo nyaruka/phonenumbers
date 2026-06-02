@@ -4,7 +4,7 @@ package phonenumbers
 // normalization / alpha / viability / extraction methods. These exercise static
 // helpers that don't touch metadata, so (unlike most ports) they don't call
 // useTestMetadata. Method names and assertions mirror the Java; non-ASCII
-// inputs use the same \u escapes as upstream. Last reconciled against: v9.0.32
+// inputs use the same \u escapes as upstream.
 
 import (
 	"testing"

@@ -3,7 +3,6 @@ package phonenumbers
 // Faithful port of upstream libphonenumber's PhoneNumberUtilTest.java tests for
 // getSupportedTypesForRegion/NonGeoEntity, getInvalidExampleNumber, and
 // isPossibleNumberForType(WithReason), run against the synthetic test metadata.
-// Last reconciled against: v9.0.32
 
 import (
 	"testing"
