@@ -60,4 +60,4 @@ To rebuild from a specific release instead, pass the tag:
 ```
 
 After syncing, run the tests and update [SYNC.md](SYNC.md) — which records the upstream
-version each part of the port is currently reconciled against.
+version the port is reconciled against and the deliberate divergences from upstream.

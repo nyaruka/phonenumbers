@@ -28,31 +28,32 @@ release it built `data/` from in the generated
    `go run ./cmd/buildmetadata v9.0.31`.
 2. `go test ./...` and fix any reconciliation differences.
 3. Review the `data/` and `metadataversion.go` diff. Reconciling the *code* against the
-   new release is a human judgment, so it isn't automated: update the **Reconcile
-   status** below and add a **Sync log** entry.
+   new release is a human judgment, so it isn't automated: bump **Code reconciled
+   against** in **Baseline** above and add a **Sync log** entry.
 
-## Reconcile status
+## Ported files
 
-Each ported Go file and the upstream Java source it mirrors. "Reconciled @" is the
-upstream version the Go code was last checked against; test files track the same
-version as the code they exercise.
+Each hand-ported Go file and the upstream Java source it mirrors. The whole port tracks
+a single upstream version (see **Baseline** above) — it isn't synced file-by-file or with
+mixed versions, so there's no per-file version here. Test files mirror the corresponding
+upstream tests and aren't listed separately.
 
-| Go file | Upstream Java source | Reconciled @ |
-| --- | --- | --- |
-| `phonenumberutil.go` | `PhoneNumberUtil.java` | v9.0.31 |
-| `enums.go` | `PhoneNumberUtil.java` (enums) | v9.0.31 |
-| `errors.go` | `NumberParseException.java` | v9.0.31 |
-| `shortnumberinfo.go` | `ShortNumberInfo.java` | v9.0.31 |
-| `asyoutypeformatter.go` | `AsYouTypeFormatter.java` | v9.0.31 |
-| `phonenumbermatch.go` | `PhoneNumberMatch.java` | v9.0.31 |
-| `phonenumbermatcher.go` | `PhoneNumberMatcher.java` | v9.0.31 |
-| `carrier.go` | `carrier/PhoneNumberToCarrierMapper.java` | v9.0.31 |
-| `geocoding.go` | `geocoder/geocoding/PhoneNumberOfflineGeocoder.java` | v9.0.31 |
-| `timezone.go` | `geocoder/PhoneNumberToTimeZonesMapper.java` | v9.0.31 |
-| `prefixmapper.go` | `internal/prefixmapper/*` | v9.0.31 |
-| `metadatasource.go` | `metadata/source/*` + `MetadataLoader` | v9.0.31 |
-| `alternateformats.go` | `metadata/source/*` (alternate formats) | v9.0.31 |
-| `builder.go` | `tools/.../BuildMetadataFromXml.java` | v9.0.31 |
+| Go file | Upstream Java source |
+| --- | --- |
+| `phonenumberutil.go` | `PhoneNumberUtil.java` |
+| `enums.go` | `PhoneNumberUtil.java` (enums) |
+| `errors.go` | `NumberParseException.java` |
+| `shortnumberinfo.go` | `ShortNumberInfo.java` |
+| `asyoutypeformatter.go` | `AsYouTypeFormatter.java` |
+| `phonenumbermatch.go` | `PhoneNumberMatch.java` |
+| `phonenumbermatcher.go` | `PhoneNumberMatcher.java` |
+| `carrier.go` | `carrier/PhoneNumberToCarrierMapper.java` |
+| `geocoding.go` | `geocoder/geocoding/PhoneNumberOfflineGeocoder.java` |
+| `timezone.go` | `geocoder/PhoneNumberToTimeZonesMapper.java` |
+| `prefixmapper.go` | `internal/prefixmapper/*` |
+| `metadatasource.go` | `metadata/source/*` + `MetadataLoader` |
+| `alternateformats.go` | `metadata/source/*` (alternate formats) |
+| `builder.go` | `tools/.../BuildMetadataFromXml.java` |
 
 Generated or built, not hand-ported:
 
