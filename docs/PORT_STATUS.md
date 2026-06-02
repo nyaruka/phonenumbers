@@ -97,6 +97,39 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   code points would differ, but phone input never contains them. The port required
   no behaviour fixes; it passed the upstream assertions as written.
 
+### PhoneNumberMatcherTest — ported
+- ✅ Faithful port in `phonenumbermatcher_test.go` (all 46 upstream test methods
+  except `testRemovalNotSupported`, which has no Go analogue — range-over-func has
+  no `remove()`), run against the synthetic test metadata via `useTestMetadata(t)`,
+  reconciled against v9.0.32. Covers national/international finding, extensions,
+  the `isLatinLetter` table, money/percentage/date/timestamp rejection, surrounding
+  Latin/Chinese/punctuation contexts, all four leniency levels with the
+  impossible/possible/valid/strict-grouping/exact-grouping case tables, bracket
+  matching, max-tries bounding, and the iterator contract (idempotent `hasNext`,
+  `next` after exhaustion).
+- New implementation: `phonenumbermatch.go` (`PhoneNumberMatch` with
+  `Number`/`Start`/`End`/`RawString`) and a full rewrite of `phonenumbermatcher.go`
+  (the `find`/`extractMatch`/`extractInnerMatch`/`parseAndVerify` engine, the bounded
+  `PATTERN` / `MATCHING_BRACKETS` / inner-match regexes, `isLatinLetter`,
+  `checkNumberGroupingIsValid`, and faithful rewrites of the previously-stubbed/buggy
+  grouping helpers). The public entry points are `FindNumbers(text, region)` and
+  `FindNumbersWithLeniency(text, region, leniency, maxTries)`, returning a Go 1.23
+  `iter.Seq[*PhoneNumberMatch]` (range with `for m := range …`). Match offsets are
+  **byte** offsets (Go-idiomatic), so `text[m.Start():m.End()] == m.RawString()`;
+  upstream uses UTF-16 char offsets, which differ only for multi-byte input.
+- **Alternate-formats metadata** was added to support the grouping leniencies
+  (`STRICT_GROUPING` / `EXACT_GROUPING`): `PhoneNumberAlternateFormats.xml` is now
+  compiled (`BuildAlternateFormatsMetadataCollection`, a new `cmd/buildmetadata`
+  step) into `data/alternateformats_metadata.xml.gz`, embedded, and looked up by
+  country calling code (`getAlternateFormatsForCountryCallingCode`, loaded lazily).
+  As upstream does, this uses the production alternate-formats data even though the
+  matcher's main metadata is the synthetic test set.
+- Regex notes: `REGEX_FLAGS` (UNICODE|CASE_INSENSITIVE) maps to RE2's already-Unicode
+  `\p{…}` classes plus a `(?i)` prefix on `PATTERN`; Java's `.matches()` /
+  `.lookingAt()` are emulated with anchored patterns / leftmost-at-0 index checks;
+  `String.split(\D+)` is replicated (drop trailing empties) for the exact-grouping
+  check.
+
 ### Bugs the port surfaced and fixed
 - `extractPossibleNumber` never trimmed trailing junk: `UNWANTED_END_CHARS` was
   copied verbatim from Java (`[[\P{N}&&\P{L}]&&[^#]]+$`), but Go's RE2 engine has
@@ -137,9 +170,7 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 
 ## Remaining work (roughly in order)
 
-1. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
-   `phonenumbermatcher.go`) and port `PhoneNumberMatcherTest`.
-2. **Automate**: a scheduled task that detects new upstream releases, regenerates
+1. **Automate**: a scheduled task that detects new upstream releases, regenerates
    metadata, runs the (now-stable) synthetic tests, opens a PR for data-only
    deltas, and flags logic-touching changes for manual porting. See
    `docs/2.0-restructure.md`.
