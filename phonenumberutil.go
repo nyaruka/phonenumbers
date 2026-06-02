@@ -2,7 +2,6 @@ package phonenumbers
 
 import (
 	"errors"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -3032,35 +3031,14 @@ func buildNationalNumberForParsing(
 // For example, the numbers +1 345 657 1234 and 657 1234 are a SHORT_NSN_MATCH.
 // The numbers +1 345 657 1234 and 345 657 are a NO_MATCH.
 func IsNumberMatchWithNumbers(firstNumberIn, secondNumberIn *PhoneNumber) MatchType {
-	// Make copies of the phone number so that the numbers passed in are not edited.
-	var firstNumber, secondNumber *PhoneNumber
-	firstNumber = &PhoneNumber{}
-	secondNumber = &PhoneNumber{}
-	proto.Merge(firstNumber, firstNumberIn)
-	proto.Merge(secondNumber, secondNumberIn)
-	// First clear raw_input, country_code_source and
-	// preferred_domestic_carrier_code fields and any empty-string
-	// extensions so that we can use the proto-buffer equality method.
-	firstNumber.RawInput = nil
-	firstNumber.CountryCodeSource = nil
-	firstNumber.PreferredDomesticCarrierCode = nil
-	secondNumber.RawInput = nil
-	secondNumber.CountryCodeSource = nil
-	secondNumber.PreferredDomesticCarrierCode = nil
-
-	firstNumExt := firstNumber.GetExtension()
-	secondNumExt := secondNumber.GetExtension()
-	// NOTE(ttacon): don't think we need this in go land...
-	if len(firstNumExt) == 0 {
-		firstNumber.Extension = nil
-	}
-	if len(secondNumExt) == 0 {
-		secondNumber.Extension = nil
-	}
+	// We only care about the fields that uniquely define a number, so we copy
+	// these across explicitly.
+	firstNumber := copyCoreFieldsOnly(firstNumberIn)
+	secondNumber := copyCoreFieldsOnly(secondNumberIn)
 
 	// Early exit if both had extensions and these are different.
-	if len(firstNumExt) > 0 && len(secondNumExt) > 0 &&
-		firstNumExt != secondNumExt {
+	if firstNumber.GetExtension() != "" && secondNumber.GetExtension() != "" &&
+		firstNumber.GetExtension() != secondNumber.GetExtension() {
 		return NO_MATCH
 	}
 	var (
@@ -3069,8 +3047,7 @@ func IsNumberMatchWithNumbers(firstNumberIn, secondNumberIn *PhoneNumber) MatchT
 	)
 	// Both had country_code specified.
 	if firstNumberCountryCode != 0 && secondNumberCountryCode != 0 {
-		// TODO(ttacon): remove when make gen-equals
-		if reflect.DeepEqual(firstNumber, secondNumber) {
+		if proto.Equal(firstNumber, secondNumber) {
 			return EXACT_MATCH
 		} else if firstNumberCountryCode == secondNumberCountryCode &&
 			isNationalNumberSuffixOfTheOther(firstNumber, secondNumber) {
@@ -3088,14 +3065,35 @@ func IsNumberMatchWithNumbers(firstNumberIn, secondNumberIn *PhoneNumber) MatchT
 	// country_code fields to be equal.
 	firstNumber.CountryCode = proto.Int32(secondNumberCountryCode)
 	// If all else was the same, then this is an NSN_MATCH.
-	// TODO(ttacon): remove when make gen-equals
-	if reflect.DeepEqual(firstNumber, secondNumber) {
+	if proto.Equal(firstNumber, secondNumber) {
 		return NSN_MATCH
 	}
 	if isNationalNumberSuffixOfTheOther(firstNumber, secondNumber) {
 		return SHORT_NSN_MATCH
 	}
 	return NO_MATCH
+}
+
+// copyCoreFieldsOnly returns a copy of the number keeping only the fields that
+// uniquely define it, so two numbers can be compared with proto.Equal. Mirrors
+// upstream PhoneNumberUtil.copyCoreFieldsOnly: raw_input, country_code_source,
+// preferred_domestic_carrier_code and empty extensions are dropped, and
+// number_of_leading_zeros is only relevant (and so only copied) when
+// italian_leading_zero is true.
+func copyCoreFieldsOnly(in *PhoneNumber) *PhoneNumber {
+	out := &PhoneNumber{
+		CountryCode:    proto.Int32(in.GetCountryCode()),
+		NationalNumber: proto.Uint64(in.GetNationalNumber()),
+	}
+	if len(in.GetExtension()) > 0 {
+		out.Extension = proto.String(in.GetExtension())
+	}
+	if in.GetItalianLeadingZero() {
+		out.ItalianLeadingZero = proto.Bool(true)
+		// This field is only relevant if there are leading zeros at all.
+		out.NumberOfLeadingZeros = proto.Int32(in.GetNumberOfLeadingZeros())
+	}
+	return out
 }
 
 // Returns true when one national number is the suffix of the other or both
@@ -3177,7 +3175,7 @@ func IsNumberMatchWithOneNumber(
 	} else {
 		// If the first number didn't have a valid country calling
 		// code, then we parse the second number without one as well.
-		var secondNumberProto *PhoneNumber
+		secondNumberProto := &PhoneNumber{}
 		err := parseHelper(secondNumber, "", false, false, secondNumberProto)
 		if err != nil {
 			return NOT_A_NUMBER
