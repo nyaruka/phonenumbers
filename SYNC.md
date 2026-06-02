@@ -36,10 +36,11 @@ release it built `data/` from in the generated
 Places where this port intentionally differs from upstream:
 
 - **`MaybeSeparateExtensionFromPhone`** (`phonenumberutil.go`) — a nyaruka-only helper
-  with no upstream equivalent. Revisit for API purity.
+  with no upstream equivalent. Candidate for removal in `/v2`; see
+  [`docs/2.0-plan.md`](docs/2.0-plan.md).
 - **v2 API cleanups** — the deprecated `FormatWithBuf` and the exported `StringBuilder`
   type exist only for backwards compatibility and are slated for removal in a future
-  `/v2` module. See "Planned for v2" in the [README](README.md).
+  `/v2` module. See [`docs/2.0-plan.md`](docs/2.0-plan.md).
 - **Unported upstream tests** — three `PhoneNumberUtilTest` cases have no Go
   counterpart: `testGetMetadataForRegionForMissingMetadata` and its non-geographical
   variant (both rely on Mockito-style metadata-source injection), and

@@ -15,13 +15,6 @@ Go port of Google's [libphonenumber](https://github.com/google/libphonenumber), 
 
 As we don't want to bump our major semantic version number in step with the upstream library, we use independent version numbers than the Google libphonenumber repo. The release notes will mention what version of the metadata a release was built against.
 
-## Planned for v2
-
-A future v2 (published under a `/v2` module path) will tidy up some legacy API surface. These are breaking changes, so they won't land on v1 — current consumers are unaffected until they choose to upgrade:
-
-- Remove the deprecated `FormatWithBuf`. Use `Format` instead; the buffer reuse it offered is negligible in practice.
-- Make the `StringBuilder` type private once nothing in the public API depends on it (after `FormatWithBuf` is gone). It only exists to mirror Java's mutable-`StringBuilder` formatting helper and isn't meant for external use.
-
 ## Usage
 
 ```go
