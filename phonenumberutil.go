@@ -834,17 +834,17 @@ var allPhoneNumberTypes = []PhoneNumberType{
 }
 
 // descHasData returns true if there is any data set for a particular
-// PhoneNumberDesc. The builder marks an absent descriptor with possibleLength
-// [-1] (matching upstream), but the committed embedded metadata still uses the
-// legacy "NA" national-number-pattern sentinel, so a pattern of "NA" also counts
-// as no data.
+// PhoneNumberDesc. An absent descriptor is marked with possibleLength [-1]
+// (matching upstream).
 func descHasData(desc *PhoneNumberDesc) bool {
 	if desc == nil {
 		return false
 	}
+	// Checking most properties since we don't know what's present, since a custom
+	// build may have some of them removed.
 	return len(desc.GetExampleNumber()) > 0 ||
 		descHasPossibleNumberData(desc) ||
-		(desc.NationalNumberPattern != nil && desc.GetNationalNumberPattern() != "NA")
+		desc.NationalNumberPattern != nil
 }
 
 // getSupportedTypesForMetadata returns the types we have metadata for based on
@@ -2181,13 +2181,8 @@ func IsPossibleNumber(number *PhoneNumber) bool {
 // descHasPossibleNumberData returns true if there is any possible-length data
 // set for a PhoneNumberDesc. An empty possibleLength means numbers of this type
 // inherit from the general desc (so the type is supported); a single -1 entry
-// means no numbers exist for the type. The committed embedded metadata still
-// marks absent types with the legacy "NA" national-number pattern (and an empty
-// possibleLength) instead, so we treat that as no data too.
+// means no numbers exist for the type.
 func descHasPossibleNumberData(desc *PhoneNumberDesc) bool {
-	if desc.GetNationalNumberPattern() == "NA" {
-		return false
-	}
 	return len(desc.PossibleLength) != 1 || desc.PossibleLength[0] != -1
 }
 

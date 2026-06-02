@@ -56,7 +56,8 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   `GetExpectedCostForRegion` (+ the `ShortNumberCost` type), `IsCarrierSpecific` /
   `IsCarrierSpecificForRegion`, `IsSmsServiceForRegion`, and the
   `getExampleShortNumber[ForCost]` helpers.
-- One skipped test: `TestIsSmsService` (see TODO below).
+- `TestIsSmsService` is active: the embedded short metadata was regenerated, so it
+  now carries `<smsServices>` data (see the metadata-refresh note below).
 
 ### ExampleNumbersTest — ported
 - ✅ Faithful port in `examplenumbers_test.go`, reconciled against v9.0.32. A
@@ -130,8 +131,9 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 - Short-number builder dropped `<smsServices>`: the short-metadata branch of
   `setRelevantDescPatterns` never processed the element, so `IsSmsServiceForRegion`
   could never match. The builder now reads it (verified by
-  `TestBuilderProcessesSmsServices`); the embedded data still needs regenerating
-  for it to carry the data (see TODO).
+  `TestBuilderProcessesSmsServices`). The embedded short metadata has since been
+  regenerated, so all 241 regions now carry `<smsServices>` data and the ported
+  `TestIsSmsService` is active.
 
 ## Remaining work (roughly in order)
 
@@ -144,17 +146,17 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 
 ## Known TODOs / documented divergences
 
-- **Embedded metadata still uses the legacy `"NA"` sentinel.** The builder now
-  emits `possibleLength = [-1]` for absent types (matching upstream), but the
-  committed `data/metadata.xml.gz` was generated before that change and still
-  marks absent types with an `"NA"` national pattern. `descHasData` /
-  `descHasPossibleNumberData` handle both representations, so behaviour is
-  correct; the `"NA"` special-cases become dead code only once the embedded
-  metadata is regenerated (a separate data-refresh concern — see the automate item).
-- **`TestIsSmsService` is skipped.** `IsSmsServiceForRegion` is implemented and the
-  builder now reads `<smsServices>`, but the committed embedded short metadata was
-  generated before that builder support, so it carries no smsServices data and the
-  test would always see `false`. Un-skips once the short metadata is regenerated.
+- **Embedded metadata regenerated against upstream (legacy `"NA"` sentinel gone).**
+  `data/metadata.xml.gz` and `data/shortnumber_metadata.xml.gz` have been
+  regenerated with the current builder: the main metadata now marks absent types
+  with `possibleLength = [-1]` (0 `"NA"` national patterns remain, 1132 `[-1]`
+  lengths across 245 regions), and the short metadata now carries `<smsServices>`
+  for all 241 regions. The now-dead `"NA"` sentinel special-cases were removed from
+  `descHasData` / `descHasPossibleNumberData` (both now match upstream verbatim),
+  and the synthetic fixture in `metadatasource_test.go` was updated to mark absent
+  types with `possibleLength = [-1]` like the real builder. The remaining `"NA"`
+  literals (the builder's `intlFormat="NA"` handling and AsYouTypeFormatter's
+  placeholder international prefix) are faithful upstream behavior, not the sentinel.
 - **Parsing edge case:** `normalizeDigits` may not map every non-ASCII unicode
   digit script (e.g. Mongolian) to ASCII; the Arabic-Indic, Eastern-Arabic and
   fullwidth digits exercised by `TestNormaliseOtherDigits` do convert correctly.

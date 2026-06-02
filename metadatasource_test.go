@@ -18,10 +18,10 @@ func syntheticCollection() (*PhoneMetadataCollection, map[int][]string) {
 			PossibleLength:        []int32{7},
 		}
 	}
-	// "NA" never matches; the real builder always populates every type
-	// descriptor (empty where absent), and getNumberTypeHelper relies on that,
-	// so synthetic metadata must do the same.
-	na := func() *PhoneNumberDesc { return &PhoneNumberDesc{NationalNumberPattern: proto.String("NA")} }
+	// An absent type is marked with possibleLength [-1] — exactly what the real
+	// builder emits for a type with no numbers — so it never matches and
+	// getNumberTypeHelper classifies correctly.
+	absent := func() *PhoneNumberDesc { return &PhoneNumberDesc{PossibleLength: []int32{-1}} }
 	coll := &PhoneMetadataCollection{
 		Metadata: []*PhoneMetadata{
 			{
@@ -30,15 +30,15 @@ func syntheticCollection() (*PhoneMetadataCollection, map[int][]string) {
 				InternationalPrefix: proto.String("00"),
 				GeneralDesc:         sevenDigits(),
 				FixedLine:           sevenDigits(),
-				Mobile:              na(),
-				PremiumRate:         na(),
-				TollFree:            na(),
-				SharedCost:          na(),
-				Voip:                na(),
-				PersonalNumber:      na(),
-				Pager:               na(),
-				Uan:                 na(),
-				Voicemail:           na(),
+				Mobile:              absent(),
+				PremiumRate:         absent(),
+				TollFree:            absent(),
+				SharedCost:          absent(),
+				Voip:                absent(),
+				PersonalNumber:      absent(),
+				Pager:               absent(),
+				Uan:                 absent(),
+				Voicemail:           absent(),
 			},
 		},
 	}
