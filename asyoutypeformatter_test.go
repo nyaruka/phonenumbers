@@ -6,7 +6,7 @@ package phonenumbers
 // regression test of real-world data. Each test starts with useTestMetadata(t)
 // (the analogue of TestMetadataTestCase.setUp) and therefore must not run in
 // parallel. Method names and assertions mirror the Java; non-ASCII inputs use the
-// same \u escapes as upstream. Last reconciled against: v9.0.32
+// same \u escapes as upstream.
 
 import (
 	"testing"

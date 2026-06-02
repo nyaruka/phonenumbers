@@ -1,5 +1,5 @@
 // Port of PhoneNumberMatch.java from google/libphonenumber.
-// Last reconciled against: v9.0.32
+// Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 
 import "fmt"

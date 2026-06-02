@@ -6,8 +6,8 @@ package phonenumbers
 // Upstream's PhoneNumberUtilTest et al. run against resources/PhoneNumberMetadata
 // ForTesting.xml — a frozen, hand-authored set of regions with made-up number
 // ranges — so test expectations never change when real-world metadata updates.
-// We compile that same XML (committed under testdata/, reconciled against
-// upstream v9.0.32) through our builder and swap it in via the metadata seam.
+// We compile that same XML (committed under testdata/) through our builder and
+// swap it in via the metadata seam.
 //
 // Mirrors TestMetadataTestCase: useTestMetadata == setUp's setInstance(test),
 // and the registered t.Cleanup == tearDown's setInstance(null). As upstream

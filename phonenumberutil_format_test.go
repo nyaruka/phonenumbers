@@ -3,7 +3,7 @@ package phonenumbers
 // Faithful port of upstream libphonenumber's PhoneNumberUtilTest.java formatting
 // tests, run against the synthetic test metadata (see testmetadata_test.go).
 // Method names and assertions mirror the Java so this file can be kept in sync
-// with upstream. Last reconciled against: v9.0.32
+// with upstream.
 //
 // Note: testFormatWithCarrierCode is already covered by
 // TestFormatWithCarrierCodeTestMetadata in phonenumberutil_format_natprefix_test.go;

@@ -1,6 +1,5 @@
 // Port of internal/prefixmapper/* (shared prefix lookup) from google/libphonenumber.
 // Functions are kept in upstream source order to ease syncing.
-// Last reconciled against: v9.0.32
 package phonenumbers
 
 import (

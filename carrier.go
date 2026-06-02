@@ -1,6 +1,5 @@
 // Port of carrier/PhoneNumberToCarrierMapper.java from google/libphonenumber.
 // Functions are kept in upstream source order to ease syncing.
-// Last reconciled against: v9.0.32
 package phonenumbers
 
 // GetCarrierForNumber returns the carrier we believe the number belongs to. Note due

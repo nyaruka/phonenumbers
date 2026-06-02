@@ -5,7 +5,6 @@ package phonenumbers
 // parsing-focused methods: invalid-number errors, extensions, keep-raw-input,
 // and phone-context handling.
 //
-// Last reconciled against: v9.0.32
 
 import (
 	"testing"

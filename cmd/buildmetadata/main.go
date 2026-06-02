@@ -21,6 +21,10 @@ import (
 
 const distPath = "data"
 
+// upstreamVersion pins the libphonenumber release tag that metadata is built
+// from. Bump this to sync to a newer release, then update SYNC.md.
+const upstreamVersion = "v9.0.31"
+
 func main() {
 	if err := buildMetadata(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -29,9 +33,9 @@ func main() {
 }
 
 func buildMetadata() error {
-	fmt.Print("Cloning upstream repo... ")
+	fmt.Printf("Cloning upstream repo at %s... ", upstreamVersion)
 
-	if err := cloneUpstreamRepo("https://github.com/google/libphonenumber.git"); err != nil {
+	if err := cloneUpstreamRepo("https://github.com/google/libphonenumber.git", upstreamVersion); err != nil {
 		return err
 	}
 
@@ -82,12 +86,12 @@ func buildMetadata() error {
 	return nil
 }
 
-func cloneUpstreamRepo(url string) error {
+func cloneUpstreamRepo(url, version string) error {
 	os.RemoveAll("_build")
 
-	cmd := exec.Command("git", "clone", "--depth=1", url, "_build")
+	cmd := exec.Command("git", "clone", "--depth=1", "--branch", version, url, "_build")
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error cloning upstream repo: %w", err)
+		return fmt.Errorf("error cloning upstream repo at %s: %w", version, err)
 	}
 
 	return nil

@@ -7,4 +7,6 @@
 // their Java counterparts (for example PhoneNumberUtil and PhoneNumberUtilTest)
 // to keep the port easy to verify against upstream. The aim is strictly to
 // match libphonenumber's functionality rather than to add to it.
+//
+// See SYNC.md for which upstream version each ported file is reconciled against.
 package phonenumbers

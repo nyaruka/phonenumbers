@@ -1,3 +1,5 @@
+// Port of tools/.../BuildMetadataFromXml.java from google/libphonenumber.
+// Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 
 import (
@@ -8,11 +10,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-// ----------------------------------------------------------------------------
-// Golang port of:
-// https://github.com/googlei18n/libphonenumber/blob/master/tools/java/common/src/com/google/i18n/phonenumbers/BuildMetadataFromXml.java
-// ----------------------------------------------------------------------------
 
 func sp(value string) *string {
 	if value == "" {

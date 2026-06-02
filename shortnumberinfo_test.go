@@ -13,7 +13,6 @@ import (
 // metadata file: ShortNumberInfo.getInstance() always uses the production short
 // metadata, so these run against the embedded short-number metadata (just like
 // upstream). They are therefore real-metadata regressions, not synthetic.
-// Last reconciled against: v9.0.32
 
 func TestIsPossibleShortNumber(t *testing.T) {
 	countryCode := int32(33)

@@ -2,7 +2,7 @@ package phonenumbers
 
 // Faithful port of upstream libphonenumber's PhoneNumberUtilTest.java
 // possibility / truncation methods, run against the synthetic test metadata.
-// Method names and assertions mirror the Java. Last reconciled against: v9.0.32
+// Method names and assertions mirror the Java.
 
 import (
 	"testing"
