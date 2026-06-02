@@ -2396,11 +2396,8 @@ func TruncateTooLongNumber(number *PhoneNumber) bool {
 	return true
 }
 
-// Gets an AsYouTypeFormatter for the specific region.
-// TODO(ttacon): uncomment once we do asyoutypeformatter.go
-// public AsYouTypeFormatter getAsYouTypeFormatter(String regionCode) {
-//    return new AsYouTypeFormatter(regionCode);
-// }
+// GetAsYouTypeFormatter (the analogue of Java's getAsYouTypeFormatter) is defined
+// alongside the AsYouTypeFormatter type in asyoutypeformatter.go.
 
 // Extracts country calling code from fullNumber, returns it and places
 // the remaining number in nationalNumber. It assumes that the leading plus

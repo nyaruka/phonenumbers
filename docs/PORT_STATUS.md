@@ -73,6 +73,29 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 - `getExampleNumberForType` still has no region-less overload, so the
   every-type test uses a local helper (`getExampleNumberForTypeAnyRegion`).
 
+### AsYouTypeFormatterTest — ported
+- ✅ Faithful port in `asyoutypeformatter_test.go` (all 33 upstream test methods),
+  run against the synthetic test metadata via `useTestMetadata(t)`, reconciled
+  against v9.0.32. Covers invalid region / plus sign, the too-long multiple-leading-
+  digits case, national-prefix-with-space (incl. long NDD), per-region formatting
+  (US incl. full-width input, mobile short codes and vanity numbers; GB / NZ / DE /
+  AR / KR / MX / JP / AU / SG / IT / AO / CN), remembered-position tracking, long
+  IDD / NDD extraction, the short-number formatting fix, NANPA leading-1 handling,
+  and NDD-cleared-after-IDD-extraction.
+- New implementation in `asyoutypeformatter.go` (the `AsYouTypeFormatter` type and
+  the `GetAsYouTypeFormatter` constructor). It reuses the existing helpers
+  (`extractCountryCode`, `formattingRuleHasFirstGroupOnly`,
+  `normalizeDiallableCharsOnly`, region/country-code lookups, the `regexFor` cache,
+  the `arabicIndicNumberals` digit map). A few unexported `java.lang.StringBuilder`-
+  style methods were added to `stringbuilder.go` (`setLength`, `delete`,
+  `substring`, `lastIndexOf`, `charAt`); `formattingTemplate` is held as a `[]rune`
+  (not a `StringBuilder`) so the multi-byte `DIGIT_PLACEHOLDER` is indexed by
+  character the way Java indexes by UTF-16 char. Position tracking
+  (`GetRememberedPosition`) uses rune counts, which equal Java's UTF-16 char
+  positions for every (BMP) character a phone number can contain — supplementary
+  code points would differ, but phone input never contains them. The port required
+  no behaviour fixes; it passed the upstream assertions as written.
+
 ### Bugs the port surfaced and fixed
 - `extractPossibleNumber` never trimmed trailing junk: `UNWANTED_END_CHARS` was
   copied verbatim from Java (`[[\P{N}&&\P{L}]&&[^#]]+$`), but Go's RE2 engine has
@@ -112,11 +135,9 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 
 ## Remaining work (roughly in order)
 
-1. **Implement `AsYouTypeFormatter`** (currently absent) and port
-   `AsYouTypeFormatterTest`.
-2. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
+1. **Implement `PhoneNumberMatcher` / `findNumbers`** (currently a `nil` stub in
    `phonenumbermatcher.go`) and port `PhoneNumberMatcherTest`.
-3. **Automate**: a scheduled task that detects new upstream releases, regenerates
+2. **Automate**: a scheduled task that detects new upstream releases, regenerates
    metadata, runs the (now-stable) synthetic tests, opens a PR for data-only
    deltas, and flags logic-touching changes for manual porting. See
    `docs/2.0-restructure.md`.

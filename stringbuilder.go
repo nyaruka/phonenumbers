@@ -1,6 +1,7 @@
 package phonenumbers
 
 import (
+	"bytes"
 	"errors"
 	"slices"
 	"unicode/utf8"
@@ -106,4 +107,46 @@ func (b *StringBuilder) ResetWith(buf []byte) (int, error) {
 func (b *StringBuilder) ResetWithString(s string) (int, error) {
 	b.buf = append(b.buf[:0], s...)
 	return len(s), nil
+}
+
+// The methods below mirror the remaining java.lang.StringBuilder operations that
+// AsYouTypeFormatter relies on. They are deliberately unexported: unlike the
+// methods above (which back the public FormatWithBuf), these are only used
+// internally, so keeping them off the public surface avoids growing an API that
+// is already slated to become private (see the v2 notes in the README). Like
+// their Java counterparts they assume valid indices and will panic on
+// out-of-range access rather than returning an error.
+
+// charAt returns the byte at index i, mirroring StringBuilder.charAt. Callers in
+// the port only ever index ASCII content, so a byte is an exact analogue of
+// Java's char here.
+func (b *StringBuilder) charAt(i int) byte { return b.buf[i] }
+
+// setLength truncates the buffer to n bytes, or pads it with NUL bytes if n is
+// greater than the current length, mirroring StringBuilder.setLength.
+func (b *StringBuilder) setLength(n int) {
+	if n <= len(b.buf) {
+		b.buf = b.buf[:n]
+		return
+	}
+	for len(b.buf) < n {
+		b.buf = append(b.buf, 0)
+	}
+}
+
+// delete removes the bytes in [start, end), mirroring StringBuilder.delete.
+func (b *StringBuilder) delete(start, end int) {
+	b.buf = append(b.buf[:start], b.buf[end:]...)
+}
+
+// substring returns the bytes in [start, end) as a string, mirroring
+// StringBuilder.substring(start, end).
+func (b *StringBuilder) substring(start, end int) string {
+	return string(b.buf[start:end])
+}
+
+// lastIndexOf returns the byte index of the last occurrence of s, or -1 if
+// absent, mirroring StringBuilder.lastIndexOf.
+func (b *StringBuilder) lastIndexOf(s string) int {
+	return bytes.LastIndex(b.buf, []byte(s))
 }
