@@ -298,7 +298,7 @@ var (
 	// We remove all characters that are not alpha or numerical characters.
 	// The hash character is retained here, as it may signify the previous
 	// block was an extension.
-	UNWANTED_END_CHARS        = "[[\\P{N}&&\\P{L}]&&[^#]]+$"
+	UNWANTED_END_CHARS        = "[^\\p{N}\\p{L}#]+$"
 	UNWANTED_END_CHAR_PATTERN = regexp.MustCompile(UNWANTED_END_CHARS)
 
 	// We use this pattern to check if the phone number has at least three

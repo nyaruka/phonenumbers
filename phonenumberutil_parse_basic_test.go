@@ -58,6 +58,116 @@ func TestMaybeStripNationalPrefixAndCarrierCode(t *testing.T) {
 	assert.Equal(t, "5315123", number.String())
 }
 
+// testMaybeStripInternationalPrefix (PhoneNumberUtilTest.java:1902-1960)
+func TestMaybeStripInternationalPrefix(t *testing.T) {
+	internationalPrefix := "00[39]"
+	numberToStrip := NewBuilder([]byte("0034567700-3898003"))
+	// Note the dash is removed as part of the normalization.
+	strippedNumber := "45677003898003"
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_IDD, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+	assert.Equal(t, strippedNumber, numberToStrip.String(), "The number supplied was not stripped of its international prefix.")
+	// Now the number no longer starts with an IDD prefix, so it should now report
+	// FROM_DEFAULT_COUNTRY.
+	assert.Equal(t, PhoneNumber_FROM_DEFAULT_COUNTRY, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+
+	numberToStrip = NewBuilder([]byte("00945677003898003"))
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_IDD, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+	assert.Equal(t, strippedNumber, numberToStrip.String(), "The number supplied was not stripped of its international prefix.")
+	// Test it works when the international prefix is broken up by spaces.
+	numberToStrip = NewBuilder([]byte("00 9 45677003898003"))
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_IDD, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+	assert.Equal(t, strippedNumber, numberToStrip.String(), "The number supplied was not stripped of its international prefix.")
+	// Now the number no longer starts with an IDD prefix, so it should now report
+	// FROM_DEFAULT_COUNTRY.
+	assert.Equal(t, PhoneNumber_FROM_DEFAULT_COUNTRY, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+
+	// Test the + symbol is also recognised and stripped.
+	numberToStrip = NewBuilder([]byte("+45677003898003"))
+	strippedNumber = "45677003898003"
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_PLUS_SIGN, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+	assert.Equal(t, strippedNumber, numberToStrip.String(), "The number supplied was not stripped of the plus symbol.")
+
+	// If the number afterwards is a zero, we should not strip this - no country calling code begins
+	// with 0.
+	numberToStrip = NewBuilder([]byte("0090112-3123"))
+	strippedNumber = "00901123123"
+	assert.Equal(t, PhoneNumber_FROM_DEFAULT_COUNTRY, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+	assert.Equal(t, strippedNumber, numberToStrip.String(), "The number supplied had a 0 after the match so shouldn't be stripped.")
+	// Here the 0 is separated by a space from the IDD.
+	numberToStrip = NewBuilder([]byte("009 0-112-3123"))
+	assert.Equal(t, PhoneNumber_FROM_DEFAULT_COUNTRY, maybeStripInternationalPrefixAndNormalize(numberToStrip, internationalPrefix))
+}
+
+// testMaybeExtractCountryCode (PhoneNumberUtilTest.java:1962-2090)
+func TestMaybeExtractCountryCode(t *testing.T) {
+	useTestMetadata(t)
+	metadata := getMetadataForRegion(regionCode.US)
+
+	// Note that for the US, the IDD is 011.
+	number := &PhoneNumber{}
+	numberToFill := NewBuilder(nil)
+	cc, err := maybeExtractCountryCode("011112-3456789", metadata, numberToFill, true, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, cc, "Did not extract country calling code 1 correctly.")
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_IDD, number.GetCountryCodeSource(), "Did not figure out CountryCodeSource correctly")
+	// Should strip and normalize national significant number.
+	assert.Equal(t, "123456789", numberToFill.String(), "Did not strip off the country calling code correctly.")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("+6423456789", metadata, numberToFill, true, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 64, cc, "Did not extract country calling code 64 correctly.")
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_PLUS_SIGN, number.GetCountryCodeSource(), "Did not figure out CountryCodeSource correctly")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("+80012345678", metadata, numberToFill, true, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 800, cc, "Did not extract country calling code 800 correctly.")
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITH_PLUS_SIGN, number.GetCountryCodeSource(), "Did not figure out CountryCodeSource correctly")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("2345-6789", metadata, numberToFill, true, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cc, "Should not have extracted a country calling code - no international prefix present.")
+	assert.Equal(t, PhoneNumber_FROM_DEFAULT_COUNTRY, number.GetCountryCodeSource(), "Did not figure out CountryCodeSource correctly")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	_, err = maybeExtractCountryCode("0119991123456789", metadata, numberToFill, true, number)
+	assert.ErrorIs(t, err, ErrInvalidCountryCode, "Should have thrown an exception, no valid country calling code present.")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("(1 610) 619 4466", metadata, numberToFill, true, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, cc, "Should have extracted the country calling code of the region passed in")
+	assert.Equal(t, PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN, number.GetCountryCodeSource(), "Did not figure out CountryCodeSource correctly")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("(1 610) 619 4466", metadata, numberToFill, false, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, cc, "Should have extracted the country calling code of the region passed in")
+	assert.Nil(t, number.CountryCodeSource, "Should not contain CountryCodeSource.")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("(1 610) 619 446", metadata, numberToFill, false, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cc, "Should not have extracted a country calling code - invalid number after extraction of uncertain country calling code.")
+	assert.Nil(t, number.CountryCodeSource, "Should not contain CountryCodeSource.")
+
+	number = &PhoneNumber{}
+	numberToFill = NewBuilder(nil)
+	cc, err = maybeExtractCountryCode("(1 610) 619", metadata, numberToFill, true, number)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cc, "Should not have extracted a country calling code - too short number both before and after extraction of uncertain country calling code.")
+	assert.Equal(t, PhoneNumber_FROM_DEFAULT_COUNTRY, number.GetCountryCodeSource(), "Did not figure out CountryCodeSource correctly")
+}
+
 func TestParseNationalNumber(t *testing.T) {
 	useTestMetadata(t)
 

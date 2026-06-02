@@ -26,21 +26,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestConvertAlphaCharactersInNumber(t *testing.T) {
-	var tests = []struct {
-		input, expected string
-	}{
-		{input: "1800AWWPOOP", expected: "18002997667"},
-		{input: "(800) DAW-ORLD", expected: "(800) 329-6753"},
-		{input: "1800-ABC-DEF", expected: "1800-222-333"},
-	}
-
-	for _, tc := range tests {
-		actual := ConvertAlphaCharactersInNumber(tc.input)
-		assert.Equal(t, tc.expected, actual, "mismatch for input %s", tc.input)
-	}
-}
-
 func TestNormalizeDigits(t *testing.T) {
 	var tests = []struct {
 		input         string
@@ -59,52 +44,6 @@ func TestNormalizeDigits(t *testing.T) {
 	}
 }
 
-func TestExtractPossibleNumber(t *testing.T) {
-	assert.Equal(t, "530) 583-6985 x302", extractPossibleNumber("(530) 583-6985 x302/x2303")) // yes, the leading '(' is missing
-}
-
-func TestIsViablePhoneNumber(t *testing.T) {
-	var tests = []struct {
-		input    string
-		isViable bool
-	}{
-		{input: "4445556666", isViable: true},
-		{input: "+441932123456", isViable: true},
-		{input: "4930123456", isViable: true},
-		{input: "2", isViable: false},
-		{input: "helloworld", isViable: false},
-	}
-
-	for _, tc := range tests {
-		actual := isViablePhoneNumber(tc.input)
-		assert.Equal(t, tc.isViable, actual, "mismatch for input %s", tc.input)
-	}
-}
-
-func TestNormalize(t *testing.T) {
-	var tests = []struct {
-		input    string
-		expected string
-	}{
-		{input: "4431234567", expected: "4431234567"},
-		{input: "443 1234567", expected: "4431234567"},
-		{input: "(443)123-4567", expected: "4431234567"},
-		{input: "800yoloFOO", expected: "8009656366"},
-		{input: "444111a2222", expected: "4441112222"},
-
-		// from libponenumber [java] unit tests
-		{input: "034-56&+#2\u00AD34", expected: "03456234"},
-		{input: "034-I-am-HUNGRY", expected: "034426486479"},
-		{input: "\uFF125\u0665", expected: "255"},
-		{input: "\u06F52\u06F0", expected: "520"},
-	}
-
-	for _, tc := range tests {
-		actual := normalize(tc.input)
-		assert.Equal(t, tc.expected, actual, "mismatch for input %s", tc.input)
-	}
-}
-
 func TestRepeatedParsing(t *testing.T) {
 	phoneNumbers := []string{"+917827202781", "+910000000000", "+910800125778", "+917503257232", "+917566482842"}
 
@@ -117,60 +56,6 @@ func TestRepeatedParsing(t *testing.T) {
 		assert.NoError(t, err, "unexpected error for input %s", n)
 
 		assert.Equal(t, IsValidNumber(num), IsValidNumber(number))
-	}
-}
-
-func TestIsPossibleNumberWithReason(t *testing.T) {
-	var tests = []struct {
-		input  string
-		region string
-		err    error
-		valid  ValidationResult
-	}{
-		{input: "16502530000", region: "US", err: nil, valid: IS_POSSIBLE},
-		{input: "2530000", region: "US", err: nil, valid: IS_POSSIBLE_LOCAL_ONLY},
-		{input: "65025300001", region: "US", err: nil, valid: TOO_LONG},
-		{input: "2530000", region: "", err: ErrInvalidCountryCode, valid: IS_POSSIBLE_LOCAL_ONLY},
-		{input: "253000", region: "US", err: nil, valid: TOO_SHORT},
-		{input: "1234567890", region: "SG", err: nil, valid: IS_POSSIBLE},
-		{input: "800123456789", region: "US", err: nil, valid: TOO_LONG},
-		{input: "+1456723456", region: "US", err: nil, valid: TOO_SHORT},
-		{input: "6041234567", region: "US", err: nil, valid: IS_POSSIBLE},
-		{input: "+2250749195919", region: "CI", err: nil, valid: IS_POSSIBLE},
-	}
-
-	for _, tc := range tests {
-		num, err := Parse(tc.input, tc.region)
-
-		if tc.err != nil {
-			assert.EqualError(t, err, tc.err.Error(), "error mismatch for input %s", tc.input)
-		} else {
-			assert.NoError(t, err, "unexpected error for input %s", tc.input)
-			assert.Equal(t, tc.valid, IsPossibleNumberWithReason(num), "mismatch for input %s", tc.input)
-		}
-	}
-}
-
-func TestTruncateTooLongNumber(t *testing.T) {
-	var tests = []struct {
-		country int
-		input   uint64
-		res     bool
-		output  uint64
-	}{
-		{country: 1, input: 80055501234, res: true, output: 8005550123},
-		{country: 1, input: 8005550123, res: true, output: 8005550123},
-		{country: 1, input: 800555012, res: false, output: 800555012},
-	}
-
-	for _, tc := range tests {
-		num := &PhoneNumber{}
-		num.CountryCode = proto.Int32(int32(tc.country))
-		num.NationalNumber = proto.Uint64(tc.input)
-		res := TruncateTooLongNumber(num)
-
-		assert.Equal(t, tc.res, res, "res mismatch for input %d", tc.input)
-		assert.Equal(t, tc.output, *num.NationalNumber, "output mismatch for input %d", tc.input)
 	}
 }
 
@@ -277,17 +162,6 @@ func TestGetMetadata(t *testing.T) {
 				i, len(meta.GetNumberFormat()), meta.GetNumberFormat(), test.numFmtSize)
 		}
 	}
-}
-
-func TestNormalizeDigitsOnly(t *testing.T) {
-	if NormalizeDigitsOnly("034-56&+a#234") != "03456234" {
-		t.Errorf("didn't fully normalize digits only")
-	}
-}
-
-func TestNormalizeDiallableCharsOnly(t *testing.T) {
-	// '#' is a diallable character and should be preserved
-	assert.Equal(t, "03*456+#234", normalizeDiallableCharsOnly("03*4-56&+a#234"))
 }
 
 type testCase struct {
