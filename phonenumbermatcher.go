@@ -75,11 +75,11 @@ func IsNationalPrefixPresentIfRequired(number *PhoneNumber) bool {
 		}
 		// Normalize the remainder.
 		var rawInputCopy = NormalizeDigitsOnly(number.GetRawInput())
-		var rawInput = NewBuilderString(rawInputCopy)
+		var rawInput = NewStringBuilderString(rawInputCopy)
 		// Check if we found a national prefix and/or carrier code at
 		// the start of the raw input, and return the result.
 		return maybeStripNationalPrefixAndCarrierCode(
-			rawInput, metadata, NewBuilder(nil))
+			rawInput, metadata, NewStringBuilder(nil))
 	}
 	return true
 }
