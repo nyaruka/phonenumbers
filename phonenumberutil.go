@@ -951,6 +951,12 @@ func Format(number *PhoneNumber, numberFormat PhoneNumberFormat) string {
 // Same as Format(PhoneNumber, PhoneNumberFormat), but accepts a mutable
 // StringBuilder as a parameter to decrease object creation when invoked
 // many times.
+//
+// Deprecated: use Format instead. This only exists to mirror Java's
+// format(PhoneNumber, PhoneNumberFormat, StringBuilder) overload, and it leaks
+// the internal StringBuilder type into the public API. The allocation it saves
+// is negligible in practice, since formatting must prepend the country calling
+// code, which forces the buffer to be rebuilt on every call anyway.
 func FormatWithBuf(number *PhoneNumber, numberFormat PhoneNumberFormat, formattedNumber *StringBuilder) {
 	// Clear the StringBuilder first.
 	formattedNumber.Reset()
