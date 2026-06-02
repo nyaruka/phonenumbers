@@ -21,7 +21,7 @@ func TestConvertAlphaCharactersInNumber(t *testing.T) {
 
 // testNormaliseRemovePunctuation (PhoneNumberUtilTest.java:453-458)
 func TestNormaliseRemovePunctuation(t *testing.T) {
-	assert.Equal(t, "03456234", normalize("034-56&+#2­34"), "Conversion did not correctly remove punctuation")
+	assert.Equal(t, "03456234", normalize("034-56&+#2\u00AD34"), "Conversion did not correctly remove punctuation")
 }
 
 // testNormaliseReplaceAlphaCharacters (PhoneNumberUtilTest.java:460-465)
@@ -31,9 +31,9 @@ func TestNormaliseReplaceAlphaCharacters(t *testing.T) {
 
 // testNormaliseOtherDigits (PhoneNumberUtilTest.java:467-478)
 func TestNormaliseOtherDigits(t *testing.T) {
-	assert.Equal(t, "255", normalize("２5٥"), "Conversion did not correctly replace non-latin digits")
+	assert.Equal(t, "255", normalize("\uFF125\u0665"), "Conversion did not correctly replace non-latin digits")
 	// Eastern-Arabic digits.
-	assert.Equal(t, "520", normalize("۵2۰"), "Conversion did not correctly replace non-latin digits")
+	assert.Equal(t, "520", normalize("\u06F52\u06F0"), "Conversion did not correctly replace non-latin digits")
 }
 
 // testNormaliseStripAlphaCharacters (PhoneNumberUtilTest.java:479-485)
@@ -67,12 +67,12 @@ func TestIsViablePhoneNumber(t *testing.T) {
 // testIsViablePhoneNumberNonAscii (PhoneNumberUtilTest.java:1815-1823)
 func TestIsViablePhoneNumberNonAscii(t *testing.T) {
 	// Only one or two digits before possible punctuation followed by more digits.
-	assert.True(t, isViablePhoneNumber("1　34"))
-	assert.False(t, isViablePhoneNumber("1　3+4"))
+	assert.True(t, isViablePhoneNumber("1\u300034"))
+	assert.False(t, isViablePhoneNumber("1\u30003+4"))
 	// Unicode variants of possible starting character and other allowed punctuation/digits.
-	assert.True(t, isViablePhoneNumber("（1）　3456789"))
+	assert.True(t, isViablePhoneNumber("\uFF081\uFF09\u30003456789"))
 	// Testing a leading + is okay.
-	assert.True(t, isViablePhoneNumber("+1）　3456789"))
+	assert.True(t, isViablePhoneNumber("+1\uFF09\u30003456789"))
 }
 
 // testExtractPossibleNumber (PhoneNumberUtilTest.java:1825-1847)
@@ -83,9 +83,9 @@ func TestExtractPossibleNumber(t *testing.T) {
 	// Should not remove plus sign
 	assert.Equal(t, "+800-345-600", extractPossibleNumber("Tel:+800-345-600"))
 	// Should recognise wide digits as possible start values.
-	assert.Equal(t, "０２３", extractPossibleNumber("０２３"))
+	assert.Equal(t, "\uFF10\uFF12\uFF13", extractPossibleNumber("\uFF10\uFF12\uFF13"))
 	// Dashes are not possible start values and should be removed.
-	assert.Equal(t, "１２３", extractPossibleNumber("Num-１２３"))
+	assert.Equal(t, "\uFF11\uFF12\uFF13", extractPossibleNumber("Num-\uFF11\uFF12\uFF13"))
 	// If not possible number present, return empty string.
 	assert.Equal(t, "", extractPossibleNumber("Num-...."))
 	// Leading brackets are stripped - these are not used when parsing.
@@ -95,5 +95,5 @@ func TestExtractPossibleNumber(t *testing.T) {
 	assert.Equal(t, "650) 253-0000", extractPossibleNumber("(650) 253-0000..- .."))
 	assert.Equal(t, "650) 253-0000", extractPossibleNumber("(650) 253-0000."))
 	// This case has a trailing RTL char.
-	assert.Equal(t, "650) 253-0000", extractPossibleNumber("(650) 253-0000‏"))
+	assert.Equal(t, "650) 253-0000", extractPossibleNumber("(650) 253-0000\u200F"))
 }
