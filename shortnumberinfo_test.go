@@ -93,12 +93,6 @@ func TestIsCarrierSpecific(t *testing.T) {
 }
 
 func TestIsSmsService(t *testing.T) {
-	// SKIP: the committed embedded short metadata carries no smsServices data — it
-	// was generated before the builder learned to read the <smsServices> element
-	// (see builder.go and TestBuilderProcessesSmsServices). IsSmsServiceForRegion
-	// therefore returns false for every region against the embedded snapshot. This
-	// un-skips once the short metadata is regenerated (a separate data refresh).
-	t.Skip("blocked on short metadata predating smsServices builder support (needs data regen)")
 	smsServiceNumberForSomeRegion := &PhoneNumber{CountryCode: proto.Int32(1), NationalNumber: proto.Uint64(21234)}
 	assert.True(t, IsSmsServiceForRegion(smsServiceNumberForSomeRegion, "US"))
 	assert.False(t, IsSmsServiceForRegion(smsServiceNumberForSomeRegion, "BB"))
