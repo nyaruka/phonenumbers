@@ -103,6 +103,7 @@ func TestParseExtensions(t *testing.T) {
 		{"+44 2034567890 X 456", regionCode.GB},
 		{"+44 2034567890 X  456", regionCode.GB},
 		{"+44 2034567890  X 456", regionCode.GB},
+		{"+44 2034567890 x 456  ", regionCode.GB},
 		{"+44-2034567890;ext=456", regionCode.GB},
 		{"tel:2034567890;ext=456;phone-context=+44", regionCode.ZZ},
 		// Full-width extension, "extn" only.
@@ -116,16 +117,6 @@ func TestParseExtensions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, proto.Equal(ukNumber, got), "input %q", tc.in)
 	}
-
-	// DIVERGENCE(upstream): upstream parses "+44 2034567890 x 456  " (trailing
-	// whitespace after the extension digits) as ukNumber with extension "456",
-	// but the Go extension regex does not tolerate trailing whitespace, so the
-	// "456" is folded into the national number (2034567890456) and no extension
-	// is extracted. We assert our actual behavior here. TODO reconcile.
-	got2, err2 := Parse("+44 2034567890 x 456  ", regionCode.GB)
-	assert.NoError(t, err2)
-	assert.Equal(t, uint64(2034567890456), got2.GetNationalNumber())
-	assert.Equal(t, "", got2.GetExtension())
 
 	usWithExtension := pn(1, 8009013355)
 	usWithExtension.Extension = proto.String("7246433")

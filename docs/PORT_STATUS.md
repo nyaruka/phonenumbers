@@ -27,26 +27,24 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
 
 ## Status
 
-### PhoneNumberUtilTest — substantially ported
+### PhoneNumberUtilTest — ported (except 2 Mockito tests)
 - ✅ Metadata loading, region / country-code lookup, number type, validation,
-  example numbers, supported-types, possibility-by-type
+  example numbers, supported-types, possibility (incl. by-type, with-reason,
+  not-possible)
 - ✅ Parsing (national, international prefixes, non-ASCII, extensions, the
   invalid-number error table, keep-raw, phone-context, Italian leading zeros,
-  national-prefix stripping)
+  national-prefix / international-prefix stripping, country-code extraction)
 - ✅ Formatting (per-country, by-pattern, out-of-country, carrier, mobile-dialing,
   in-original-format)
 - ✅ Number matching — the full `testIsNumberMatch*` family (8 methods) in
   `phonenumberutil_isnumbermatch_test.go`
-- ⚠️ Still only covered by the **ad-hoc** tests (real embedded metadata, not
-  faithful synthetic-metadata ports — see `phonenumberutil_adhoc_test.go`), so a
-  faithful port is still owed for:
-  - `testIsPossibleNumber` / `testIsNotPossibleNumber` /
-    `testIsPossibleNumberWithReason` (the non-by-type possibility checks)
-  - `testTruncateTooLongNumber`, `testIsViablePhoneNumber` (+ `NonAscii`),
-    `testExtractPossibleNumber`
-  - the `testNormalise*` family and `testConvertAlphaCharactersInNumber`
-- Not ported at all yet: `testMaybeStripInternationalPrefix`,
-  `testMaybeExtractCountryCode`, and the 2 Mockito missing-metadata tests.
+- ✅ Normalization / viability / extraction (`testConvertAlphaCharactersInNumber`,
+  the `testNormalise*` family, `testIsViablePhoneNumber` (+ `NonAscii`),
+  `testExtractPossibleNumber`) in `phonenumberutil_normalize_test.go`; truncation
+  and possibility in `phonenumberutil_possibility_test.go`.
+- ⚠️ Not ported: only the 2 Mockito missing-metadata tests
+  (`testGetMetadataForRegionForMissingMetadata` and the non-geographical variant),
+  which rely on Mockito-style metadata-source injection.
 
 ### ShortNumberInfoTest — ported
 - ✅ Faithful port in `shortnumberinfo_test.go`, reconciled against v9.0.32.
@@ -76,6 +74,13 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   every-type test uses a local helper (`getExampleNumberForTypeAnyRegion`).
 
 ### Bugs the port surfaced and fixed
+- `extractPossibleNumber` never trimmed trailing junk: `UNWANTED_END_CHARS` was
+  copied verbatim from Java (`[[\P{N}&&\P{L}]&&[^#]]+$`), but Go's RE2 engine has
+  no character-class intersection (`&&`), so the pattern compiled to something
+  meaningless and matched nothing. Rewrote it as the equivalent negated class
+  `[^\p{N}\p{L}#]+$`. This also resolved the documented trailing-whitespace
+  divergence in `testParseExtensions` (`"+44 2034567890 x 456  "` now extracts
+  extension `456` like upstream, instead of folding the digits into the NSN).
 - `IsNumberMatch` leading-zeros equality: the matcher compared the two numbers
   with `reflect.DeepEqual` on the raw protos instead of upstream's
   `copyCoreFieldsOnly` value comparison, so a `numberOfLeadingZeros` that was the
@@ -129,10 +134,9 @@ upstream's `TestMetadataTestCase` + `RegionCode`), fixtures in
   builder now reads `<smsServices>`, but the committed embedded short metadata was
   generated before that builder support, so it carries no smsServices data and the
   test would always see `false`. Un-skips once the short metadata is regenerated.
-- **Parsing edge cases:** `normalizeDigits` doesn't map non-ASCII / non-Arabic
-  unicode digits (e.g. Mongolian) to ASCII; the extension regex doesn't tolerate
-  trailing whitespace after the extension digits. Both are characterized in the
-  parsing tests.
+- **Parsing edge case:** `normalizeDigits` may not map every non-ASCII unicode
+  digit script (e.g. Mongolian) to ASCII; the Arabic-Indic, Eastern-Arabic and
+  fullwidth digits exercised by `TestNormaliseOtherDigits` do convert correctly.
 - `getExampleNumberForType` has no region-less overload; the relevant test uses a
   local helper.
 
