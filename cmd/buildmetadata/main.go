@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/nyaruka/phonenumbers/v2"
+	"github.com/nyaruka/phonenumbers/v2/internal/metadatabuilder"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -172,7 +173,7 @@ func buildNumberMetadata(srcFile, varName, destDir, dstFile string, short bool) 
 		return nil, fmt.Errorf("error reading %s: %w", srcFile, err)
 	}
 
-	collection, err := phonenumbers.BuildPhoneMetadataCollection(body, false, false, short)
+	collection, err := metadatabuilder.BuildPhoneMetadataCollection(body, false, false, short)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing %s: %w", srcFile, err)
 	}
@@ -195,7 +196,7 @@ func buildAlternateFormatsMetadata(srcFile, varName, dstFile string) error {
 		return fmt.Errorf("error reading %s: %w", srcFile, err)
 	}
 
-	collection, err := phonenumbers.BuildAlternateFormatsMetadataCollection(body)
+	collection, err := metadatabuilder.BuildAlternateFormatsMetadataCollection(body)
 	if err != nil {
 		return fmt.Errorf("error parsing %s: %w", srcFile, err)
 	}
@@ -213,7 +214,7 @@ func buildAlternateFormatsMetadata(srcFile, varName, dstFile string) error {
 }
 
 func buildRegionMetadata(metadata *phonenumbers.PhoneMetadataCollection, varName, destDir, dstFile string) error {
-	regionMap := phonenumbers.BuildCountryCodeToRegionMap(metadata)
+	regionMap := metadatabuilder.BuildCountryCodeToRegionMap(metadata)
 
 	// generate our map data
 	data, err := renderMap(regionMap)
