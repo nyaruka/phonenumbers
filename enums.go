@@ -81,11 +81,11 @@ type ValidationResult int
 
 const (
 	IS_POSSIBLE ValidationResult = iota
+	IS_POSSIBLE_LOCAL_ONLY
 	INVALID_COUNTRY_CODE
 	TOO_SHORT
-	TOO_LONG
-	IS_POSSIBLE_LOCAL_ONLY
 	INVALID_LENGTH
+	TOO_LONG
 )
 
 // TODO(ttacon): leniency comments?
@@ -105,36 +105,36 @@ func (l Leniency) Verify(number *PhoneNumber, candidate string) bool {
 		return IsPossibleNumber(number)
 	case VALID:
 		if !IsValidNumber(number) ||
-			!ContainsOnlyValidXChars(number, candidate) {
+			!containsOnlyValidXChars(number, candidate) {
 			return false
 		}
-		return IsNationalPrefixPresentIfRequired(number)
+		return isNationalPrefixPresentIfRequired(number)
 	case STRICT_GROUPING:
 		if !IsValidNumber(number) ||
-			!ContainsOnlyValidXChars(number, candidate) ||
-			ContainsMoreThanOneSlashInNationalNumber(number, candidate) ||
-			!IsNationalPrefixPresentIfRequired(number) {
+			!containsOnlyValidXChars(number, candidate) ||
+			containsMoreThanOneSlashInNationalNumber(number, candidate) ||
+			!isNationalPrefixPresentIfRequired(number) {
 			return false
 		}
-		return CheckNumberGroupingIsValid(number, candidate,
+		return checkNumberGroupingIsValid(number, candidate,
 			func(number *PhoneNumber,
 				normalizedCandidate string,
 				expectedNumberGroups []string) bool {
-				return AllNumberGroupsRemainGrouped(
+				return allNumberGroupsRemainGrouped(
 					number, normalizedCandidate, expectedNumberGroups)
 			})
 	case EXACT_GROUPING:
 		if !IsValidNumber(number) ||
-			!ContainsOnlyValidXChars(number, candidate) ||
-			ContainsMoreThanOneSlashInNationalNumber(number, candidate) ||
-			!IsNationalPrefixPresentIfRequired(number) {
+			!containsOnlyValidXChars(number, candidate) ||
+			containsMoreThanOneSlashInNationalNumber(number, candidate) ||
+			!isNationalPrefixPresentIfRequired(number) {
 			return false
 		}
-		return CheckNumberGroupingIsValid(number, candidate,
+		return checkNumberGroupingIsValid(number, candidate,
 			func(number *PhoneNumber,
 				normalizedCandidate string,
 				expectedNumberGroups []string) bool {
-				return AllNumberGroupsAreExactlyPresent(
+				return allNumberGroupsAreExactlyPresent(
 					number, normalizedCandidate, expectedNumberGroups)
 			})
 	}

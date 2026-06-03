@@ -77,26 +77,26 @@ func TestContainsMoreThanOneSlashInNationalNumber(t *testing.T) {
 	useTestMetadata(t)
 	// A date should return true.
 	number := &PhoneNumber{CountryCode: proto.Int32(1), CountryCodeSource: ccSource(PhoneNumber_FROM_DEFAULT_COUNTRY)}
-	assert.True(t, ContainsMoreThanOneSlashInNationalNumber(number, "1/05/2013"))
+	assert.True(t, containsMoreThanOneSlashInNationalNumber(number, "1/05/2013"))
 
 	// The country code source thinks it started with a country calling code, but
 	// this is not the same as the part before the slash, so it's still true.
 	number = &PhoneNumber{CountryCode: proto.Int32(274), CountryCodeSource: ccSource(PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN)}
-	assert.True(t, ContainsMoreThanOneSlashInNationalNumber(number, "27/4/2013"))
+	assert.True(t, containsMoreThanOneSlashInNationalNumber(number, "27/4/2013"))
 
 	// Now false, because the first slash is after the country calling code.
 	number = &PhoneNumber{CountryCode: proto.Int32(49), CountryCodeSource: ccSource(PhoneNumber_FROM_NUMBER_WITH_PLUS_SIGN)}
-	assert.False(t, ContainsMoreThanOneSlashInNationalNumber(number, "49/69/2013"))
+	assert.False(t, containsMoreThanOneSlashInNationalNumber(number, "49/69/2013"))
 
 	number = &PhoneNumber{CountryCode: proto.Int32(49), CountryCodeSource: ccSource(PhoneNumber_FROM_NUMBER_WITHOUT_PLUS_SIGN)}
-	assert.False(t, ContainsMoreThanOneSlashInNationalNumber(number, "+49/69/2013"))
-	assert.False(t, ContainsMoreThanOneSlashInNationalNumber(number, "+ 49/69/2013"))
-	assert.True(t, ContainsMoreThanOneSlashInNationalNumber(number, "+ 49/69/20/13"))
+	assert.False(t, containsMoreThanOneSlashInNationalNumber(number, "+49/69/2013"))
+	assert.False(t, containsMoreThanOneSlashInNationalNumber(number, "+ 49/69/2013"))
+	assert.True(t, containsMoreThanOneSlashInNationalNumber(number, "+ 49/69/20/13"))
 
 	// Here the first group is not assumed to be the country calling code, even
 	// though it is the same as it, so this should return true.
 	number = &PhoneNumber{CountryCode: proto.Int32(49), CountryCodeSource: ccSource(PhoneNumber_FROM_DEFAULT_COUNTRY)}
-	assert.True(t, ContainsMoreThanOneSlashInNationalNumber(number, "49/69/2013"))
+	assert.True(t, containsMoreThanOneSlashInNationalNumber(number, "49/69/2013"))
 }
 
 func TestFindNationalNumber(t *testing.T) {

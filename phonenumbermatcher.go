@@ -332,10 +332,10 @@ func getNationalNumberGroupsWithPattern(number *PhoneNumber, formattingPattern *
 	return strings.Split(formatNsnUsingPattern(nationalSignificantNumber, formattingPattern, RFC3966), "-")
 }
 
-// CheckNumberGroupingIsValid checks the digit groups of candidate against the
+// checkNumberGroupingIsValid checks the digit groups of candidate against the
 // expected grouping for number using checker, falling back to any alternate
 // formats for the number's country calling code.
-func CheckNumberGroupingIsValid(
+func checkNumberGroupingIsValid(
 	number *PhoneNumber,
 	candidate string,
 	checker func(number *PhoneNumber, normalizedCandidate string, expectedNumberGroups []string) bool) bool {
@@ -367,10 +367,10 @@ func CheckNumberGroupingIsValid(
 	return false
 }
 
-// AllNumberGroupsRemainGrouped reports that the number groups found in the
+// allNumberGroupsRemainGrouped reports that the number groups found in the
 // candidate are not broken up differently from how the number would be
 // formatted (the STRICT_GROUPING check).
-func AllNumberGroupsRemainGrouped(
+func allNumberGroupsRemainGrouped(
 	number *PhoneNumber,
 	normalizedCandidate string,
 	formattedNumberGroups []string) bool {
@@ -415,10 +415,10 @@ func AllNumberGroupsRemainGrouped(
 	return strings.Contains(normalizedCandidate[fromIndex:], number.GetExtension())
 }
 
-// AllNumberGroupsAreExactlyPresent reports that the groups of digits in the
+// allNumberGroupsAreExactlyPresent reports that the groups of digits in the
 // candidate exactly match how the number would be formatted (the EXACT_GROUPING
 // check).
-func AllNumberGroupsAreExactlyPresent(
+func allNumberGroupsAreExactlyPresent(
 	number *PhoneNumber,
 	normalizedCandidate string,
 	formattedNumberGroups []string) bool {
@@ -467,9 +467,9 @@ func splitNonDigits(s string) []string {
 	return groups
 }
 
-// ContainsMoreThanOneSlashInNationalNumber reports whether candidate contains
+// containsMoreThanOneSlashInNationalNumber reports whether candidate contains
 // more than one slash in the national-number portion (used to reject dates).
-func ContainsMoreThanOneSlashInNationalNumber(number *PhoneNumber, candidate string) bool {
+func containsMoreThanOneSlashInNationalNumber(number *PhoneNumber, candidate string) bool {
 	firstSlashInBodyIndex := strings.IndexByte(candidate, '/')
 	if firstSlashInBodyIndex < 0 {
 		// No slashes, this is okay.
@@ -494,9 +494,9 @@ func ContainsMoreThanOneSlashInNationalNumber(number *PhoneNumber, candidate str
 	return true
 }
 
-// ContainsOnlyValidXChars reports whether every 'x'/'X' in candidate represents
+// containsOnlyValidXChars reports whether every 'x'/'X' in candidate represents
 // a carrier code or an extension sign (and not, say, a vanity-number letter).
-func ContainsOnlyValidXChars(number *PhoneNumber, candidate string) bool {
+func containsOnlyValidXChars(number *PhoneNumber, candidate string) bool {
 	// The characters 'x' and 'X' can be (1) a carrier code, in which case they
 	// always precede the national significant number or (2) an extension sign,
 	// in which case they always precede the extension number. We assume a
@@ -524,9 +524,9 @@ func ContainsOnlyValidXChars(number *PhoneNumber, candidate string) bool {
 	return true
 }
 
-// IsNationalPrefixPresentIfRequired reports whether, if a national prefix is
+// isNationalPrefixPresentIfRequired reports whether, if a national prefix is
 // required to format number, it was present in the raw input.
-func IsNationalPrefixPresentIfRequired(number *PhoneNumber) bool {
+func isNationalPrefixPresentIfRequired(number *PhoneNumber) bool {
 	// First, check how we deduced the country code. If it was written in
 	// international format, then the national prefix is not required.
 	if number.GetCountryCodeSource() != PhoneNumber_FROM_DEFAULT_COUNTRY {
