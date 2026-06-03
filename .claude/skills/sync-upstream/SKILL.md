@@ -119,6 +119,13 @@ For each non-empty diff, translate the relevant change into the Go port. While d
   A few files are deliberately reorganized for Go idiom and don't follow upstream order
   (`metadata/source.go`, `internal/regexcache`, `internal/regexbasedmatcher`,
   `internal/prefixmapper`); that's expected.
+- **Java-shaped over idiomatic — in ports.** Inside a `// Port of …` file, keep constructs close
+  to the Java so the next diff lines up, even when a linter (`gopls modernize`, `staticcheck`)
+  suggests a more idiomatic Go form — e.g. don't rewrite an index `for` loop as `for i := range n`,
+  or a manual scan as `slices.Contains`. Let those modernizations ride in *with* upstream when the
+  Java itself changes. Non-ported code (`cmd/`, CI, build glue, and Go-specific scaffolding like
+  `internal/serialize` / `internal/stringbuilder`) has no Java counterpart to track, so make it
+  fully idiomatic.
 - **Honor deliberate divergences.** Check SYNC.md before porting something back; some upstream
   code is intentionally absent (e.g. Mockito-style metadata-source injection tests, Java
   iterator semantics with no Go equivalent). Don't re-introduce it. If you make a *new*

@@ -137,7 +137,7 @@ func latestUpstreamRelease(url string) (string, error) {
 		return "", fmt.Errorf("error listing upstream release tags: %w", err)
 	}
 
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
 		if _, tag, ok := strings.Cut(line, "refs/tags/"); ok && strings.HasPrefix(tag, "v") {
 			return tag, nil
 		}
@@ -246,7 +246,7 @@ func buildTimezoneMetadata(srcFile, varName, destDir, dstFile string) error {
 
 	// build our map of prefix to timezones
 	prefixMap := make(map[int][]string)
-	for _, line := range strings.Split(string(body), "\n") {
+	for line := range strings.SplitSeq(string(body), "\n") {
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -500,7 +500,7 @@ func readMappingsForDir(dir string) (map[int]string, error) {
 			return nil, err
 		}
 
-		for _, line := range strings.Split(string(body), "\n") {
+		for line := range strings.SplitSeq(string(body), "\n") {
 			if strings.HasPrefix(line, "#") {
 				continue
 			}
