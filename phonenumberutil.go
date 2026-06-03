@@ -62,9 +62,6 @@ const (
 	// and lower case.
 	VALID_ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	PLUS_CHARS  = "+\uFF0B"
-
-	// This is defined by ICU as the unknown time zone.
-	UNKNOWN_TIMEZONE = "Etc/Unknown"
 )
 
 var (

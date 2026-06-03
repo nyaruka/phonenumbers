@@ -1,29 +1,40 @@
 // Port of geocoder/geocoding/PhoneNumberOfflineGeocoder.java from google/libphonenumber.
 // Functions are kept in upstream source order to ease syncing.
-package phonenumbers
+package geocoding
 
 import (
+	"embed"
+
+	"github.com/nyaruka/phonenumbers/v2"
+	"github.com/nyaruka/phonenumbers/v2/internal/prefixmapper"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 )
 
-// GetGeocodingForNumber returns the location we think the number was first acquired in. This is
+//go:embed data/*.gz
+var geocodingData embed.FS
+
+var mapper = prefixmapper.New(geocodingData, "data")
+
+// ForNumber returns the location we think the number was first acquired in. This is
 // just our best guess, there is no guarantee to its accuracy.
-func GetGeocodingForNumber(number *PhoneNumber, lang string) (string, error) {
-	geocoding, _, err := getValueForNumber(geocodingPrefixMap, geocodingData, geocodingDataPath, lang, 10, number)
+func ForNumber(number *phonenumbers.PhoneNumber, lang string) (string, error) {
+	e164 := phonenumbers.Format(number, phonenumbers.E164)
+
+	geocoding, _, err := mapper.ValueForNumber(lang, 10, e164)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
 
 	// fallback to english
-	geocoding, _, err = getValueForNumber(geocodingPrefixMap, geocodingData, geocodingDataPath, "en", 10, number)
+	geocoding, _, err = mapper.ValueForNumber("en", 10, e164)
 	if err != nil || geocoding != "" {
 		return geocoding, err
 	}
 
 	// fallback to locale
 	var reg language.Region
-	if reg, err = language.ParseRegion(GetRegionCodeForNumber(number)); err != nil {
+	if reg, err = language.ParseRegion(phonenumbers.GetRegionCodeForNumber(number)); err != nil {
 		return "", err
 	}
 
