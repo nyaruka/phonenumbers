@@ -18,6 +18,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/metadatabuilder"
 	"github.com/nyaruka/phonenumbers/v2/metadata"
 	"github.com/stretchr/testify/require"
 )
@@ -51,12 +52,12 @@ func loadTestMetadataContainer() (*metadata.Container, error) {
 			testMetadataErr = err
 			return
 		}
-		coll, err := BuildPhoneMetadataCollection(xml, false, false, false)
+		coll, err := metadatabuilder.BuildPhoneMetadataCollection(xml, false, false, false)
 		if err != nil {
 			testMetadataErr = err
 			return
 		}
-		testMetadataContainer, testMetadataErr = metadata.NewContainer(coll, BuildCountryCodeToRegionMap(coll))
+		testMetadataContainer, testMetadataErr = metadata.NewContainer(coll, metadatabuilder.BuildCountryCodeToRegionMap(coll))
 	})
 	return testMetadataContainer, testMetadataErr
 }

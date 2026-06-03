@@ -3,6 +3,7 @@ package phonenumbers
 import (
 	"testing"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/metadatabuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +35,7 @@ func TestBuilderProcessesSmsServices(t *testing.T) {
   </territories>
 </phoneNumberMetadata>`
 
-	coll, err := BuildPhoneMetadataCollection([]byte(shortXML), false, false, true)
+	coll, err := metadatabuilder.BuildPhoneMetadataCollection([]byte(shortXML), false, false, true)
 	require.NoError(t, err)
 	require.Len(t, coll.GetMetadata(), 1)
 
