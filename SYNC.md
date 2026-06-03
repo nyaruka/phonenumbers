@@ -27,3 +27,9 @@ Places where this port intentionally differs from upstream:
   `testGetMetadataForRegionForMissingMetadata` and its non-geographical variant (both rely on
   Mockito-style metadata-source injection), and `testRemovalNotSupported` (Go's range-over-func
   iterator has no `remove()`).
+- **Lookup-subpackage naming** — `carrier`, `geocoding`, and `timezone` keep the upstream
+  method *behaviour* but drop the Java `get` prefix (`getNameForNumber` → `carrier.NameForNumber`,
+  `getDescriptionForNumber` → `geocoding.DescriptionForNumber`, `getTimeZonesForNumber` →
+  `timezone.TimeZonesForNumber`), and `getUnknownTimeZone()` is the `timezone.Unknown` const.
+  `geocoding` renders the country name via `golang.org/x/text` rather than `java.util.Locale`.
+  Don't "restore" the `Get` prefix on a sync.
