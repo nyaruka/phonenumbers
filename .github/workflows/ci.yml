@@ -18,10 +18,3 @@ jobs:
 
       - name: Run tests
         run: go test -p=1 -coverprofile=coverage.text -covermode=atomic ./...
-
-      - name: Upload coverage
-        if: success()
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
