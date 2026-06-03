@@ -5,10 +5,10 @@
 Go port of Google's [libphonenumber](https://github.com/google/libphonenumber). Specifically it tracks the **Java** implementation — that library's reference implementation, of which the C++ and JavaScript versions are themselves ports. This library is used daily in production for parsing and validation of numbers worldwide and is well maintained.
 
 > [!IMPORTANT]
-> This project is strictly a port and aims to match as closely as possible the functionality in libphonenumber. Please don't submit feature requests for functionality that doesn't exist there.
+> This project is a strict port and strives to match as closely as possible the functionality in libphonenumber. Please don't submit feature requests for functionality that doesn't exist there.
 
 > [!IMPORTANT]
-> This project uses the metadata from libphonenumber so if you encounter unexpected parsing results, please first verify if the problem affects libphonenumber and report there if so. You can use their [online demo](https://libphonenumber.appspot.com) to quickly check parsing results.
+> This project uses the metadata from libphonenumber, so if you encounter unexpected parsing results, please first verify if the problem affects libphonenumber and report there if so. You can use the [online demo](https://libphonenumber.appspot.com) to quickly check parsing results.
 
 ## Usage
 
