@@ -8,6 +8,9 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
+	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 )
 
 // limit returns a regular expression quantifier with a lower and upper bound.
@@ -350,7 +353,7 @@ func CheckNumberGroupingIsValid(
 		for _, alternateFormat := range alternateFormats.GetNumberFormat() {
 			if len(alternateFormat.GetLeadingDigitsPattern()) > 0 {
 				// There is only one leading digits pattern for alternate formats.
-				pattern := regexFor(alternateFormat.GetLeadingDigitsPattern()[0])
+				pattern := regexcache.For(alternateFormat.GetLeadingDigitsPattern()[0])
 				if loc := pattern.FindStringIndex(nationalSignificantNumber); loc == nil || loc[0] != 0 {
 					// Leading digits don't match (lookingAt); try another one.
 					continue
@@ -552,7 +555,7 @@ func IsNationalPrefixPresentIfRequired(number *PhoneNumber) bool {
 		}
 		// Normalize the remainder.
 		rawInputCopy := NormalizeDigitsOnly(number.GetRawInput())
-		rawInput := NewStringBuilderString(rawInputCopy)
+		rawInput := stringbuilder.NewString(rawInputCopy)
 		// Check if we found a national prefix and/or carrier code at the start of
 		// the raw input, and return the result.
 		return maybeStripNationalPrefixAndCarrierCode(rawInput, metadata, nil)
@@ -584,26 +587,4 @@ func (m *phoneNumberMatcher) next() *PhoneNumberMatch {
 	m.lastMatch = nil
 	m.state = matcherNotReady
 	return result
-}
-
-// MatchNationalNumber reports whether the given national number (a string of
-// decimal digits) matches the national number pattern in numberDesc.
-func MatchNationalNumber(number string, numberDesc *PhoneNumberDesc, allowPrefixMatch bool) bool {
-	nationalNumberPattern := numberDesc.GetNationalNumberPattern()
-	// We don't want to consider it a prefix match when matching non-empty input
-	// against an empty pattern.
-	if len(nationalNumberPattern) == 0 {
-		return false
-	}
-	return match(number, regexFor(nationalNumberPattern), allowPrefixMatch)
-}
-
-func match(number string, pattern *regexp.Regexp, allowPrefixMatch bool) bool {
-	ind := pattern.FindStringIndex(number)
-	if len(ind) == 0 || ind[0] != 0 {
-		return false
-	}
-	patP := `^(?:` + pattern.String() + `)$` // Strictly match
-	pat := regexFor(patP)
-	return pat.MatchString(number) || allowPrefixMatch
 }

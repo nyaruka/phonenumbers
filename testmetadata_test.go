@@ -18,6 +18,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/nyaruka/phonenumbers/v2/metadata"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,14 +37,14 @@ var regionCode = struct {
 
 var (
 	testMetadataOnce      sync.Once
-	testMetadataContainer *metadataContainer
+	testMetadataContainer *metadata.Container
 	testMetadataErr       error
 )
 
 // loadTestMetadataContainer compiles the synthetic test XML once and caches the
 // resulting container, following the exact build path cmd/buildmetadata uses for
 // the real metadata.
-func loadTestMetadataContainer() (*metadataContainer, error) {
+func loadTestMetadataContainer() (*metadata.Container, error) {
 	testMetadataOnce.Do(func() {
 		xml, err := os.ReadFile("testdata/PhoneNumberMetadataForTesting.xml")
 		if err != nil {
@@ -55,7 +56,7 @@ func loadTestMetadataContainer() (*metadataContainer, error) {
 			testMetadataErr = err
 			return
 		}
-		testMetadataContainer, testMetadataErr = newMetadataContainer(coll, BuildCountryCodeToRegionMap(coll))
+		testMetadataContainer, testMetadataErr = metadata.NewContainer(coll, BuildCountryCodeToRegionMap(coll))
 	})
 	return testMetadataContainer, testMetadataErr
 }
@@ -66,5 +67,5 @@ func loadTestMetadataContainer() (*metadataContainer, error) {
 func useTestMetadata(t *testing.T) {
 	mc, err := loadTestMetadataContainer()
 	require.NoError(t, err)
-	t.Cleanup(useMetadata(mc))
+	t.Cleanup(metadata.Use(mc))
 }

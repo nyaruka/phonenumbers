@@ -9,6 +9,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
+	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -33,8 +35,8 @@ type AsYouTypeFormatter struct {
 	// currentFormattingPattern is the pattern from the NumberFormat currently used
 	// to create formattingTemplate.
 	currentFormattingPattern      string
-	accruedInput                  *StringBuilder
-	accruedInputWithoutFormatting *StringBuilder
+	accruedInput                  *stringbuilder.Builder
+	accruedInputWithoutFormatting *stringbuilder.Builder
 	// ableToFormat indicates whether the formatter is currently doing formatting.
 	ableToFormat bool
 	// inputHasFormatting is set to true when users enter their own formatting. The
@@ -64,12 +66,12 @@ type AsYouTypeFormatter struct {
 	// preceding the national significant number, and it is formatted (e.g. with
 	// space inserted). For example, this can contain IDD, country code, and/or
 	// NDD, etc.
-	prefixBeforeNationalNumber        *StringBuilder
+	prefixBeforeNationalNumber        *stringbuilder.Builder
 	shouldAddSpaceAfterNationalPrefix bool
 	// extractedNationalPrefix contains the national prefix that has been extracted.
 	// It contains only digits without formatting.
 	extractedNationalPrefix string
-	nationalNumber          *StringBuilder
+	nationalNumber          *stringbuilder.Builder
 	possibleFormats         []*NumberFormat
 }
 
@@ -127,10 +129,10 @@ func newAsYouTypeFormatter(regionCode string) *AsYouTypeFormatter {
 	aytf := &AsYouTypeFormatter{
 		ableToFormat:                  true,
 		defaultCountry:                regionCode,
-		accruedInput:                  NewStringBuilder(nil),
-		accruedInputWithoutFormatting: NewStringBuilder(nil),
-		prefixBeforeNationalNumber:    NewStringBuilder(nil),
-		nationalNumber:                NewStringBuilder(nil),
+		accruedInput:                  stringbuilder.New(nil),
+		accruedInputWithoutFormatting: stringbuilder.New(nil),
+		prefixBeforeNationalNumber:    stringbuilder.New(nil),
+		nationalNumber:                stringbuilder.New(nil),
 	}
 	aytf.currentMetadata = aytf.getMetadataForRegion(regionCode)
 	aytf.defaultMetadata = aytf.currentMetadata
@@ -228,7 +230,7 @@ func (aytf *AsYouTypeFormatter) narrowDownPossibleFormats(leadingDigits string) 
 		if count := len(format.GetLeadingDigitsPattern()) - 1; count < lastLeadingDigitsPattern {
 			lastLeadingDigitsPattern = count
 		}
-		leadingDigitsPattern := regexFor("^(?:" + format.GetLeadingDigitsPattern()[lastLeadingDigitsPattern] + ")")
+		leadingDigitsPattern := regexcache.For("^(?:" + format.GetLeadingDigitsPattern()[lastLeadingDigitsPattern] + ")")
 		if !leadingDigitsPattern.MatchString(leadingDigits) {
 			aytf.possibleFormats = append(aytf.possibleFormats[:i], aytf.possibleFormats[i+1:]...)
 		} else {
@@ -254,7 +256,7 @@ func (aytf *AsYouTypeFormatter) getFormattingTemplate(numberPattern, numberForma
 	// Creates a phone number consisting only of the digit 9 that matches the
 	// numberPattern by applying the pattern to the longestPhoneNumber string.
 	longestPhoneNumber := "999999999999999"
-	m := regexFor(numberPattern)
+	m := regexcache.For(numberPattern)
 	aPhoneNumber := m.FindString(longestPhoneNumber) // this will always succeed
 	// No formatting template can be created if the number of digits entered so far is
 	// longer than the maximum the current formatting rule can accommodate.
@@ -416,8 +418,8 @@ func (aytf *AsYouTypeFormatter) ableToExtractLongerNdd() bool {
 		// Remove the previously extracted NDD from prefixBeforeNationalNumber. We cannot
 		// simply set it to empty string because people sometimes incorrectly enter national
 		// prefix after the country code, e.g. +44 (0)20-1234-5678.
-		indexOfPreviousNdd := aytf.prefixBeforeNationalNumber.lastIndexOf(aytf.extractedNationalPrefix)
-		aytf.prefixBeforeNationalNumber.setLength(indexOfPreviousNdd)
+		indexOfPreviousNdd := aytf.prefixBeforeNationalNumber.LastIndexOf(aytf.extractedNationalPrefix)
+		aytf.prefixBeforeNationalNumber.SetLength(indexOfPreviousNdd)
 	}
 	return aytf.extractedNationalPrefix != aytf.removeNationalPrefixFromNationalNumber()
 }
@@ -433,7 +435,7 @@ func (aytf *AsYouTypeFormatter) isDigitOrLeadingPlusSign(nextChar rune) bool {
 // template whose leadingDigitsPattern also matches the input.
 func (aytf *AsYouTypeFormatter) attemptToFormatAccruedDigits() string {
 	for _, numberFormat := range aytf.possibleFormats {
-		m := regexFor("^(?:" + numberFormat.GetPattern() + ")$")
+		m := regexcache.For("^(?:" + numberFormat.GetPattern() + ")$")
 		if m.MatchString(aytf.nationalNumber.String()) {
 			aytf.shouldAddSpaceAfterNationalPrefix =
 				NATIONAL_PREFIX_SEPARATORS_PATTERN.MatchString(numberFormat.GetNationalPrefixFormattingRule())
@@ -483,7 +485,7 @@ func (aytf *AsYouTypeFormatter) GetRememberedPosition() int {
 func (aytf *AsYouTypeFormatter) appendNationalNumber(nationalNumber string) string {
 	prefixBeforeNationalNumberLength := aytf.prefixBeforeNationalNumber.Len()
 	if aytf.shouldAddSpaceAfterNationalPrefix && prefixBeforeNationalNumberLength > 0 &&
-		aytf.prefixBeforeNationalNumber.charAt(prefixBeforeNationalNumberLength-1) != byte(SEPARATOR_BEFORE_NATIONAL_NUMBER) {
+		aytf.prefixBeforeNationalNumber.CharAt(prefixBeforeNationalNumberLength-1) != byte(SEPARATOR_BEFORE_NATIONAL_NUMBER) {
 		// We want to add a space after the national prefix if the national prefix formatting
 		// rule indicates that this would normally be done, with the exception of the case
 		// where we already appended a space because the NDD was surprisingly long.
@@ -520,7 +522,7 @@ func (aytf *AsYouTypeFormatter) inputAccruedNationalNumber() string {
 	if lengthOfNationalNumber > 0 {
 		tempNationalNumber := ""
 		for i := 0; i < lengthOfNationalNumber; i++ {
-			tempNationalNumber = aytf.inputDigitHelper(rune(aytf.nationalNumber.charAt(i)))
+			tempNationalNumber = aytf.inputDigitHelper(rune(aytf.nationalNumber.CharAt(i)))
 		}
 		if aytf.ableToFormat {
 			return aytf.appendNationalNumber(tempNationalNumber)
@@ -538,8 +540,8 @@ func (aytf *AsYouTypeFormatter) isNanpaNumberWithNationalPrefix() bool {
 	// after the national prefix. Numbers beginning with 1[01] can only be
 	// short/emergency numbers, which don't need the national prefix.
 	return aytf.currentMetadata.GetCountryCode() == 1 && aytf.nationalNumber.Len() >= 2 &&
-		aytf.nationalNumber.charAt(0) == '1' &&
-		aytf.nationalNumber.charAt(1) != '0' && aytf.nationalNumber.charAt(1) != '1'
+		aytf.nationalNumber.CharAt(0) == '1' &&
+		aytf.nationalNumber.CharAt(1) != '0' && aytf.nationalNumber.CharAt(1) != '1'
 }
 
 // removeNationalPrefixFromNationalNumber returns the national prefix extracted,
@@ -552,7 +554,7 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 		aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
 		aytf.isCompleteNumber = true
 	} else if len(aytf.currentMetadata.GetNationalPrefixForParsing()) > 0 {
-		nationalPrefixForParsing := regexFor("^(?:" + aytf.currentMetadata.GetNationalPrefixForParsing() + ")")
+		nationalPrefixForParsing := regexcache.For("^(?:" + aytf.currentMetadata.GetNationalPrefixForParsing() + ")")
 		// Since some national prefix patterns are entirely optional, check that a national
 		// prefix could actually be extracted.
 		loc := nationalPrefixForParsing.FindStringIndex(aytf.nationalNumber.String())
@@ -562,11 +564,11 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 			// formatting rules for numbers entered without area code.
 			aytf.isCompleteNumber = true
 			startOfNationalNumber = loc[1]
-			aytf.prefixBeforeNationalNumber.WriteString(aytf.nationalNumber.substring(0, startOfNationalNumber))
+			aytf.prefixBeforeNationalNumber.WriteString(aytf.nationalNumber.Substring(0, startOfNationalNumber))
 		}
 	}
-	nationalPrefix := aytf.nationalNumber.substring(0, startOfNationalNumber)
-	aytf.nationalNumber.delete(0, startOfNationalNumber)
+	nationalPrefix := aytf.nationalNumber.Substring(0, startOfNationalNumber)
+	aytf.nationalNumber.Delete(0, startOfNationalNumber)
 	return nationalPrefix
 }
 
@@ -575,7 +577,7 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 // returns true when accruedInputWithoutFormatting begins with the plus sign or
 // valid IDD for defaultCountry.
 func (aytf *AsYouTypeFormatter) attemptToExtractIdd() bool {
-	internationalPrefix := regexFor("^(?:" + "\\" + string(PLUS_SIGN) + "|" +
+	internationalPrefix := regexcache.For("^(?:" + "\\" + string(PLUS_SIGN) + "|" +
 		aytf.currentMetadata.GetInternationalPrefix() + ")")
 	accruedInputWithoutFormatting := aytf.accruedInputWithoutFormatting.String()
 	loc := internationalPrefix.FindStringIndex(accruedInputWithoutFormatting)
@@ -586,7 +588,7 @@ func (aytf *AsYouTypeFormatter) attemptToExtractIdd() bool {
 		aytf.nationalNumber.WriteString(accruedInputWithoutFormatting[startOfCountryCallingCode:])
 		aytf.prefixBeforeNationalNumber.Reset()
 		aytf.prefixBeforeNationalNumber.WriteString(accruedInputWithoutFormatting[:startOfCountryCallingCode])
-		if aytf.accruedInputWithoutFormatting.charAt(0) != byte(PLUS_SIGN) {
+		if aytf.accruedInputWithoutFormatting.CharAt(0) != byte(PLUS_SIGN) {
 			aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
 		}
 		return true
@@ -602,7 +604,7 @@ func (aytf *AsYouTypeFormatter) attemptToExtractCountryCallingCode() bool {
 	if aytf.nationalNumber.Len() == 0 {
 		return false
 	}
-	numberWithoutCountryCallingCode := NewStringBuilder(nil)
+	numberWithoutCountryCallingCode := stringbuilder.New(nil)
 	countryCode := extractCountryCode(aytf.nationalNumber, numberWithoutCountryCallingCode)
 	if countryCode == 0 {
 		return false

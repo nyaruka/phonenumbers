@@ -8,23 +8,25 @@ import (
 	"io/fs"
 	"strconv"
 	"sync"
+
+	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
 )
 
 var (
 	dataLoadMutex = sync.Mutex{}
 
 	// These are maps for our prefix to carrier maps
-	carrierPrefixMap = make(map[string]*intStringMap)
+	carrierPrefixMap = make(map[string]*serialize.IntStringMap)
 
 	// These are maps for our prefix to geocoding maps
-	geocodingPrefixMap = make(map[string]*intStringMap)
+	geocodingPrefixMap = make(map[string]*serialize.IntStringMap)
 
 	// Our once and map for prefix to timezone lookups
 	timezoneOnce sync.Once
-	timezoneMap  *intStringArrayMap
+	timezoneMap  *serialize.IntStringArrayMap
 )
 
-func lazyLoadPrefixes(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string) (*intStringMap, error) {
+func lazyLoadPrefixes(langMap map[string]*serialize.IntStringMap, dataFS embed.FS, dir, language string) (*serialize.IntStringMap, error) {
 	dataLoadMutex.Lock()
 	defer dataLoadMutex.Unlock()
 
@@ -41,7 +43,7 @@ func lazyLoadPrefixes(langMap map[string]*intStringMap, dataFS embed.FS, dir, la
 	}
 
 	if data != nil {
-		prefixes, err = loadPrefixMap(data)
+		prefixes, err = serialize.LoadPrefixMap(data)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +55,7 @@ func lazyLoadPrefixes(langMap map[string]*intStringMap, dataFS embed.FS, dir, la
 	return langMap[language], nil
 }
 
-func getValueForNumber(langMap map[string]*intStringMap, dataFS embed.FS, dir, language string, maxLength int, number *PhoneNumber) (string, int, error) {
+func getValueForNumber(langMap map[string]*serialize.IntStringMap, dataFS embed.FS, dir, language string, maxLength int, number *PhoneNumber) (string, int, error) {
 	prefixes, err := lazyLoadPrefixes(langMap, dataFS, dir, language)
 	if err != nil || prefixes == nil {
 		return "", 0, err

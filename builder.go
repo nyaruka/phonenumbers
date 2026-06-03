@@ -177,7 +177,7 @@ func loadInternationalFormat(metadata *PhoneMetadata, numberFormatElement *Numbe
 
 	} else if len(intlFormatPattern) == 0 {
 		// Default to use the same as the national pattern if none is defined.
-		intlFormat.merge(nationalFormat)
+		intlFormat.Merge(nationalFormat)
 	} else {
 		intlFormat.Pattern = sp(numberFormatElement.Pattern)
 		setLeadingDigitsPatterns(numberFormatElement, intlFormat)
@@ -468,7 +468,7 @@ func setPossibleLengths(lengths map[int32]bool, localOnlyLengths map[int32]bool,
 	// lengths in the general desc (for metadata size reasons).
 	if parentDesc == nil || !arePossibleLengthsEqual(lengths, parentDesc) {
 		for length := range lengths {
-			if parentDesc == nil || parentDesc.hasPossibleLength(length) {
+			if parentDesc == nil || parentDesc.HasPossibleLength(length) {
 				desc.PossibleLength = append(desc.PossibleLength, length)
 			} else {
 				// We shouldn't have possible lengths defined in a child element that are not covered by
@@ -488,7 +488,7 @@ func setPossibleLengths(lengths map[int32]bool, localOnlyLengths map[int32]bool,
 			// PhoneNumberDesc, because for example 7 might be a valid localOnly length for mobile, but
 			// a valid national length for fixedLine, so the generalDesc would have the 7 removed from
 			// localOnly.
-			if parentDesc == nil || parentDesc.hasPossibleLength(length) || parentDesc.hasPossibleLengthLocalOnly(length) {
+			if parentDesc == nil || parentDesc.HasPossibleLength(length) || parentDesc.HasPossibleLengthLocalOnly(length) {
 				desc.PossibleLengthLocalOnly = append(desc.PossibleLengthLocalOnly, length)
 			} else {
 				panic(fmt.Sprintf("Out-of-range local-only possible length found (%d), parent length %v.", length, parentDesc.PossibleLengthLocalOnly))

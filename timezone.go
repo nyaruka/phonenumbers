@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
 )
 
 // GetTimezonesForPrefix returns a slice of Timezones corresponding to the number passed
@@ -15,7 +17,7 @@ import (
 func GetTimezonesForPrefix(number string) ([]string, error) {
 	var err error
 	timezoneOnce.Do(func() {
-		timezoneMap, err = loadIntArrayMap(timezoneData)
+		timezoneMap, err = serialize.LoadIntArrayMap(timezoneData)
 	})
 
 	if timezoneMap == nil {

@@ -5,6 +5,8 @@ package phonenumbers
 import (
 	"slices"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/regexbasedmatcher"
+	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -38,7 +40,7 @@ func ShortNumberMetadataCollection() (*PhoneMetadataCollection, error) {
 		return currShortNumberMetadataColl, nil
 	}
 
-	rawBytes, err := decodeUnzip(shortNumberData)
+	rawBytes, err := serialize.DecodeUnzip(shortNumberData)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +112,7 @@ func IsPossibleShortNumber(number *PhoneNumber) bool {
 		if phoneMetadata == nil {
 			continue
 		}
-		if phoneMetadata.GeneralDesc.hasPossibleLength(int32(shortNumberLength)) {
+		if phoneMetadata.GeneralDesc.HasPossibleLength(int32(shortNumberLength)) {
 			return true
 		}
 	}
@@ -128,7 +130,7 @@ func IsPossibleShortNumberForRegion(number *PhoneNumber, regionDialingFrom strin
 		return false
 	}
 	numberLength := len(GetNationalSignificantNumber(number))
-	return phoneMetadata.GeneralDesc.hasPossibleLength(int32(numberLength))
+	return phoneMetadata.GeneralDesc.HasPossibleLength(int32(numberLength))
 }
 
 // Tests whether a short number matches a valid pattern. If a country calling code is shared by
@@ -185,7 +187,7 @@ func GetExpectedCostForRegion(number *PhoneNumber, regionDialingFrom string) Sho
 	// The possible lengths are not present for a particular sub-type if they match the general
 	// description; for this reason, we check the possible lengths against the general description
 	// first to allow an early exit if possible.
-	if !phoneMetadata.GetGeneralDesc().hasPossibleLength(int32(len(shortNumber))) {
+	if !phoneMetadata.GetGeneralDesc().HasPossibleLength(int32(len(shortNumber))) {
 		return UNKNOWN_COST
 	}
 
@@ -320,10 +322,10 @@ func matchesPossibleNumberAndNationalNumber(number string, numberDesc *PhoneNumb
 	if numberDesc == nil {
 		return false
 	}
-	if len(numberDesc.PossibleLength) > 0 && !numberDesc.hasPossibleLength(int32(len(number))) {
+	if len(numberDesc.PossibleLength) > 0 && !numberDesc.HasPossibleLength(int32(len(number))) {
 		return false
 	}
-	return MatchNationalNumber(number, numberDesc, false)
+	return regexbasedmatcher.MatchNationalNumber(number, numberDesc, false)
 }
 
 // In these countries, if extra digits are added to an emergency number, it no longer connects
@@ -347,7 +349,7 @@ func matchesEmergencyNumber(number string, regionCode string, allowPrefixMatch b
 	normalizedNumber := NormalizeDigitsOnly(possibleNumber)
 
 	allowPrefixMatchForRegion := allowPrefixMatch && !slices.Contains(REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT, regionCode)
-	return MatchNationalNumber(normalizedNumber, phoneMetadata.GetEmergency(), allowPrefixMatchForRegion)
+	return regexbasedmatcher.MatchNationalNumber(normalizedNumber, phoneMetadata.GetEmergency(), allowPrefixMatchForRegion)
 }
 
 // Returns true if the given number exactly matches an emergency service number in the given

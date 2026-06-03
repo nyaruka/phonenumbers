@@ -16,14 +16,14 @@ package phonenumbers
 // RegexCache tests (upstream internal/), and a handful of Go-specific unit tests
 // for internal helpers with no standalone upstream test (e.g. normalizeDigits's
 // keep-non-digits branch, setItalianLeadingZerosForPhoneNumber, maybeStripExtension,
-// MaybeSeparateExtensionFromPhone, mergeLengths, formattingRuleHasFirstGroupOnly).
+// mergeLengths, formattingRuleHasFirstGroupOnly).
 
 import (
 	"reflect"
-	"regexp"
 	"sync"
 	"testing"
 
+	"github.com/nyaruka/phonenumbers/v2/metadata"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -468,93 +468,6 @@ func TestMaybeStripExtension(t *testing.T) {
 	}
 }
 
-func TestMaybeSeparateExtensionFromPhone(t *testing.T) {
-	tests := []struct {
-		name      string
-		rawPhone  string
-		wantPhone string
-		wantExt   string
-	}{
-		{
-			name:      "Blank",
-			rawPhone:  "",
-			wantPhone: "",
-			wantExt:   "",
-		},
-		{
-			name:      "Number only",
-			rawPhone:  "+1 306-555-1234",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "",
-		},
-		{
-			name:      "Local phone",
-			rawPhone:  "555-1234",
-			wantPhone: "555-1234",
-			wantExt:   "",
-		},
-		{
-			name:      "Local phone with ext",
-			rawPhone:  "555-1234 x 78",
-			wantPhone: "555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Wait separator",
-			rawPhone:  "+1 306-555-1234;78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Pause separator",
-			rawPhone:  "+1 306-555-1234,78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Extra space separator",
-			rawPhone:  "+1 306-555-1234   ,  78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "ext. separator",
-			rawPhone:  "+1 306-555-1234 ext. 78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "# separator",
-			rawPhone:  "+1 306-555-1234 #78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "RFC3966",
-			rawPhone:  "+1 306-555-1234;ext=78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Vanity phone number",
-			rawPhone:  "+1 800-Go-Green #78",
-			wantPhone: "+1 800-Go-Green",
-			wantExt:   "78",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := MaybeSeparateExtensionFromPhone(tt.rawPhone)
-			if got != tt.wantPhone {
-				t.Errorf("Phone got = %v, want %v", got, tt.wantPhone)
-			}
-			if got1 != tt.wantExt {
-				t.Errorf("Extension got = %v, want %v", got1, tt.wantExt)
-			}
-		})
-	}
-}
-
 // TestGetSupportedCallingCodes was migrated to the faithful upstream port in
 // phonenumberutil_test.go (run against synthetic test metadata).
 
@@ -586,48 +499,6 @@ func TestMergeLengths(t *testing.T) {
 		if !reflect.DeepEqual(merged, tc.merged) {
 			t.Errorf("[test %d:num] failed for l1: %v and l2: %v: %v != %v\n", i, tc.l1, tc.l2, tc.merged, merged)
 		}
-	}
-}
-
-func TestRegexCacheWrite(t *testing.T) {
-	pattern1 := "TestRegexCacheWrite"
-	if _, found1 := readFromRegexCache(pattern1); found1 {
-		t.Errorf("pattern |%v| is in the cache", pattern1)
-	}
-	regex1 := regexFor(pattern1)
-	cachedRegex1, found1 := readFromRegexCache(pattern1)
-	if !found1 {
-		t.Errorf("pattern |%v| is not in the cache", pattern1)
-	}
-	if regex1 != cachedRegex1 {
-		t.Error("expected the same instance, but got a different one")
-	}
-	pattern2 := pattern1 + "."
-	if _, found2 := readFromRegexCache(pattern2); found2 {
-		t.Errorf("pattern |%v| is in the cache", pattern2)
-	}
-}
-
-func TestRegexCacheRead(t *testing.T) {
-	pattern1 := "TestRegexCacheRead"
-	if _, found1 := readFromRegexCache(pattern1); found1 {
-		t.Errorf("pattern |%v| is in the cache", pattern1)
-	}
-	regex1 := regexp.MustCompile(pattern1)
-	writeToRegexCache(pattern1, regex1)
-	if cachedRegex1 := regexFor(pattern1); cachedRegex1 != regex1 {
-		t.Error("expected the same instance, but got a different one")
-	}
-	cachedRegex1, found1 := readFromRegexCache(pattern1)
-	if !found1 {
-		t.Errorf("pattern |%v| is not in the cache", pattern1)
-	}
-	if cachedRegex1 != regex1 {
-		t.Error("expected the same instance, but got a different one")
-	}
-	pattern2 := pattern1 + "."
-	if _, found2 := readFromRegexCache(pattern2); found2 {
-		t.Errorf("pattern |%v| is in the cache", pattern2)
 	}
 }
 
@@ -690,7 +561,7 @@ func TestFormattingRuleHasFirstGroupOnly(t *testing.T) {
 
 func BenchmarkLoadMetadata(b *testing.B) {
 	for i := 0; i <= b.N; i++ {
-		initMetadata()
+		_, _ = metadata.Load()
 	}
 }
 
