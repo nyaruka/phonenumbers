@@ -42,8 +42,9 @@ go test ./...
 ```
 
 Review the diff in `data/`, `metadata/data/`, the per-package `*/data/` blobs, and
-`metadata/version.go`. A metadata-only release (no Java logic change) can stop here — but
-still finish with the **Finalize** step so the sync log records it.
+`metadata/version.go`. A metadata-only release (no Java logic change) can stop here: Phase 1
+has already bumped `metadata/version.go`, and the **`Code reconciled against`** baseline in
+SYNC.md stays where it is (the two versions are tracked separately for exactly this case).
 
 > The target tag you built becomes the new code baseline once Phase 2 reconciles against it.
 
@@ -146,7 +147,7 @@ go test ./...
 
 Update [SYNC.md](../../../SYNC.md) (state only):
 
-1. Bump **`Code reconciled against`** in the Baseline section to the target tag.
+1. Bump the **`Code reconciled against`** version to the target tag.
 2. If anything new was intentionally left unported, add it under **Deliberate divergences**.
 
 Record what was reconciled (and the version) in the commit / PR message — git history is the

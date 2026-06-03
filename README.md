@@ -27,37 +27,30 @@ formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 
 ## Updating Metadata
 
-The `buildmetadata` command clones an upstream libphonenumber release and rebuilds the
-embedded metadata into gzipped files, each embedded by the package that uses it:
-
- * `metadata/data/metadata.xml.gz` - core territory metadata (number formats, validation rules, etc.)
- * `data/shortnumber_metadata.xml.gz` - short-number metadata
- * `data/alternateformats_metadata.xml.gz` - alternate format patterns used when matching
- * `metadata/data/countrycode_to_region.xml.gz` - maps a country code to its region(s)
- * `carrier/data/*.gz` - maps a phone number prefix to a carrier
- * `geocoding/data/*.gz` - maps a phone number prefix to a geographic area
- * `timezone/data/prefix_to_timezone.xml.gz` - maps a phone number prefix to a timezone
-
-By default it resolves the **latest** upstream release tag, rebuilds `data/`, and records
-the release it used in the generated `metadata/version.go` (the `metadata.Version`
-constant):
+The `buildmetadata` command regenerates the embedded metadata from an upstream release. It
+clones the release and rebuilds the gzipped data blobs embedded across the packages (core
+territory metadata, short numbers, alternate formats, country-code→region, carrier,
+geocoding, and timezone), recording the release it built from in the generated
+[`metadata/version.go`](metadata/version.go).
 
 ```bash
+# resolve and build from the latest upstream release
 % go run ./cmd/buildmetadata
-```
 
-To rebuild from a specific release instead, pass the tag:
-
-```bash
+# or pin a specific release tag
 % go run ./cmd/buildmetadata v9.0.31
 ```
 
-After syncing, run the tests and update [SYNC.md](SYNC.md) — which records the upstream
-version the port is reconciled against and the deliberate divergences from upstream.
+This part is mechanical and fully automated.
 
-Regenerating the metadata is only half of a sync; the ported Go code also has to be
-reconciled against the new release's Java changes. If you use [Claude Code](https://claude.com/claude-code),
-the **`sync-upstream`** skill ([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md))
-walks through the whole process — metadata regen plus the per-file code reconciliation — and
-updates [SYNC.md](SYNC.md) at the end. Invoke it with `/sync-upstream` or by asking it to
-sync with upstream.
+## Updating Code
+
+Regenerating the metadata is only half of a sync — the ported Go code also has to be
+reconciled against the new release's Java *logic* changes, which is judgment work rather than
+a mechanical rebuild.
+
+If you use [Claude Code](https://claude.com/claude-code), the **`sync-upstream`** skill
+([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md)) walks
+through the whole process — metadata regen plus the per-file code reconciliation. Invoke it
+with `/sync-upstream` or by asking it to sync with upstream. [SYNC.md](SYNC.md) records the
+upstream version the code is reconciled against and the deliberate divergences from upstream.

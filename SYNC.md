@@ -1,25 +1,23 @@
 # Upstream Sync
 
 This package is a port of Google's [libphonenumber](https://github.com/google/libphonenumber),
-tracking its **Java** reference implementation. This file is the **state** of the sync:
-*which upstream version the code is reconciled against* and *what we deliberately diverge on*.
+tracking its **Java** reference implementation. This file records the **state** of the port:
+the upstream version the code is reconciled against, and the deliberate divergences from
+upstream.
 
-The **procedure** for performing a sync lives in the `sync-upstream` skill
-([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md)) — run it
-with "sync with upstream" or `/sync-upstream`.
+For *how* to perform a sync, see the **Updating Metadata** / **Updating Code** sections of the
+[README](README.md), or the `sync-upstream` skill
+([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md)). The
+procedure is not duplicated here.
 
-Per-file headers carry the Go→Java mapping: each ported file records the full upstream path it
-maps to (e.g. `// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/PhoneNumberUtil.java`).
-The reconciled version isn't duplicated into those headers — it lives here, so it can't go stale
-file-by-file.
+## Code reconciled against
 
-## Baseline
+- **v9.0.31**
 
-- **Code reconciled against:** `v9.0.31`
-
-The **metadata** version isn't tracked here — `cmd/buildmetadata` records the upstream release it
-built `data/` from in the generated [`metadata/version.go`](metadata/version.go) (the
-`metadata.Version` constant).
+This is the upstream release whose **Java logic** the Go code is reconciled against. It is
+tracked separately from the embedded **metadata** version — recorded in the generated
+[`metadata/version.go`](metadata/version.go) (`metadata.Version`) — which can move ahead of
+this when metadata is regenerated without a code change.
 
 ## Deliberate divergences
 
