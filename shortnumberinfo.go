@@ -1,5 +1,4 @@
-// Port of ShortNumberInfo.java from google/libphonenumber.
-// Functions are kept in upstream source order to ease syncing.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/ShortNumberInfo.java.
 package phonenumbers
 
 import (

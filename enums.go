@@ -1,5 +1,4 @@
-// Port of PhoneNumberUtil.java (enums) from google/libphonenumber.
-// Functions are kept in upstream source order to ease syncing.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/PhoneNumberUtil.java (enums).
 package phonenumbers
 
 // INTERNATIONAL and NATIONAL formats are consistent with the definition

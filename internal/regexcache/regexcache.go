@@ -1,7 +1,8 @@
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/internal/RegexCache.java.
+
 // Package regexcache caches compiled regular expressions keyed by their pattern
 // string, so the libphonenumber port avoids recompiling the same
-// metadata-derived patterns on every call. It mirrors upstream's
-// internal/RegexCache.
+// metadata-derived patterns on every call.
 package regexcache
 
 import (

@@ -1,5 +1,4 @@
-// Port of NumberParseException.java + package errors from google/libphonenumber.
-// Functions are kept in upstream source order to ease syncing.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/NumberParseException.java (+ package errors).
 package phonenumbers
 
 import (
