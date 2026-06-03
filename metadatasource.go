@@ -2,7 +2,10 @@
 // Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 
-import "google.golang.org/protobuf/proto"
+import (
+	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
+	"google.golang.org/protobuf/proto"
+)
 
 // metadataContainer bundles all of the metadata-derived lookup state used by
 // the library. The package keeps a single active container (currentMetadata),
@@ -46,7 +49,7 @@ var currentMetadata *metadataContainer
 
 func initMetadata() {
 	// load our regions
-	regionMap, err := loadIntArrayMap(regionData)
+	regionMap, err := serialize.LoadIntArrayMap(regionData)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +167,7 @@ func MetadataCollection() (*PhoneMetadataCollection, error) {
 		return currMetadataColl, nil
 	}
 
-	rawBytes, err := decodeUnzip(numberData)
+	rawBytes, err := serialize.DecodeUnzip(numberData)
 	if err != nil {
 		return nil, err
 	}

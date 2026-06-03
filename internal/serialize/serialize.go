@@ -1,4 +1,6 @@
-package phonenumbers
+// Package serialize decodes the gzipped binary blobs the library embeds for its
+// metadata and prefix lookups (carrier, geocoding, timezone, and region maps).
+package serialize
 
 import (
 	"bytes"
@@ -10,15 +12,16 @@ import (
 	"strings"
 )
 
-// intStringMap is our data structure for maps from prefixes to a single string
-// this is used for our carrier and geocoding maps
-type intStringMap struct {
+// IntStringMap is our data structure for maps from prefixes to a single string;
+// this is used for our carrier and geocoding maps.
+type IntStringMap struct {
 	Map       map[int]string
 	MaxLength int
 }
 
-func loadPrefixMap(data []byte) (*intStringMap, error) {
-	rawBytes, err := decodeUnzip(data)
+// LoadPrefixMap decodes a prefix->string map from a gzipped binary blob.
+func LoadPrefixMap(data []byte) (*IntStringMap, error) {
+	rawBytes, err := DecodeUnzip(data)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +78,7 @@ func loadPrefixMap(data []byte) (*intStringMap, error) {
 	}
 
 	// return our values
-	return &intStringMap{
+	return &IntStringMap{
 		Map:       mappings,
 		MaxLength: maxLength,
 	}, nil
@@ -93,15 +96,16 @@ func digitCount(n int) int {
 	return int(math.Floor(math.Log10(float64(n)))) + 1
 }
 
-// intStringArrayMap is our map from an int to an array of strings
-// this is used for our timezone and region maps
-type intStringArrayMap struct {
+// IntStringArrayMap is our map from an int to an array of strings; this is used
+// for our timezone and region maps.
+type IntStringArrayMap struct {
 	Map       map[int][]string
 	MaxLength int
 }
 
-func loadIntArrayMap(data []byte) (*intStringArrayMap, error) {
-	rawBytes, err := decodeUnzip(data)
+// LoadIntArrayMap decodes a key->[]string map from a gzipped binary blob.
+func LoadIntArrayMap(data []byte) (*IntStringArrayMap, error) {
+	rawBytes, err := DecodeUnzip(data)
 	if err != nil {
 		return nil, err
 	}
@@ -166,13 +170,14 @@ func loadIntArrayMap(data []byte) (*intStringArrayMap, error) {
 	}
 
 	// return our values
-	return &intStringArrayMap{
+	return &IntStringArrayMap{
 		Map:       mappings,
 		MaxLength: maxLength,
 	}, nil
 }
 
-func decodeUnzip(data []byte) ([]byte, error) {
+// DecodeUnzip gunzips data and returns the decompressed bytes.
+func DecodeUnzip(data []byte) ([]byte, error) {
 	zipReader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err

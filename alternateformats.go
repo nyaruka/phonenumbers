@@ -5,6 +5,7 @@ package phonenumbers
 import (
 	"sync"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -22,7 +23,7 @@ var (
 )
 
 func loadAlternateFormatsMetadata() {
-	rawBytes, err := decodeUnzip(alternateFormatsData)
+	rawBytes, err := serialize.DecodeUnzip(alternateFormatsData)
 	if err != nil {
 		panic(err)
 	}
