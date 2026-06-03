@@ -15,8 +15,10 @@ import (
 //go:embed data/prefix_to_timezone.xml.gz
 var timezoneData []byte
 
-// Unknown is the value returned for a prefix that maps to no timezone. This is
-// defined by ICU as the unknown time zone.
+// Unknown is the value returned for a prefix that maps to no timezone, defined
+// by ICU as the unknown time zone. It corresponds to upstream's
+// PhoneNumberToTimeZonesMapper.getUnknownTimeZone(), exposed here as a const
+// rather than a function.
 const Unknown = "Etc/Unknown"
 
 var (
@@ -24,23 +26,23 @@ var (
 	timezoneMap  *serialize.IntStringArrayMap
 )
 
-// TimeZonesForNumber returns the names of the timezones to which the given
+// GetTimeZonesForNumber returns the names of the timezones to which the given
 // number maps. An unknown-type number maps to the unknown timezone; a
 // non-geographical number is resolved at the country-calling-code level; any
 // other number is resolved from its full digits.
-func TimeZonesForNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
+func GetTimeZonesForNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
 	numberType := phonenumbers.GetNumberType(number)
 	if numberType == phonenumbers.UNKNOWN {
 		return []string{Unknown}, nil
 	} else if !phonenumbers.IsNumberGeographicalForType(numberType, int(number.GetCountryCode())) {
 		return countryLevelTimeZonesForNumber(number)
 	}
-	return TimeZonesForGeographicalNumber(number)
+	return GetTimeZonesForGeographicalNumber(number)
 }
 
-// TimeZonesForGeographicalNumber returns the names of the timezones to which the
+// GetTimeZonesForGeographicalNumber returns the names of the timezones to which the
 // given geographical number maps, resolved from its full digits.
-func TimeZonesForGeographicalNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
+func GetTimeZonesForGeographicalNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
 	e164 := phonenumbers.Format(number, phonenumbers.E164)
 	return lookupTimeZones(e164)
 }

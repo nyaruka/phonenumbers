@@ -6,7 +6,7 @@ import (
 	"github.com/nyaruka/phonenumbers/v2"
 )
 
-func TestDescriptionForNumber(t *testing.T) {
+func TestGetDescriptionForNumber(t *testing.T) {
 	tests := []struct {
 		num      string
 		lang     string
@@ -28,7 +28,7 @@ func TestDescriptionForNumber(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to parse number %s: %s", test.num, err)
 		}
-		geocoding, err := DescriptionForNumber(number, test.lang)
+		geocoding, err := GetDescriptionForNumber(number, test.lang)
 		if err != nil {
 			t.Errorf("Failed to get description for the number %s: %s", test.num, err)
 		}

@@ -12,7 +12,7 @@ type timeZonesTestCases struct {
 	expectedTimeZones []string
 }
 
-func TestTimeZonesForNumber(t *testing.T) {
+func TestGetTimeZonesForNumber(t *testing.T) {
 	tests := []timeZonesTestCases{
 		{num: "+442073238299", expectedTimeZones: []string{"Europe/London"}},
 		{num: "+61255501234", expectedTimeZones: []string{"Australia/Sydney"}},
@@ -47,7 +47,7 @@ func TestTimeZonesForNumber(t *testing.T) {
 			continue
 		}
 
-		timeZones, err := TimeZonesForNumber(num)
+		timeZones, err := GetTimeZonesForNumber(num)
 		if err != nil {
 			t.Errorf("Failed to get timezones for the number %s: %s", test.num, err)
 		}
@@ -61,12 +61,12 @@ func TestTimeZonesForNumber(t *testing.T) {
 }
 
 // A number whose type can't be determined maps to the unknown timezone.
-func TestTimeZonesForNumberUnknownType(t *testing.T) {
+func TestGetTimeZonesForNumberUnknownType(t *testing.T) {
 	num, err := phonenumbers.Parse("+1911", "")
 	if err != nil {
 		t.Fatalf("Failed to parse number: %s", err)
 	}
-	timeZones, err := TimeZonesForNumber(num)
+	timeZones, err := GetTimeZonesForNumber(num)
 	if err != nil {
 		t.Fatalf("Failed to get timezones: %s", err)
 	}
@@ -76,14 +76,14 @@ func TestTimeZonesForNumberUnknownType(t *testing.T) {
 }
 
 // For a non-geographical mobile, the geographical lookup still resolves to the
-// specific area's timezone, unlike TimeZonesForNumber which gives the
+// specific area's timezone, unlike GetTimeZonesForNumber which gives the
 // country-level list.
-func TestTimeZonesForGeographicalNumber(t *testing.T) {
+func TestGetTimeZonesForGeographicalNumber(t *testing.T) {
 	num, err := phonenumbers.Parse("+61491570156", "")
 	if err != nil {
 		t.Fatalf("Failed to parse number: %s", err)
 	}
-	timeZones, err := TimeZonesForGeographicalNumber(num)
+	timeZones, err := GetTimeZonesForGeographicalNumber(num)
 	if err != nil {
 		t.Fatalf("Failed to get timezones: %s", err)
 	}

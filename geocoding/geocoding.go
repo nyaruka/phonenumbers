@@ -16,10 +16,10 @@ var geocodingData embed.FS
 
 var mapper = prefixmapper.New(geocodingData, "data")
 
-// DescriptionForValidNumber returns a text description in the given language for
+// GetDescriptionForValidNumber returns a text description in the given language for
 // the geographical area the number is from, falling back to the country name.
 // The number is assumed to be valid.
-func DescriptionForValidNumber(number *phonenumbers.PhoneNumber, lang string) (string, error) {
+func GetDescriptionForValidNumber(number *phonenumbers.PhoneNumber, lang string) (string, error) {
 	mobileToken := phonenumbers.GetCountryMobileToken(int(number.GetCountryCode()))
 	nationalNumber := phonenumbers.GetNationalSignificantNumber(number)
 
@@ -44,18 +44,18 @@ func DescriptionForValidNumber(number *phonenumbers.PhoneNumber, lang string) (s
 	return countryNameForNumber(number, lang)
 }
 
-// DescriptionForNumber returns a text description in the given language for the
+// GetDescriptionForNumber returns a text description in the given language for the
 // given phone number: the name of the geographical area it is from for
 // geographical numbers, otherwise the name of the country, and the empty string
 // for numbers of an unknown type.
-func DescriptionForNumber(number *phonenumbers.PhoneNumber, lang string) (string, error) {
+func GetDescriptionForNumber(number *phonenumbers.PhoneNumber, lang string) (string, error) {
 	numberType := phonenumbers.GetNumberType(number)
 	if numberType == phonenumbers.UNKNOWN {
 		return "", nil
 	} else if !phonenumbers.IsNumberGeographicalForType(numberType, int(number.GetCountryCode())) {
 		return countryNameForNumber(number, lang)
 	}
-	return DescriptionForValidNumber(number, lang)
+	return GetDescriptionForValidNumber(number, lang)
 }
 
 // countryNameForNumber returns the name of the country, in the given language,

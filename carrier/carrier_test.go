@@ -7,7 +7,7 @@ import (
 	"github.com/nyaruka/phonenumbers/v2"
 )
 
-func TestNameForNumber(t *testing.T) {
+func TestGetNameForNumber(t *testing.T) {
 	tests := []struct {
 		num      string
 		lang     string
@@ -30,7 +30,7 @@ func TestNameForNumber(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to parse number %s: %s", test.num, err)
 		}
-		carrier, err := NameForNumber(number, test.lang)
+		carrier, err := GetNameForNumber(number, test.lang)
 		if err != nil {
 			t.Errorf("Failed to get carrier for the number %s: %s", test.num, err)
 		}
@@ -40,7 +40,7 @@ func TestNameForNumber(t *testing.T) {
 	}
 }
 
-func TestNameForNumberConcurrency(t *testing.T) {
+func TestGetNameForNumberConcurrency(t *testing.T) {
 	number, _ := phonenumbers.Parse("+8613702032331", "ZZ")
 
 	wg := sync.WaitGroup{}
@@ -49,7 +49,7 @@ func TestNameForNumberConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := NameForNumber(number, "en")
+			_, err := GetNameForNumber(number, "en")
 			if err != nil {
 				t.Errorf("Failed to get carrier for the number %s: %s", "+8613702032331", err)
 			}
@@ -59,7 +59,7 @@ func TestNameForNumberConcurrency(t *testing.T) {
 	wg.Wait()
 }
 
-func TestSafeDisplayName(t *testing.T) {
+func TestGetSafeDisplayName(t *testing.T) {
 	tests := []struct {
 		num      string
 		lang     string
@@ -73,9 +73,9 @@ func TestSafeDisplayName(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to parse number %s: %s", test.num, err)
 		}
-		carrier, err := SafeDisplayName(number, test.lang)
+		carrier, err := GetSafeDisplayName(number, test.lang)
 		if err != nil {
-			t.Errorf("Failed to SafeDisplayName for the number %s: %s", test.num, err)
+			t.Errorf("Failed to GetSafeDisplayName for the number %s: %s", test.num, err)
 		}
 		if test.expected != carrier {
 			t.Errorf("Expected '%s', got '%s' for '%s'", test.expected, carrier, test.num)
@@ -83,11 +83,11 @@ func TestSafeDisplayName(t *testing.T) {
 	}
 }
 
-func BenchmarkNameForNumber(b *testing.B) {
+func BenchmarkGetNameForNumber(b *testing.B) {
 	number, _ := phonenumbers.Parse("+8613702032331", "ZZ")
 
 	for n := 0; n < b.N; n++ {
-		_, err := NameForNumber(number, "en")
+		_, err := GetNameForNumber(number, "en")
 		if err != nil {
 			b.Errorf("Failed to get carrier for the number %s: %s", "+8613702032331", err)
 		}
