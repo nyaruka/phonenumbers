@@ -24,11 +24,38 @@ var (
 	timezoneMap  *serialize.IntStringArrayMap
 )
 
-// ForPrefix returns a slice of Timezones corresponding to the number passed
-// or error when it is impossible to convert the string to int
-// The algorithm tries to match the timezones starting from the maximum
-// number of phone number digits and decreasing until it finds one or reaches 0
-func ForPrefix(number string) ([]string, error) {
+// TimeZonesForNumber returns the names of the timezones to which the given
+// number maps. An unknown-type number maps to the unknown timezone; a
+// non-geographical number is resolved at the country-calling-code level; any
+// other number is resolved from its full digits.
+func TimeZonesForNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
+	numberType := phonenumbers.GetNumberType(number)
+	if numberType == phonenumbers.UNKNOWN {
+		return []string{Unknown}, nil
+	} else if !phonenumbers.IsNumberGeographicalForType(numberType, int(number.GetCountryCode())) {
+		return countryLevelTimeZonesForNumber(number)
+	}
+	return TimeZonesForGeographicalNumber(number)
+}
+
+// TimeZonesForGeographicalNumber returns the names of the timezones to which the
+// given geographical number maps, resolved from its full digits.
+func TimeZonesForGeographicalNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
+	e164 := phonenumbers.Format(number, phonenumbers.E164)
+	return lookupTimeZones(e164)
+}
+
+// countryLevelTimeZonesForNumber resolves the timezones for a number using only
+// its country calling code.
+func countryLevelTimeZonesForNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
+	return lookupTimeZones(strconv.Itoa(int(number.GetCountryCode())))
+}
+
+// lookupTimeZones returns the timezones for the longest matching prefix of the
+// given number string, or the unknown timezone when none matches. The algorithm
+// tries to match starting from the maximum number of digits and decreasing until
+// it finds one or reaches 0.
+func lookupTimeZones(number string) ([]string, error) {
 	var err error
 	timezoneOnce.Do(func() {
 		timezoneMap, err = serialize.LoadIntArrayMap(timezoneData)
@@ -54,11 +81,4 @@ func ForPrefix(number string) ([]string, error) {
 		}
 	}
 	return []string{Unknown}, nil
-}
-
-// ForNumber returns the names of timezones which we believe maps to the
-// passed in number.
-func ForNumber(number *phonenumbers.PhoneNumber) ([]string, error) {
-	e164 := phonenumbers.Format(number, phonenumbers.E164)
-	return ForPrefix(e164)
 }
