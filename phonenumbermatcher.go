@@ -8,6 +8,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 )
 
 // limit returns a regular expression quantifier with a lower and upper bound.
@@ -552,7 +554,7 @@ func IsNationalPrefixPresentIfRequired(number *PhoneNumber) bool {
 		}
 		// Normalize the remainder.
 		rawInputCopy := NormalizeDigitsOnly(number.GetRawInput())
-		rawInput := NewStringBuilderString(rawInputCopy)
+		rawInput := stringbuilder.NewString(rawInputCopy)
 		// Check if we found a national prefix and/or carrier code at the start of
 		// the raw input, and return the result.
 		return maybeStripNationalPrefixAndCarrierCode(rawInput, metadata, nil)
