@@ -26,6 +26,15 @@ const distPath = "data"
 // embedded by the metadata package rather than the root package.
 const metadataDistPath = "metadata/data"
 
+// The prefix-lookup blobs are embedded by their own packages (carrier,
+// geocoding, timezone) rather than the root package, so they live alongside
+// each package's source.
+const (
+	carrierDistPath   = "carrier/data"
+	geocodingDistPath = "geocoding/data"
+	timezoneDistPath  = "timezone/data"
+)
+
 const upstreamURL = "https://github.com/google/libphonenumber.git"
 
 func main() {
@@ -75,19 +84,19 @@ func buildMetadata() error {
 
 	fmt.Print("OK\nBuilding timezone metadata...")
 
-	if err := buildTimezoneMetadata("resources/timezones/map_data.txt", "TimezoneData", "prefix_to_timezone.xml.gz"); err != nil {
+	if err := buildTimezoneMetadata("resources/timezones/map_data.txt", "TimezoneData", timezoneDistPath, "prefix_to_timezone.xml.gz"); err != nil {
 		return err
 	}
 
 	fmt.Println("OK\nBuilding carrier prefix metadata...")
 
-	if err := buildPrefixMetadata("resources/carrier", "CarrierData", "prefix_to_carriers"); err != nil {
+	if err := buildPrefixMetadata("resources/carrier", "CarrierData", carrierDistPath); err != nil {
 		return err
 	}
 
 	fmt.Println("Building geographic prefix metadata...")
 
-	if err := buildPrefixMetadata("resources/geocoding", "GeocodingData", "prefix_to_geocodings"); err != nil {
+	if err := buildPrefixMetadata("resources/geocoding", "GeocodingData", geocodingDistPath); err != nil {
 		return err
 	}
 
@@ -229,7 +238,7 @@ func buildRegionMetadata(metadata *phonenumbers.PhoneMetadataCollection, varName
 	return nil
 }
 
-func buildTimezoneMetadata(srcFile, varName, dstFile string) error {
+func buildTimezoneMetadata(srcFile, varName, destDir, dstFile string) error {
 	body, err := os.ReadFile("_build/" + srcFile)
 	if err != nil {
 		return fmt.Errorf("error reading %s: %w", srcFile, err)
@@ -270,21 +279,21 @@ func buildTimezoneMetadata(srcFile, varName, dstFile string) error {
 		return fmt.Errorf("error generating %s: %w", dstFile, err)
 	}
 
-	if err := os.WriteFile(distPath+"/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
+	if err := os.WriteFile(destDir+"/"+dstFile, generateBinFile(varName, data), os.FileMode(0664)); err != nil {
 		return fmt.Errorf("error writing %s: %w", dstFile, err)
 	}
 
 	return nil
 }
 
-func buildPrefixMetadata(srcDir, varName, dstDir string) error {
+func buildPrefixMetadata(srcDir, varName, destDir string) error {
 	// get our top level language directories
 	dirs, err := filepath.Glob(filepath.Join("_build", srcDir, "*"))
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(distPath+"/"+dstDir, os.ModePerm)
+	err = os.MkdirAll(destDir, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -385,8 +394,8 @@ func buildPrefixMetadata(srcDir, varName, dstDir string) error {
 		}
 		w.Close()
 
-		if err := os.WriteFile(distPath+"/"+dstDir+"/"+lang+".txt.gz", compressed.Bytes(), os.FileMode(0664)); err != nil {
-			return fmt.Errorf("error writing %s: %w", dstDir, err)
+		if err := os.WriteFile(destDir+"/"+lang+".txt.gz", compressed.Bytes(), os.FileMode(0664)); err != nil {
+			return fmt.Errorf("error writing %s: %w", destDir, err)
 		}
 	}
 
