@@ -1,4 +1,4 @@
-// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/internal/RegexBasedMatcher.java + .../internal/MatcherApi.java from google/libphonenumber.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/internal/RegexBasedMatcher.java + .../internal/MatcherApi.java.
 
 // Package regexbasedmatcher matches national numbers against the patterns in
 // phone-number metadata.

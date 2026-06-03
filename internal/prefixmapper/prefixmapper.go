@@ -1,4 +1,4 @@
-// Port of java/internal/prefixmapper/src/com/google/i18n/phonenumbers/prefixmapper/* (shared prefix lookup) from google/libphonenumber.
+// Port of java/internal/prefixmapper/src/com/google/i18n/phonenumbers/prefixmapper/* (shared prefix lookup).
 //
 // A Mapper resolves the value (carrier name, geocoding description, …) mapped to
 // the longest matching numeric prefix of an E164 number. It is shared by the

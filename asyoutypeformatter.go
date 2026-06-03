@@ -1,4 +1,4 @@
-// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/AsYouTypeFormatter.java from google/libphonenumber.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/AsYouTypeFormatter.java.
 // Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 

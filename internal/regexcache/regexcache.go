@@ -1,4 +1,4 @@
-// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/internal/RegexCache.java from google/libphonenumber.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/internal/RegexCache.java.
 
 // Package regexcache caches compiled regular expressions keyed by their pattern
 // string, so the libphonenumber port avoids recompiling the same

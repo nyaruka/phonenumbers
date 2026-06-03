@@ -1,4 +1,4 @@
-// Port of java/geocoder/src/com/google/i18n/phonenumbers/PhoneNumberToTimeZonesMapper.java from google/libphonenumber.
+// Port of java/geocoder/src/com/google/i18n/phonenumbers/PhoneNumberToTimeZonesMapper.java.
 // Functions are kept in upstream source order to ease syncing.
 package timezone
 

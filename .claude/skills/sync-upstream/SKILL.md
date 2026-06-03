@@ -68,7 +68,7 @@ git -C _build fetch --depth=1 origin tag "$BASE"
 ### Diff each ported source, baseline→target
 
 The per-file headers are the source of truth for the Go→Java mapping — every reconcilable
-file carries a `// Port of <upstream/path> from google/libphonenumber.` header. Enumerate them:
+file carries a `// Port of <upstream/path>.` header. Enumerate them:
 
 ```sh
 grep -rn "Port of" --include='*.go' . | grep -v _test.go | grep -v _build/
@@ -137,9 +137,10 @@ go test ./...
 Update [SYNC.md](../../../SYNC.md) (state only):
 
 1. Bump **`Code reconciled against`** in the Baseline section to the target tag.
-2. Add a **Sync log** entry (newest first): what was reconciled or pulled, and the version.
-3. If anything new was intentionally left unported, add it under **Deliberate divergences**.
+2. If anything new was intentionally left unported, add it under **Deliberate divergences**.
 
-Do **not** touch `CHANGELOG.md` — it's maintained by the release process.
+Record what was reconciled (and the version) in the commit / PR message — git history is the
+sync log, so SYNC.md doesn't keep one. Don't touch `CHANGELOG.md` either; it's maintained by
+the release process.
 
 Leave public-facing text (commit messages, comments) describing the software in general terms.

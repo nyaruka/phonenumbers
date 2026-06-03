@@ -29,18 +29,3 @@ Places where this port intentionally differs from upstream:
   `testGetMetadataForRegionForMissingMetadata` and its non-geographical variant (both rely on
   Mockito-style metadata-source injection), and `testRemovalNotSupported` (Go's range-over-func
   iterator has no `remove()`).
-
-## Sync log
-
-Newest first. Each entry: what was reconciled or pulled, and the upstream version.
-
-- **2026-06-03** — Moved the sync *procedure* into the `sync-upstream` skill; SYNC.md is now
-  pure state. Per-file `// Port of` headers upgraded to full upstream paths so reconciliation
-  diffs are mechanical.
-- **2026-06-02** — Established this file; moved per-file version headers here.
-  `cmd/buildmetadata` now resolves the latest upstream release tag itself (pass a tag to
-  pin a specific release) and records it in the generated `metadata/version.go`, so the
-  embedded metadata's version is no longer hand-maintained here. `go test ./...` green.
-- **2026-06-01** (v1.8.0) — Regenerated all metadata against `v9.0.31`; refactored to
-  ease upstream syncing.
-- Ported `PhoneNumberMatcher` + `PhoneNumberMatch` and their tests against `v9.0.31`.

@@ -1,4 +1,4 @@
-// Port of tools/java/common/src/com/google/i18n/phonenumbers/BuildMetadataFromXml.java from google/libphonenumber.
+// Port of tools/java/common/src/com/google/i18n/phonenumbers/BuildMetadataFromXml.java.
 // Functions are kept in upstream source order to ease syncing.
 //
 // This is build-time-only machinery: it compiles upstream's metadata XML into
