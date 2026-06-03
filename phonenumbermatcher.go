@@ -1,4 +1,4 @@
-// Port of PhoneNumberMatcher.java from google/libphonenumber.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/PhoneNumberMatcher.java from google/libphonenumber.
 // Methods are kept in upstream source order to ease syncing.
 package phonenumbers
 

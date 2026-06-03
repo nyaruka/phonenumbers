@@ -1,4 +1,4 @@
-// Port of metadata/source/* alternate-formats loading from google/libphonenumber.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/metadata/source/* alternate-formats loading from google/libphonenumber.
 // Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 

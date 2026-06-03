@@ -1,4 +1,4 @@
-// Port of metadata/source/* + MetadataLoader from google/libphonenumber.
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/metadata/source/* + .../MetadataLoader.java from google/libphonenumber.
 package metadata
 
 import (

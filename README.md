@@ -54,3 +54,10 @@ To rebuild from a specific release instead, pass the tag:
 
 After syncing, run the tests and update [SYNC.md](SYNC.md) — which records the upstream
 version the port is reconciled against and the deliberate divergences from upstream.
+
+Regenerating the metadata is only half of a sync; the ported Go code also has to be
+reconciled against the new release's Java changes. If you use [Claude Code](https://claude.com/claude-code),
+the **`sync-upstream`** skill ([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md))
+walks through the whole process — metadata regen plus the per-file code reconciliation — and
+updates [SYNC.md](SYNC.md) at the end. Invoke it with `/sync-upstream` or by asking it to
+sync with upstream.

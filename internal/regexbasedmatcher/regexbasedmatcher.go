@@ -1,6 +1,7 @@
+// Port of java/libphonenumber/src/com/google/i18n/phonenumbers/internal/RegexBasedMatcher.java + .../internal/MatcherApi.java from google/libphonenumber.
+
 // Package regexbasedmatcher matches national numbers against the patterns in
-// phone-number metadata, mirroring upstream's internal/RegexBasedMatcher and
-// MatcherApi.
+// phone-number metadata.
 package regexbasedmatcher
 
 import (
