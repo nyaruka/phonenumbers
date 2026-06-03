@@ -5,6 +5,7 @@ package phonenumbers
 import (
 	"slices"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/regexbasedmatcher"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -323,7 +324,7 @@ func matchesPossibleNumberAndNationalNumber(number string, numberDesc *PhoneNumb
 	if len(numberDesc.PossibleLength) > 0 && !numberDesc.HasPossibleLength(int32(len(number))) {
 		return false
 	}
-	return MatchNationalNumber(number, numberDesc, false)
+	return regexbasedmatcher.MatchNationalNumber(number, numberDesc, false)
 }
 
 // In these countries, if extra digits are added to an emergency number, it no longer connects
@@ -347,7 +348,7 @@ func matchesEmergencyNumber(number string, regionCode string, allowPrefixMatch b
 	normalizedNumber := NormalizeDigitsOnly(possibleNumber)
 
 	allowPrefixMatchForRegion := allowPrefixMatch && !slices.Contains(REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT, regionCode)
-	return MatchNationalNumber(normalizedNumber, phoneMetadata.GetEmergency(), allowPrefixMatchForRegion)
+	return regexbasedmatcher.MatchNationalNumber(normalizedNumber, phoneMetadata.GetEmergency(), allowPrefixMatchForRegion)
 }
 
 // Returns true if the given number exactly matches an emergency service number in the given

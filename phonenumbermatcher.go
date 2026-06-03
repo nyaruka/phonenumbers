@@ -588,25 +588,3 @@ func (m *phoneNumberMatcher) next() *PhoneNumberMatch {
 	m.state = matcherNotReady
 	return result
 }
-
-// MatchNationalNumber reports whether the given national number (a string of
-// decimal digits) matches the national number pattern in numberDesc.
-func MatchNationalNumber(number string, numberDesc *PhoneNumberDesc, allowPrefixMatch bool) bool {
-	nationalNumberPattern := numberDesc.GetNationalNumberPattern()
-	// We don't want to consider it a prefix match when matching non-empty input
-	// against an empty pattern.
-	if len(nationalNumberPattern) == 0 {
-		return false
-	}
-	return match(number, regexcache.For(nationalNumberPattern), allowPrefixMatch)
-}
-
-func match(number string, pattern *regexp.Regexp, allowPrefixMatch bool) bool {
-	ind := pattern.FindStringIndex(number)
-	if len(ind) == 0 || ind[0] != 0 {
-		return false
-	}
-	patP := `^(?:` + pattern.String() + `)$` // Strictly match
-	pat := regexcache.For(patP)
-	return pat.MatchString(number) || allowPrefixMatch
-}
