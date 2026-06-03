@@ -1,7 +1,12 @@
-package phonenumbers
+// Package metadata holds the phone-number metadata value types (a port of
+// upstream's Phonemetadata) together with the hand-written helpers on them. It
+// is the acyclic home for these types now that the metadata loader depends on
+// them; the root phonenumbers package re-exports them as aliases.
+package metadata
 
-// merge merges two number formats
-func (nf *NumberFormat) merge(other *NumberFormat) {
+// Merge folds the set fields of other into nf: for each field other sets, its
+// value overwrites nf's, and leading-digit patterns are appended.
+func (nf *NumberFormat) Merge(other *NumberFormat) {
 	if other.Pattern != nil {
 		nf.Pattern = other.Pattern
 	}
@@ -22,7 +27,8 @@ func (nf *NumberFormat) merge(other *NumberFormat) {
 	}
 }
 
-func (pd *PhoneNumberDesc) hasPossibleLength(length int32) bool {
+// HasPossibleLength reports whether length is one of pd's possible lengths.
+func (pd *PhoneNumberDesc) HasPossibleLength(length int32) bool {
 	for _, l := range pd.PossibleLength {
 		if l == length {
 			return true
@@ -32,7 +38,9 @@ func (pd *PhoneNumberDesc) hasPossibleLength(length int32) bool {
 	return false
 }
 
-func (pd *PhoneNumberDesc) hasPossibleLengthLocalOnly(length int32) bool {
+// HasPossibleLengthLocalOnly reports whether length is one of pd's local-only
+// possible lengths.
+func (pd *PhoneNumberDesc) HasPossibleLengthLocalOnly(length int32) bool {
 	for _, l := range pd.PossibleLengthLocalOnly {
 		if l == length {
 			return true
