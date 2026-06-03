@@ -11,19 +11,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// possibleWithRegion is the test-local stand-in for upstream's
-// isPossibleNumber(CharSequence, regionDialingFrom) overload, which the Go API
-// does not expose (only the *PhoneNumber form). It parses then checks
-// possibility, returning false if parsing fails — mirroring upstream's catch of
-// NumberParseException.
-func possibleWithRegion(number, regionDialingFrom string) bool {
-	num, err := Parse(number, regionDialingFrom)
-	if err != nil {
-		return false
-	}
-	return IsPossibleNumber(num)
-}
-
 // testIsPossibleNumber (PhoneNumberUtilTest.java:1375-1391)
 func TestIsPossibleNumber(t *testing.T) {
 	useTestMetadata(t)
@@ -32,16 +19,16 @@ func TestIsPossibleNumber(t *testing.T) {
 	assert.True(t, IsPossibleNumber(gbNumber()))
 	assert.True(t, IsPossibleNumber(internationalTollFree()))
 
-	assert.True(t, possibleWithRegion("+1 650 253 0000", regionCode.US))
-	assert.True(t, possibleWithRegion("+1 650 GOO OGLE", regionCode.US))
-	assert.True(t, possibleWithRegion("(650) 253-0000", regionCode.US))
-	assert.True(t, possibleWithRegion("253-0000", regionCode.US))
-	assert.True(t, possibleWithRegion("+1 650 253 0000", regionCode.GB))
-	assert.True(t, possibleWithRegion("+44 20 7031 3000", regionCode.GB))
-	assert.True(t, possibleWithRegion("(020) 7031 300", regionCode.GB))
-	assert.True(t, possibleWithRegion("7031 3000", regionCode.GB))
-	assert.True(t, possibleWithRegion("3331 6005", regionCode.NZ))
-	assert.True(t, possibleWithRegion("+800 1234 5678", regionCode.UN001))
+	assert.True(t, IsPossibleNumberFromRegion("+1 650 253 0000", regionCode.US))
+	assert.True(t, IsPossibleNumberFromRegion("+1 650 GOO OGLE", regionCode.US))
+	assert.True(t, IsPossibleNumberFromRegion("(650) 253-0000", regionCode.US))
+	assert.True(t, IsPossibleNumberFromRegion("253-0000", regionCode.US))
+	assert.True(t, IsPossibleNumberFromRegion("+1 650 253 0000", regionCode.GB))
+	assert.True(t, IsPossibleNumberFromRegion("+44 20 7031 3000", regionCode.GB))
+	assert.True(t, IsPossibleNumberFromRegion("(020) 7031 300", regionCode.GB))
+	assert.True(t, IsPossibleNumberFromRegion("7031 3000", regionCode.GB))
+	assert.True(t, IsPossibleNumberFromRegion("3331 6005", regionCode.NZ))
+	assert.True(t, IsPossibleNumberFromRegion("+800 1234 5678", regionCode.UN001))
 }
 
 // testIsPossibleNumberWithReason (PhoneNumberUtilTest.java:1475-1500)
@@ -77,13 +64,13 @@ func TestIsNotPossibleNumber(t *testing.T) {
 
 	number = &PhoneNumber{CountryCode: proto.Int32(44), NationalNumber: proto.Uint64(300)}
 	assert.False(t, IsPossibleNumber(number))
-	assert.False(t, possibleWithRegion("+1 650 253 00000", regionCode.US))
-	assert.False(t, possibleWithRegion("(650) 253-00000", regionCode.US))
-	assert.False(t, possibleWithRegion("I want a Pizza", regionCode.US))
-	assert.False(t, possibleWithRegion("253-000", regionCode.US))
-	assert.False(t, possibleWithRegion("1 3000", regionCode.GB))
-	assert.False(t, possibleWithRegion("+44 300", regionCode.GB))
-	assert.False(t, possibleWithRegion("+800 1234 5678 9", regionCode.UN001))
+	assert.False(t, IsPossibleNumberFromRegion("+1 650 253 00000", regionCode.US))
+	assert.False(t, IsPossibleNumberFromRegion("(650) 253-00000", regionCode.US))
+	assert.False(t, IsPossibleNumberFromRegion("I want a Pizza", regionCode.US))
+	assert.False(t, IsPossibleNumberFromRegion("253-000", regionCode.US))
+	assert.False(t, IsPossibleNumberFromRegion("1 3000", regionCode.GB))
+	assert.False(t, IsPossibleNumberFromRegion("+44 300", regionCode.GB))
+	assert.False(t, IsPossibleNumberFromRegion("+800 1234 5678 9", regionCode.UN001))
 }
 
 // testTruncateTooLongNumber (PhoneNumberUtilTest.java:1747-1796)

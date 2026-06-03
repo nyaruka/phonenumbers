@@ -43,7 +43,7 @@ func TestNormaliseStripAlphaCharacters(t *testing.T) {
 
 // testNormaliseStripNonDiallableCharacters (PhoneNumberUtilTest.java:487-493)
 func TestNormaliseStripNonDiallableCharacters(t *testing.T) {
-	assert.Equal(t, "03*456+1#234", normalizeDiallableCharsOnly("03*4-56&+1a#234"), "Conversion did not correctly remove non-diallable characters")
+	assert.Equal(t, "03*456+1#234", NormalizeDiallableCharsOnly("03*4-56&+1a#234"), "Conversion did not correctly remove non-diallable characters")
 }
 
 // testIsViablePhoneNumber (PhoneNumberUtilTest.java:1798-1813)

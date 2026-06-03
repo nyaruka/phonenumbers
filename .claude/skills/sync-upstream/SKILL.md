@@ -132,6 +132,15 @@ For each non-empty diff, translate the relevant change into the Go port. While d
   iterator semantics with no Go equivalent). Don't re-introduce it. If you make a *new*
   intentional divergence, record it.
 - **Keep it a port, not an enhancement.** Match libphonenumber's behaviour; don't add API.
+- **Java overloads → distinct Go names.** Go can't overload, so a set of Java methods sharing a
+  name maps to several Go funcs: give one the bare PascalCase name and suffix the rest with the
+  parameter(s) that distinguish them. Follow the established pattern — `Parse`/`ParseToNumber`,
+  `IsNumberMatch`/`IsNumberMatchWithNumbers`/`IsNumberMatchWithOneNumber`,
+  `GetExampleNumberForType`/`GetExampleNumberForTypeInRegion`,
+  `IsPossibleNumber`/`IsPossibleNumberFromRegion`, `IsNumberGeographical`/`IsNumberGeographicalForType`.
+  Porting an overload that *already exists* upstream is faithful porting, not the "don't add API"
+  case above — fill the gap rather than skipping it. Which overload keeps the bare name (and the
+  exact suffix) is a judgment call; flag new public names in the PR.
 - **Don't hand-edit generated files** (`metadata/version.go`, `*.pb.go`) or the `data/` blobs —
   those come from Phase 1 / protoc.
 
