@@ -23,6 +23,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/nyaruka/phonenumbers/v2/metadata"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -560,7 +561,7 @@ func TestFormattingRuleHasFirstGroupOnly(t *testing.T) {
 
 func BenchmarkLoadMetadata(b *testing.B) {
 	for i := 0; i <= b.N; i++ {
-		initMetadata()
+		_, _ = metadata.Load()
 	}
 }
 

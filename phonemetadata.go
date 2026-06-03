@@ -12,3 +12,6 @@ type (
 	PhoneNumberDesc         = metadata.PhoneNumberDesc
 	NumberFormat            = metadata.NumberFormat
 )
+
+// MetadataCollection returns the embedded territory metadata collection.
+func MetadataCollection() (*PhoneMetadataCollection, error) { return metadata.Collection() }

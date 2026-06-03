@@ -2,9 +2,15 @@
 // Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 
-import "errors"
+import (
+	"errors"
 
-var ErrEmptyMetadata = errors.New("empty metadata")
+	"github.com/nyaruka/phonenumbers/v2/metadata"
+)
+
+// ErrEmptyMetadata is an alias for metadata.ErrEmptyMetadata, kept here for
+// backwards compatibility.
+var ErrEmptyMetadata = metadata.ErrEmptyMetadata
 
 var ErrTooShortAfterIDD = errors.New("phone number had an IDD, but " +
 	"after this was not long enough to be a viable phone number")

@@ -28,12 +28,12 @@ formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
 ## Updating Metadata
 
 The `buildmetadata` command clones an upstream libphonenumber release and rebuilds the
-embedded metadata into the gzipped files under `data/`:
+embedded metadata into gzipped files under `data/` and `metadata/data/`:
 
- * `data/metadata.xml.gz` - core territory metadata (number formats, validation rules, etc.)
+ * `metadata/data/metadata.xml.gz` - core territory metadata (number formats, validation rules, etc.)
  * `data/shortnumber_metadata.xml.gz` - short-number metadata
  * `data/alternateformats_metadata.xml.gz` - alternate format patterns used when matching
- * `data/countrycode_to_region.xml.gz` - maps a country code to its region(s)
+ * `metadata/data/countrycode_to_region.xml.gz` - maps a country code to its region(s)
  * `data/prefix_to_carriers/*.gz` - maps a phone number prefix to a carrier
  * `data/prefix_to_geocodings/*.gz` - maps a phone number prefix to a geographic area
  * `data/prefix_to_timezone.xml.gz` - maps a phone number prefix to a timezone
