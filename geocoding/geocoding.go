@@ -44,6 +44,31 @@ func GetDescriptionForValidNumber(number *phonenumbers.PhoneNumber, lang string)
 	return countryNameForNumber(number, lang)
 }
 
+// GetDescriptionForValidNumberForUserRegion is as per GetDescriptionForValidNumber but
+// also considers the region of the user. If the phone number is from the same region as
+// the user, only a lower-level description will be returned, if one exists. Otherwise,
+// the phone number's region will be returned, with optionally some more detailed
+// information.
+//
+// For example, for a user from the region "US" (United States), we would show "Mountain
+// View, CA" for a particular number, omitting the United States from the description. For
+// a user from the United Kingdom (region "GB"), for the same number we may show "Mountain
+// View, CA, United States" or even just "United States". The number is assumed to be
+// valid. userRegion should be a two-letter upper-case CLDR region code.
+func GetDescriptionForValidNumberForUserRegion(number *phonenumbers.PhoneNumber, lang string, userRegion string) (string, error) {
+	// If the user region matches the number's region, then we just show the lower-level
+	// description, if one exists - if no description exists, we will show the region(country)
+	// name for the number.
+	regionCode := phonenumbers.GetRegionCodeForNumber(number)
+	if userRegion == regionCode {
+		return GetDescriptionForValidNumber(number, lang)
+	}
+	// Otherwise, we just show the region(country) name for now.
+	return regionDisplayName(regionCode, lang), nil
+	// TODO: Concatenate the lower-level and country-name information in an appropriate
+	// way for each language.
+}
+
 // GetDescriptionForNumber returns a text description in the given language for the
 // given phone number: the name of the geographical area it is from for
 // geographical numbers, otherwise the name of the country, and the empty string
@@ -56,6 +81,18 @@ func GetDescriptionForNumber(number *phonenumbers.PhoneNumber, lang string) (str
 		return countryNameForNumber(number, lang)
 	}
 	return GetDescriptionForValidNumber(number, lang)
+}
+
+// GetDescriptionForNumberForUserRegion is as per GetDescriptionForValidNumberForUserRegion
+// but explicitly checks the validity of the number passed in.
+func GetDescriptionForNumberForUserRegion(number *phonenumbers.PhoneNumber, lang string, userRegion string) (string, error) {
+	numberType := phonenumbers.GetNumberType(number)
+	if numberType == phonenumbers.UNKNOWN {
+		return "", nil
+	} else if !phonenumbers.IsNumberGeographicalForType(numberType, int(number.GetCountryCode())) {
+		return countryNameForNumber(number, lang)
+	}
+	return GetDescriptionForValidNumberForUserRegion(number, lang, userRegion)
 }
 
 // countryNameForNumber returns the name of the country, in the given language,
