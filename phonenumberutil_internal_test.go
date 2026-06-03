@@ -1,22 +1,11 @@
 package phonenumbers
 
-// Ad-hoc tests against the REAL embedded metadata, inherited from before the
-// upstream test suite was adopted. Because they assert on real-world numbering
-// data, they break whenever upstream refreshes metadata.
-//
-// MIGRATION: these are being replaced by faithful ports of upstream's own tests
-// (in phonenumberutil_test.go and the _types_/_format_/_parse_ split files), which
-// run against the frozen synthetic test metadata and so never go stale. As each
-// upstream test method is ported, delete the corresponding ad-hoc test below. The
-// goal is for this file to shrink to (near) nothing.
-//
-// Residue that has no upstream equivalent in PhoneNumberUtilTest and will linger
-// until/unless upstream's other test modules are ported: the geocoding/carrier/
-// timezone lookups (upstream java/geocoder + java/carrier test modules), the
-// RegexCache tests (upstream internal/), and a handful of Go-specific unit tests
-// for internal helpers with no standalone upstream test (e.g. normalizeDigits's
-// keep-non-digits branch, setItalianLeadingZerosForPhoneNumber, maybeStripExtension,
-// mergeLengths, formattingRuleHasFirstGroupOnly).
+// Go-specific unit tests with no standalone counterpart in upstream's
+// PhoneNumberUtilTest: direct tests of internal helpers (normalizeDigits's
+// keep-non-digits branch, setItalianLeadingZerosForPhoneNumber,
+// maybeStripExtension, mergeLengths, formattingRuleHasFirstGroupOnly) and the
+// RegexCache strictness behaviour (which upstream tests in its own internal/
+// module).
 
 import (
 	"reflect"
