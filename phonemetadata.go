@@ -15,7 +15,3 @@ type (
 
 // MetadataCollection returns the embedded territory metadata collection.
 func MetadataCollection() (*PhoneMetadataCollection, error) { return metadata.Collection() }
-
-// MetadataVersion is the upstream libphonenumber release tag the embedded
-// metadata was built from. It aliases metadata.Version.
-const MetadataVersion = metadata.Version
