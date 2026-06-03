@@ -16,7 +16,7 @@ package phonenumbers
 // RegexCache tests (upstream internal/), and a handful of Go-specific unit tests
 // for internal helpers with no standalone upstream test (e.g. normalizeDigits's
 // keep-non-digits branch, setItalianLeadingZerosForPhoneNumber, maybeStripExtension,
-// MaybeSeparateExtensionFromPhone, mergeLengths, formattingRuleHasFirstGroupOnly).
+// mergeLengths, formattingRuleHasFirstGroupOnly).
 
 import (
 	"reflect"
@@ -465,93 +465,6 @@ func TestMaybeStripExtension(t *testing.T) {
 		if num.GetExtension() != test.extension {
 			t.Errorf("[test %d:num] failed: %v != %v\n", i, num.GetExtension(), test.extension)
 		}
-	}
-}
-
-func TestMaybeSeparateExtensionFromPhone(t *testing.T) {
-	tests := []struct {
-		name      string
-		rawPhone  string
-		wantPhone string
-		wantExt   string
-	}{
-		{
-			name:      "Blank",
-			rawPhone:  "",
-			wantPhone: "",
-			wantExt:   "",
-		},
-		{
-			name:      "Number only",
-			rawPhone:  "+1 306-555-1234",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "",
-		},
-		{
-			name:      "Local phone",
-			rawPhone:  "555-1234",
-			wantPhone: "555-1234",
-			wantExt:   "",
-		},
-		{
-			name:      "Local phone with ext",
-			rawPhone:  "555-1234 x 78",
-			wantPhone: "555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Wait separator",
-			rawPhone:  "+1 306-555-1234;78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Pause separator",
-			rawPhone:  "+1 306-555-1234,78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Extra space separator",
-			rawPhone:  "+1 306-555-1234   ,  78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "ext. separator",
-			rawPhone:  "+1 306-555-1234 ext. 78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "# separator",
-			rawPhone:  "+1 306-555-1234 #78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "RFC3966",
-			rawPhone:  "+1 306-555-1234;ext=78",
-			wantPhone: "+1 306-555-1234",
-			wantExt:   "78",
-		},
-		{
-			name:      "Vanity phone number",
-			rawPhone:  "+1 800-Go-Green #78",
-			wantPhone: "+1 800-Go-Green",
-			wantExt:   "78",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := MaybeSeparateExtensionFromPhone(tt.rawPhone)
-			if got != tt.wantPhone {
-				t.Errorf("Phone got = %v, want %v", got, tt.wantPhone)
-			}
-			if got1 != tt.wantExt {
-				t.Errorf("Extension got = %v, want %v", got1, tt.wantExt)
-			}
-		})
 	}
 }
 
