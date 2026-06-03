@@ -39,7 +39,7 @@ embedded metadata into gzipped files under `data/` and `metadata/data/`:
  * `data/prefix_to_timezone.xml.gz` - maps a phone number prefix to a timezone
 
 By default it resolves the **latest** upstream release tag, rebuilds `data/`, and records
-the release it used in the generated `metadataversion.go` (the exported `MetadataVersion`
+the release it used in the generated `metadata/version.go` (the `metadata.Version`
 constant):
 
 ```bash

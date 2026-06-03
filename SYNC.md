@@ -15,7 +15,7 @@ across the tree and can't go stale file-by-file.
 
 The **metadata** version isn't tracked here — `cmd/buildmetadata` records the upstream
 release it built `data/` from in the generated
-[`metadataversion.go`](metadataversion.go) (the exported `MetadataVersion` constant).
+[`metadata/version.go`](metadata/version.go) (the `metadata.Version` constant).
 
 ## Building metadata
 
@@ -23,11 +23,11 @@ release it built `data/` from in the generated
 
 1. `go run ./cmd/buildmetadata` — resolves the **latest** libphonenumber release tag,
    clones it, rebuilds `data/`, and records the tag in the generated
-   [`metadataversion.go`](metadataversion.go). To rebuild from a specific release
+   [`metadata/version.go`](metadata/version.go). To rebuild from a specific release
    instead (e.g. to reproduce older embedded data), pass the tag:
    `go run ./cmd/buildmetadata v9.0.31`.
 2. `go test ./...` and fix any reconciliation differences.
-3. Review the `data/` and `metadataversion.go` diff. Reconciling the *code* against the
+3. Review the `data/`, `metadata/data/` and `metadata/version.go` diff. Reconciling the *code* against the
    new release is a human judgment, so it isn't automated: bump **Code reconciled
    against** in **Baseline** above and add a **Sync log** entry.
 
@@ -46,7 +46,7 @@ Newest first. Each entry: what was reconciled or pulled, and the upstream versio
 
 - **2026-06-02** — Established this file; moved per-file version headers here.
   `cmd/buildmetadata` now resolves the latest upstream release tag itself (pass a tag to
-  pin a specific release) and records it in the generated `metadataversion.go`, so the
+  pin a specific release) and records it in the generated `metadata/version.go`, so the
   embedded metadata's version is no longer hand-maintained here. `go test ./...` green.
 - **2026-06-01** (v1.8.0) — Regenerated all metadata against `v9.0.31`; refactored to
   ease upstream syncing.
