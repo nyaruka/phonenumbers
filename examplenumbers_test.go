@@ -28,7 +28,7 @@ import (
 // not in possibleExpectedTypes.
 func checkNumbersValidAndCorrectType(exampleNumberRequestedType PhoneNumberType, possibleExpectedTypes map[PhoneNumberType]bool) (invalidCases, wrongTypeCases []*PhoneNumber) {
 	for regionCode := range GetSupportedRegions() {
-		exampleNumber := GetExampleNumberForType(regionCode, exampleNumberRequestedType)
+		exampleNumber := GetExampleNumberForTypeInRegion(regionCode, exampleNumberRequestedType)
 		if exampleNumber == nil {
 			continue
 		}
@@ -108,7 +108,7 @@ func TestCanBeInternationallyDialledExampleNumbers(t *testing.T) {
 			t.Errorf("error parsing no-international-dialling example for %s: %s", regionCode, err)
 			continue
 		}
-		if canBeInternationallyDialled(exampleNumber) {
+		if CanBeInternationallyDialled(exampleNumber) {
 			wrongTypeCases = append(wrongTypeCases, exampleNumber)
 		}
 	}
@@ -156,7 +156,7 @@ func TestEveryTypeHasAnExampleNumber(t *testing.T) {
 // one, falling back to non-geographical entities.
 func getExampleNumberForTypeAnyRegion(t *testing.T, typ PhoneNumberType) *PhoneNumber {
 	for regionCode := range GetSupportedRegions() {
-		if exampleNumber := GetExampleNumberForType(regionCode, typ); exampleNumber != nil {
+		if exampleNumber := GetExampleNumberForTypeInRegion(regionCode, typ); exampleNumber != nil {
 			return exampleNumber
 		}
 	}

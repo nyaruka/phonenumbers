@@ -445,7 +445,7 @@ func (aytf *AsYouTypeFormatter) attemptToFormatAccruedDigits() string {
 			// retain all the number entered and not change in order to match a format (of same
 			// leading digits and length) display in that way.
 			fullOutput := aytf.appendNationalNumber(formattedNumber)
-			formattedNumberDigitsOnly := normalizeDiallableCharsOnly(fullOutput)
+			formattedNumberDigitsOnly := NormalizeDiallableCharsOnly(fullOutput)
 			if formattedNumberDigitsOnly == aytf.accruedInputWithoutFormatting.String() {
 				// If it's the same (i.e entered number and format is same), then it's safe to
 				// return this in formatted number as nothing is lost / added.

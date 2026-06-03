@@ -193,13 +193,13 @@ func TestGetInstanceLoadInternationalTollFreeMetadata(t *testing.T) {
 
 func TestIsNumberGeographical(t *testing.T) {
 	useTestMetadata(t)
-	assert.False(t, isNumberGeographical(bsMobile()))              // Bahamas, mobile phone number.
-	assert.True(t, isNumberGeographical(auNumber()))               // Australian fixed line number.
-	assert.False(t, isNumberGeographical(internationalTollFree())) // International toll free number.
+	assert.False(t, IsNumberGeographical(bsMobile()))              // Bahamas, mobile phone number.
+	assert.True(t, IsNumberGeographical(auNumber()))               // Australian fixed line number.
+	assert.False(t, IsNumberGeographical(internationalTollFree())) // International toll free number.
 	// We test that mobile phone numbers in relevant regions are indeed considered geographical.
-	assert.True(t, isNumberGeographical(arMobile()))  // Argentina, mobile phone number.
-	assert.True(t, isNumberGeographical(mxMobile1())) // Mexico, mobile phone number.
-	assert.True(t, isNumberGeographical(mxMobile2())) // Mexico, another mobile phone number.
+	assert.True(t, IsNumberGeographical(arMobile()))  // Argentina, mobile phone number.
+	assert.True(t, IsNumberGeographical(mxMobile1())) // Mexico, mobile phone number.
+	assert.True(t, IsNumberGeographical(mxMobile2())) // Mexico, another mobile phone number.
 }
 
 func TestGetLengthOfGeographicalAreaCode(t *testing.T) {
@@ -328,16 +328,16 @@ func TestGetExampleNumber(t *testing.T) {
 	useTestMetadata(t)
 	assert.True(t, proto.Equal(deNumber(), GetExampleNumber(regionCode.DE)))
 
-	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForType(regionCode.DE, FIXED_LINE)))
+	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForTypeInRegion(regionCode.DE, FIXED_LINE)))
 	// Should return the same response if asked for FIXED_LINE_OR_MOBILE too.
-	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForType(regionCode.DE, FIXED_LINE_OR_MOBILE)))
-	assert.NotNil(t, GetExampleNumberForType(regionCode.US, FIXED_LINE))
-	assert.NotNil(t, GetExampleNumberForType(regionCode.US, MOBILE))
+	assert.True(t, proto.Equal(deNumber(), GetExampleNumberForTypeInRegion(regionCode.DE, FIXED_LINE_OR_MOBILE)))
+	assert.NotNil(t, GetExampleNumberForTypeInRegion(regionCode.US, FIXED_LINE))
+	assert.NotNil(t, GetExampleNumberForTypeInRegion(regionCode.US, MOBILE))
 
 	// We have data for the US, but no data for VOICEMAIL, so return null.
-	assert.Nil(t, GetExampleNumberForType(regionCode.US, VOICEMAIL))
+	assert.Nil(t, GetExampleNumberForTypeInRegion(regionCode.US, VOICEMAIL))
 	// CS is an invalid region, so we have no data for it.
-	assert.Nil(t, GetExampleNumberForType("CS", MOBILE))
+	assert.Nil(t, GetExampleNumberForTypeInRegion("CS", MOBILE))
 	// RegionCode 001 is reserved for supporting non-geographical country calling code. We don't
 	// support getting an example number for it with this method.
 	assert.Nil(t, GetExampleNumber(regionCode.UN001))
@@ -352,24 +352,9 @@ func TestGetExampleNumberForNonGeoEntity(t *testing.T) {
 func TestGetExampleNumberWithoutRegion(t *testing.T) {
 	useTestMetadata(t)
 	// In our test metadata we don't cover all types: in our real metadata, we do.
-	// NOTE: the Go API has no region-less GetExampleNumberForType overload (an
-	// upstream API gap, tracked separately), so this mirrors the Java intent by
-	// iterating the supported regions and returning the first example for the type.
-	assert.NotNil(t, exampleNumberForTypeAnyRegion(FIXED_LINE))
-	assert.NotNil(t, exampleNumberForTypeAnyRegion(MOBILE))
-	assert.NotNil(t, exampleNumberForTypeAnyRegion(PREMIUM_RATE))
-}
-
-// exampleNumberForTypeAnyRegion is the test-local stand-in for upstream's
-// getExampleNumberForType(PhoneNumberType) no-region overload: it iterates every
-// supported region and returns the first example number found for the given type.
-func exampleNumberForTypeAnyRegion(typ PhoneNumberType) *PhoneNumber {
-	for regionCode := range GetSupportedRegions() {
-		if example := GetExampleNumberForType(regionCode, typ); example != nil {
-			return example
-		}
-	}
-	return nil
+	assert.NotNil(t, GetExampleNumberForType(FIXED_LINE))
+	assert.NotNil(t, GetExampleNumberForType(MOBILE))
+	assert.NotNil(t, GetExampleNumberForType(PREMIUM_RATE))
 }
 
 func TestIsPremiumRate(t *testing.T) {
@@ -628,17 +613,17 @@ func TestCanBeInternationallyDialled(t *testing.T) {
 	useTestMetadata(t)
 	// We have no-international-dialling rules for the US in our test metadata that
 	// say that toll-free numbers cannot be dialled internationally.
-	assert.False(t, canBeInternationallyDialled(usTollFree()))
+	assert.False(t, CanBeInternationallyDialled(usTollFree()))
 
 	// Normal US numbers can be internationally dialled.
-	assert.True(t, canBeInternationallyDialled(usNumber()))
+	assert.True(t, CanBeInternationallyDialled(usNumber()))
 
 	// Invalid number.
-	assert.True(t, canBeInternationallyDialled(usLocalNumber()))
+	assert.True(t, CanBeInternationallyDialled(usLocalNumber()))
 
 	// We have no data for NZ - should return true.
-	assert.True(t, canBeInternationallyDialled(nzNumber()))
-	assert.True(t, canBeInternationallyDialled(internationalTollFree()))
+	assert.True(t, CanBeInternationallyDialled(nzNumber()))
+	assert.True(t, CanBeInternationallyDialled(internationalTollFree()))
 }
 
 func TestIsAlphaNumber(t *testing.T) {

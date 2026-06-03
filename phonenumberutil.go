@@ -599,7 +599,7 @@ func normalizeDigits(number string, keepNonDigits bool) string {
 // Normalizes a string of characters representing a phone number. This
 // strips all characters which are not diallable on a mobile phone
 // keypad (including all non-ASCII digits).
-func normalizeDiallableCharsOnly(number string) string {
+func NormalizeDiallableCharsOnly(number string) string {
 	return normalizeHelper(
 		number, DIALLABLE_CHAR_MAPPINGS, true /* remove non matches */)
 }
@@ -667,7 +667,7 @@ func GetLengthOfGeographicalAreaCode(number *PhoneNumber) int {
 		return 0
 	}
 
-	if !isNumberGeographical(number) {
+	if !IsNumberGeographical(number) {
 		return 0
 	}
 
@@ -865,11 +865,17 @@ func formattingRuleHasFirstGroupOnly(nationalPrefixFormattingRule string) bool {
 // overlap for geocodable and non-geocodable numbers. Also, if new phone
 // number types were added, we should check if this other method should be
 // updated too.
-func isNumberGeographical(phoneNumber *PhoneNumber) bool {
-	numberType := GetNumberType(phoneNumber)
-	return numberType == FIXED_LINE ||
-		numberType == FIXED_LINE_OR_MOBILE ||
-		(GEO_MOBILE_COUNTRIES[phoneNumber.GetCountryCode()] && numberType == MOBILE)
+func IsNumberGeographical(phoneNumber *PhoneNumber) bool {
+	return IsNumberGeographicalForType(GetNumberType(phoneNumber), int(phoneNumber.GetCountryCode()))
+}
+
+// Overload of IsNumberGeographical(PhoneNumber), since calculating the phone
+// number type is expensive; if we have already done this, we don't want to do
+// it again.
+func IsNumberGeographicalForType(phoneNumberType PhoneNumberType, countryCallingCode int) bool {
+	return phoneNumberType == FIXED_LINE ||
+		phoneNumberType == FIXED_LINE_OR_MOBILE ||
+		(GEO_MOBILE_COUNTRIES[int32(countryCallingCode)] && phoneNumberType == MOBILE)
 }
 
 // Helper function to check region code is not unknown or null.
@@ -1133,7 +1139,7 @@ func FormatNumberForMobileDialing(
 			// always works, except for numbers which might potentially be
 			// short numbers, which are always dialled in national format.
 			regionMetadata := getMetadataForRegion(regionCallingFrom)
-			if canBeInternationallyDialled(numberNoExt) && testNumberLength(GetNationalSignificantNumber(numberNoExt), regionMetadata, UNKNOWN) != TOO_SHORT {
+			if CanBeInternationallyDialled(numberNoExt) && testNumberLength(GetNationalSignificantNumber(numberNoExt), regionMetadata, UNKNOWN) != TOO_SHORT {
 				formattedNumber = Format(numberNoExt, INTERNATIONAL)
 			} else {
 				formattedNumber = Format(numberNoExt, NATIONAL)
@@ -1158,13 +1164,13 @@ func FormatNumberForMobileDialing(
 			if (regionCode == REGION_CODE_FOR_NON_GEO_ENTITY ||
 				((regionCode == "MX" || regionCode == "CL" || regionCode == "UZ") &&
 					isFixedLineOrMobile)) &&
-				canBeInternationallyDialled(numberNoExt) {
+				CanBeInternationallyDialled(numberNoExt) {
 				formattedNumber = Format(numberNoExt, INTERNATIONAL)
 			} else {
 				formattedNumber = Format(numberNoExt, NATIONAL)
 			}
 		}
-	} else if isValidNumber && canBeInternationallyDialled(numberNoExt) {
+	} else if isValidNumber && CanBeInternationallyDialled(numberNoExt) {
 		// We assume that short numbers are not diallable from outside
 		// their region, so if a number is not a valid regular length
 		// phone number, we treat it as if it cannot be internationally
@@ -1177,7 +1183,7 @@ func FormatNumberForMobileDialing(
 	if withFormatting {
 		return formattedNumber
 	}
-	return normalizeDiallableCharsOnly(formattedNumber)
+	return NormalizeDiallableCharsOnly(formattedNumber)
 }
 
 // Formats a phone number for out-of-country dialing purposes. If no
@@ -1359,8 +1365,8 @@ func FormatInOriginalFormat(number *PhoneNumber, regionCallingFrom string) strin
 	// formatting, we return the formatted phone number; otherwise we
 	// return the raw input the user entered.
 	if len(formattedNumber) != 0 && len(rawInput) > 0 {
-		normalizedFormattedNumber := normalizeDiallableCharsOnly(formattedNumber)
-		normalizedRawInput := normalizeDiallableCharsOnly(rawInput)
+		normalizedFormattedNumber := NormalizeDiallableCharsOnly(formattedNumber)
+		normalizedRawInput := NormalizeDiallableCharsOnly(rawInput)
 		if normalizedFormattedNumber != normalizedRawInput {
 			formattedNumber = rawInput
 		}
@@ -1726,7 +1732,7 @@ func formatNsnUsingPatternWithCarrier(
 
 // Gets a valid number for the specified region.
 func GetExampleNumber(regionCode string) *PhoneNumber {
-	return GetExampleNumberForType(regionCode, FIXED_LINE)
+	return GetExampleNumberForTypeInRegion(regionCode, FIXED_LINE)
 }
 
 // GetInvalidExampleNumber returns an invalid number for the specified region.
@@ -1758,7 +1764,10 @@ func GetInvalidExampleNumber(regionCode string) *PhoneNumber {
 }
 
 // Gets a valid number for the specified region and number type.
-func GetExampleNumberForType(regionCode string, typ PhoneNumberType) *PhoneNumber {
+//
+// This is the upstream getExampleNumberForType(String, PhoneNumberType)
+// overload; GetExampleNumberForType is the region-less variant.
+func GetExampleNumberForTypeInRegion(regionCode string, typ PhoneNumberType) *PhoneNumber {
 	// Check the region code is valid.
 	if !isValidRegionCode(regionCode) {
 		return nil
@@ -1773,6 +1782,29 @@ func GetExampleNumberForType(regionCode string, typ PhoneNumberType) *PhoneNumbe
 		}
 		return num
 	}
+	return nil
+}
+
+// Gets a valid number for the specified number type (it may belong to any
+// country).
+func GetExampleNumberForType(typ PhoneNumberType) *PhoneNumber {
+	for regionCode := range GetSupportedRegions() {
+		exampleNumber := GetExampleNumberForTypeInRegion(regionCode, typ)
+		if exampleNumber != nil {
+			return exampleNumber
+		}
+	}
+	// If there wasn't an example number for a region, try the non-geographical entities.
+	for countryCallingCode := range GetSupportedGlobalNetworkCallingCodes() {
+		desc := getNumberDescByType(getMetadataForNonGeographicalRegion(countryCallingCode), typ)
+		if exNum := desc.GetExampleNumber(); len(exNum) > 0 {
+			num, err := Parse("+"+strconv.Itoa(countryCallingCode)+exNum, UNKNOWN_REGION)
+			if err == nil {
+				return num
+			}
+		}
+	}
+	// There are no example numbers of this type for any country in the library.
 	return nil
 }
 
@@ -2135,6 +2167,27 @@ func IsAlphaNumber(number string) bool {
 func IsPossibleNumber(number *PhoneNumber) bool {
 	possible := IsPossibleNumberWithReason(number)
 	return possible == IS_POSSIBLE || possible == IS_POSSIBLE_LOCAL_ONLY
+}
+
+// IsPossibleNumberFromRegion checks whether a phone number is a possible number
+// given a number in the form of a string, and the region where the number could
+// be dialled from. It provides a more lenient check than IsValidNumber. See
+// IsPossibleNumber for details.
+//
+// This method first parses the number, then invokes IsPossibleNumber with the
+// resultant PhoneNumber object.
+//
+// regionDialingFrom is the region we expect the number to be dialled from. Note
+// this is different from the region where the number belongs. For example, the
+// number +1 650 253 0000 belongs to the US. When written in this form, it can
+// be dialled from any region. When written as 650 253 0000, it can only be
+// dialled from within the US.
+func IsPossibleNumberFromRegion(number string, regionDialingFrom string) bool {
+	num, err := Parse(number, regionDialingFrom)
+	if err != nil {
+		return false
+	}
+	return IsPossibleNumber(num)
 }
 
 // descHasPossibleNumberData returns true if there is any possible-length data
@@ -3122,9 +3175,9 @@ func IsNumberMatchWithOneNumber(
 // Returns true if the number can be dialled from outside the region, or
 // unknown. If the number can only be dialled from within the region,
 // returns false. Does not check the number is a valid number. Note that,
-// at the moment, this method does not handle short numbers.
-// TODO: Make this method public when we have enough metadata to make it worthwhile.
-func canBeInternationallyDialled(number *PhoneNumber) bool {
+// at the moment, this method does not handle short numbers (which are
+// currently all presumed to not be diallable from outside their country).
+func CanBeInternationallyDialled(number *PhoneNumber) bool {
 	metadata := getMetadataForRegion(GetRegionCodeForNumber(number))
 	if metadata == nil {
 		// Note numbers belonging to non-geographical entities
