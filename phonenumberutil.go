@@ -1,5 +1,4 @@
 // Port of java/libphonenumber/src/com/google/i18n/phonenumbers/PhoneNumberUtil.java.
-// Functions are kept in upstream source order to ease syncing.
 package phonenumbers
 
 import (

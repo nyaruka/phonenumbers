@@ -1,5 +1,4 @@
 // Port of java/carrier/src/com/google/i18n/phonenumbers/PhoneNumberToCarrierMapper.java.
-// Functions are kept in upstream source order to ease syncing.
 package carrier
 
 import (

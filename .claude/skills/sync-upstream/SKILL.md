@@ -114,8 +114,11 @@ git -C _build diff "$BASE" "$TARGET" -- "$(echo "$P" | sed 's#/src/#/test/#')"
 
 For each non-empty diff, translate the relevant change into the Go port. While doing so:
 
-- **Preserve upstream source order.** The headers promise functions/methods are kept in
-  upstream order to ease the *next* sync — keep it that way.
+- **Preserve upstream source order.** The core ports keep their functions/methods in the same
+  order as the upstream Java so the *next* sync's diff lines up — maintain that as you reconcile.
+  A few files are deliberately reorganized for Go idiom and don't follow upstream order
+  (`metadata/source.go`, `internal/regexcache`, `internal/regexbasedmatcher`,
+  `internal/prefixmapper`); that's expected.
 - **Honor deliberate divergences.** Check SYNC.md before porting something back; some upstream
   code is intentionally absent (e.g. Mockito-style metadata-source injection tests, Java
   iterator semantics with no Go equivalent). Don't re-introduce it. If you make a *new*
