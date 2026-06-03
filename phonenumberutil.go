@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"unicode"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
 	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 	"google.golang.org/protobuf/proto"
 )
@@ -477,36 +477,6 @@ var (
 		86: true, // China
 	}
 )
-
-var (
-	// A cache for frequently used region-specific regular expressions.
-	// The initial capacity is set to 100 as this seems to be an optimal
-	// value for Android, based on performance measurements.
-	regexCache    = make(map[string]*regexp.Regexp)
-	regCacheMutex sync.RWMutex
-)
-
-func readFromRegexCache(key string) (*regexp.Regexp, bool) {
-	regCacheMutex.RLock()
-	v, ok := regexCache[key]
-	regCacheMutex.RUnlock()
-	return v, ok
-}
-
-func writeToRegexCache(key string, value *regexp.Regexp) {
-	regCacheMutex.Lock()
-	regexCache[key] = value
-	regCacheMutex.Unlock()
-}
-
-func regexFor(pattern string) *regexp.Regexp {
-	regex, found := readFromRegexCache(pattern)
-	if !found {
-		regex = regexp.MustCompile(pattern)
-		writeToRegexCache(pattern, regex)
-	}
-	return regex
-}
 
 // Attempts to extract a possible number from the string passed in.
 // This currently strips all leading characters that cannot be used to
@@ -1655,7 +1625,7 @@ func chooseFormattingPatternForNumber(
 		size := len(leadingDigitsPattern)
 
 		patP := `^(?:` + numFormat.GetPattern() + `)$` // Strictly match
-		m := regexFor(patP)
+		m := regexcache.For(patP)
 
 		if size == 0 {
 			mat := m.FindString(nationalNumber)
@@ -1668,7 +1638,7 @@ func chooseFormattingPatternForNumber(
 
 		// We always use the last leading_digits_pattern, as it is the
 		// most detailed.
-		reg := regexFor(leadingDigitsPattern[size-1])
+		reg := regexcache.For(leadingDigitsPattern[size-1])
 
 		inds := reg.FindStringIndex(nationalNumber)
 		if len(inds) > 0 && inds[0] == 0 && m.MatchString(nationalNumber) { // inds[0] == 0 ensures strict match of leading digits
@@ -1696,7 +1666,7 @@ func formatNsnUsingPatternWithCarrier(
 	carrierCode string) string {
 
 	numberFormatRule := formattingPattern.GetFormat()
-	m := regexFor(formattingPattern.GetPattern())
+	m := regexcache.For(formattingPattern.GetPattern())
 
 	formattedNationalNumber := ""
 	if numberFormat == NATIONAL &&
@@ -1997,13 +1967,13 @@ func isNumberPossibleForDesc(nationalNumber string, numberDesc *PhoneNumberDesc)
 		}
 	}
 	possiblePattern := "^(?:" + numberDesc.GetNationalNumberPattern() + ")$" // Strictly match
-	pat := regexFor(possiblePattern)
+	pat := regexcache.For(possiblePattern)
 	return pat.MatchString(nationalNumber)
 }
 
 func isNumberMatchingDesc(nationalNumber string, numberDesc *PhoneNumberDesc) bool {
 	patP := "^(?:" + numberDesc.GetNationalNumberPattern() + ")$" // Strictly match
-	pat := regexFor(patP)
+	pat := regexcache.For(patP)
 	return isNumberPossibleForDesc(nationalNumber, numberDesc) &&
 		pat.MatchString(nationalNumber)
 
@@ -2067,7 +2037,7 @@ func getRegionCodeForNumberFromRegionList(
 		var metadata *PhoneMetadata = getMetadataForRegion(regionCode)
 		if len(metadata.GetLeadingDigits()) > 0 {
 			patP := "^(?:" + metadata.GetLeadingDigits() + ")" // Non capturing grouping to support OR'ed alternatives (e.g. 555|1[78]|2)
-			pat := regexFor(patP)
+			pat := regexcache.For(patP)
 			if pat.MatchString(nationalNumber) {
 				return regionCode
 			}
@@ -2488,7 +2458,7 @@ func maybeExtractCountryCode(
 					normalizedNumber[len(defaultCountryCodeString):])
 				generalDesc        = defaultRegionMetadata.GetGeneralDesc()
 				patP               = `^(?:` + generalDesc.GetNationalNumberPattern() + `)$` // Strictly match
-				validNumberPattern = regexFor(patP)
+				validNumberPattern = regexcache.For(patP)
 			)
 			maybeStripNationalPrefixAndCarrierCode(
 				potentialNationalNumber,
@@ -2564,7 +2534,7 @@ func maybeStripInternationalPrefixAndNormalize(
 	}
 
 	// Attempt to parse the first digits as an international prefix.
-	iddPattern := regexFor(possibleIddPrefix)
+	iddPattern := regexcache.For(possibleIddPrefix)
 	number.ResetWithString(normalize(string(numBytes)))
 	if parsePrefixAsIdd(iddPattern, number) {
 		return PhoneNumber_FROM_NUMBER_WITH_IDD
@@ -2587,10 +2557,10 @@ func maybeStripNationalPrefixAndCarrierCode(
 	}
 	possibleNationalPrefix = "^(?:" + possibleNationalPrefix + ")" // Strictly match from string start
 	// Attempt to parse the first digits as a national prefix.
-	prefixMatcher := regexFor(possibleNationalPrefix)
+	prefixMatcher := regexcache.For(possibleNationalPrefix)
 	if prefixMatcher.MatchString(number.String()) {
 		natRulePattern := "^(?:" + metadata.GetGeneralDesc().GetNationalNumberPattern() + ")$" // Strictly match
-		nationalNumberRule := regexFor(natRulePattern)
+		nationalNumberRule := regexcache.For(natRulePattern)
 		// Check if the original number is viable.
 		isViableOriginalNumber := nationalNumberRule.Match(number.Bytes())
 		// prefixMatcher.group(numOfGroups) == null implies nothing was

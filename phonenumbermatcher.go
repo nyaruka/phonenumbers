@@ -9,6 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
 	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 )
 
@@ -352,7 +353,7 @@ func CheckNumberGroupingIsValid(
 		for _, alternateFormat := range alternateFormats.GetNumberFormat() {
 			if len(alternateFormat.GetLeadingDigitsPattern()) > 0 {
 				// There is only one leading digits pattern for alternate formats.
-				pattern := regexFor(alternateFormat.GetLeadingDigitsPattern()[0])
+				pattern := regexcache.For(alternateFormat.GetLeadingDigitsPattern()[0])
 				if loc := pattern.FindStringIndex(nationalSignificantNumber); loc == nil || loc[0] != 0 {
 					// Leading digits don't match (lookingAt); try another one.
 					continue
@@ -597,7 +598,7 @@ func MatchNationalNumber(number string, numberDesc *PhoneNumberDesc, allowPrefix
 	if len(nationalNumberPattern) == 0 {
 		return false
 	}
-	return match(number, regexFor(nationalNumberPattern), allowPrefixMatch)
+	return match(number, regexcache.For(nationalNumberPattern), allowPrefixMatch)
 }
 
 func match(number string, pattern *regexp.Regexp, allowPrefixMatch bool) bool {
@@ -606,6 +607,6 @@ func match(number string, pattern *regexp.Regexp, allowPrefixMatch bool) bool {
 		return false
 	}
 	patP := `^(?:` + pattern.String() + `)$` // Strictly match
-	pat := regexFor(patP)
+	pat := regexcache.For(patP)
 	return pat.MatchString(number) || allowPrefixMatch
 }

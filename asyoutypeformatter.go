@@ -9,6 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
 	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 	"google.golang.org/protobuf/proto"
 )
@@ -229,7 +230,7 @@ func (aytf *AsYouTypeFormatter) narrowDownPossibleFormats(leadingDigits string) 
 		if count := len(format.GetLeadingDigitsPattern()) - 1; count < lastLeadingDigitsPattern {
 			lastLeadingDigitsPattern = count
 		}
-		leadingDigitsPattern := regexFor("^(?:" + format.GetLeadingDigitsPattern()[lastLeadingDigitsPattern] + ")")
+		leadingDigitsPattern := regexcache.For("^(?:" + format.GetLeadingDigitsPattern()[lastLeadingDigitsPattern] + ")")
 		if !leadingDigitsPattern.MatchString(leadingDigits) {
 			aytf.possibleFormats = append(aytf.possibleFormats[:i], aytf.possibleFormats[i+1:]...)
 		} else {
@@ -255,7 +256,7 @@ func (aytf *AsYouTypeFormatter) getFormattingTemplate(numberPattern, numberForma
 	// Creates a phone number consisting only of the digit 9 that matches the
 	// numberPattern by applying the pattern to the longestPhoneNumber string.
 	longestPhoneNumber := "999999999999999"
-	m := regexFor(numberPattern)
+	m := regexcache.For(numberPattern)
 	aPhoneNumber := m.FindString(longestPhoneNumber) // this will always succeed
 	// No formatting template can be created if the number of digits entered so far is
 	// longer than the maximum the current formatting rule can accommodate.
@@ -434,7 +435,7 @@ func (aytf *AsYouTypeFormatter) isDigitOrLeadingPlusSign(nextChar rune) bool {
 // template whose leadingDigitsPattern also matches the input.
 func (aytf *AsYouTypeFormatter) attemptToFormatAccruedDigits() string {
 	for _, numberFormat := range aytf.possibleFormats {
-		m := regexFor("^(?:" + numberFormat.GetPattern() + ")$")
+		m := regexcache.For("^(?:" + numberFormat.GetPattern() + ")$")
 		if m.MatchString(aytf.nationalNumber.String()) {
 			aytf.shouldAddSpaceAfterNationalPrefix =
 				NATIONAL_PREFIX_SEPARATORS_PATTERN.MatchString(numberFormat.GetNationalPrefixFormattingRule())
@@ -553,7 +554,7 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 		aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
 		aytf.isCompleteNumber = true
 	} else if len(aytf.currentMetadata.GetNationalPrefixForParsing()) > 0 {
-		nationalPrefixForParsing := regexFor("^(?:" + aytf.currentMetadata.GetNationalPrefixForParsing() + ")")
+		nationalPrefixForParsing := regexcache.For("^(?:" + aytf.currentMetadata.GetNationalPrefixForParsing() + ")")
 		// Since some national prefix patterns are entirely optional, check that a national
 		// prefix could actually be extracted.
 		loc := nationalPrefixForParsing.FindStringIndex(aytf.nationalNumber.String())
@@ -576,7 +577,7 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 // returns true when accruedInputWithoutFormatting begins with the plus sign or
 // valid IDD for defaultCountry.
 func (aytf *AsYouTypeFormatter) attemptToExtractIdd() bool {
-	internationalPrefix := regexFor("^(?:" + "\\" + string(PLUS_SIGN) + "|" +
+	internationalPrefix := regexcache.For("^(?:" + "\\" + string(PLUS_SIGN) + "|" +
 		aytf.currentMetadata.GetInternationalPrefix() + ")")
 	accruedInputWithoutFormatting := aytf.accruedInputWithoutFormatting.String()
 	loc := internationalPrefix.FindStringIndex(accruedInputWithoutFormatting)

@@ -20,7 +20,6 @@ package phonenumbers
 
 import (
 	"reflect"
-	"regexp"
 	"sync"
 	"testing"
 
@@ -499,48 +498,6 @@ func TestMergeLengths(t *testing.T) {
 		if !reflect.DeepEqual(merged, tc.merged) {
 			t.Errorf("[test %d:num] failed for l1: %v and l2: %v: %v != %v\n", i, tc.l1, tc.l2, tc.merged, merged)
 		}
-	}
-}
-
-func TestRegexCacheWrite(t *testing.T) {
-	pattern1 := "TestRegexCacheWrite"
-	if _, found1 := readFromRegexCache(pattern1); found1 {
-		t.Errorf("pattern |%v| is in the cache", pattern1)
-	}
-	regex1 := regexFor(pattern1)
-	cachedRegex1, found1 := readFromRegexCache(pattern1)
-	if !found1 {
-		t.Errorf("pattern |%v| is not in the cache", pattern1)
-	}
-	if regex1 != cachedRegex1 {
-		t.Error("expected the same instance, but got a different one")
-	}
-	pattern2 := pattern1 + "."
-	if _, found2 := readFromRegexCache(pattern2); found2 {
-		t.Errorf("pattern |%v| is in the cache", pattern2)
-	}
-}
-
-func TestRegexCacheRead(t *testing.T) {
-	pattern1 := "TestRegexCacheRead"
-	if _, found1 := readFromRegexCache(pattern1); found1 {
-		t.Errorf("pattern |%v| is in the cache", pattern1)
-	}
-	regex1 := regexp.MustCompile(pattern1)
-	writeToRegexCache(pattern1, regex1)
-	if cachedRegex1 := regexFor(pattern1); cachedRegex1 != regex1 {
-		t.Error("expected the same instance, but got a different one")
-	}
-	cachedRegex1, found1 := readFromRegexCache(pattern1)
-	if !found1 {
-		t.Errorf("pattern |%v| is not in the cache", pattern1)
-	}
-	if cachedRegex1 != regex1 {
-		t.Error("expected the same instance, but got a different one")
-	}
-	pattern2 := pattern1 + "."
-	if _, found2 := readFromRegexCache(pattern2); found2 {
-		t.Errorf("pattern |%v| is in the cache", pattern2)
 	}
 }
 
