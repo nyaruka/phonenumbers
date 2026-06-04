@@ -26,7 +26,7 @@ import (
 type AsYouTypeFormatter struct {
 	currentOutput string
 	// formattingTemplate holds the current template with not-yet-entered digits
-	// represented by the DIGIT_PLACEHOLDER rune. It is kept as a []rune (rather
+	// represented by the digitPlaceholder rune. It is kept as a []rune (rather
 	// than a StringBuilder) because the placeholder is a multi-byte rune and the
 	// template is manipulated by character index, where rune indices match Java's
 	// UTF-16 char indices for every (BMP) character a phone number can contain.
@@ -74,33 +74,33 @@ type AsYouTypeFormatter struct {
 	possibleFormats         []*NumberFormat
 }
 
-// SEPARATOR_BEFORE_NATIONAL_NUMBER is the character used when appropriate to
+// separatorBeforeNationalNumber is the character used when appropriate to
 // separate a prefix, such as a long NDD or a country calling code, from the
 // national number.
-const SEPARATOR_BEFORE_NATIONAL_NUMBER = ' '
+const separatorBeforeNationalNumber = ' '
 
-// MIN_LEADING_DIGITS_LENGTH is the minimum length of national number accrued
+// minLeadingDigitsLength is the minimum length of national number accrued
 // that is required to trigger the formatter. The first element of the
 // leadingDigitsPattern of each numberFormat contains a regular expression that
 // matches up to this number of digits.
-const MIN_LEADING_DIGITS_LENGTH = 3
+const minLeadingDigitsLength = 3
 
-// DIGIT_PLACEHOLDER represents the digits that have not been entered yet, using
+// digitPlaceholder represents the digits that have not been entered yet, using
 //  , the punctuation space.
-const DIGIT_PLACEHOLDER = " "
+const digitPlaceholder = " "
 
 const digitPlaceholderRune = ' '
 
 var (
-	// EMPTY_METADATA is used as a default instance of metadata. It allows the
+	// emptyMetadata is used as a default instance of metadata. It allows the
 	// formatter to function with an incorrect region code, even if formatting only
 	// works for numbers specified with "+".
-	EMPTY_METADATA = &PhoneMetadata{
+	emptyMetadata = &PhoneMetadata{
 		Id:                  proto.String("<ignored>"),
 		InternationalPrefix: proto.String("NA"),
 	}
 
-	// ELIGIBLE_FORMAT_PATTERN determines if a numberFormat under availableFormats is
+	// eligibleFormatPattern determines if a numberFormat under availableFormats is
 	// eligible to be used by the formatter. It is eligible when the format element
 	// under numberFormat contains groups of the dollar sign followed by a single
 	// digit, separated by valid phone number punctuation. This prevents invalid
@@ -109,13 +109,13 @@ var (
 	// output pattern to ensure no data is lost while formatting; when we format as
 	// you type, this should always be the case. Anchored to require a full match,
 	// mirroring Java's Matcher.matches().
-	ELIGIBLE_FORMAT_PATTERN = regexp.MustCompile("^(?:[" + VALID_PUNCTUATION + "]*" +
-		"\\$1" + "[" + VALID_PUNCTUATION + "]*(?:\\$\\d" + "[" + VALID_PUNCTUATION + "]*)*)$")
+	eligibleFormatPattern = regexp.MustCompile("^(?:[" + validPunctuation + "]*" +
+		"\\$1" + "[" + validPunctuation + "]*(?:\\$\\d" + "[" + validPunctuation + "]*)*)$")
 
-	// NATIONAL_PREFIX_SEPARATORS_PATTERN is a set of characters that, if found in a
+	// nationalPrefixSeparatorsPattern is a set of characters that, if found in a
 	// national prefix formatting rule, are an indicator to us that we should
 	// separate the national prefix from the number when formatting.
-	NATIONAL_PREFIX_SEPARATORS_PATTERN = regexp.MustCompile("[- ]")
+	nationalPrefixSeparatorsPattern = regexp.MustCompile("[- ]")
 )
 
 // GetAsYouTypeFormatter returns an AsYouTypeFormatter for the specific region.
@@ -148,7 +148,7 @@ func (aytf *AsYouTypeFormatter) getMetadataForRegion(regionCode string) *PhoneMe
 	if metadata != nil {
 		return metadata
 	}
-	return EMPTY_METADATA
+	return emptyMetadata
 }
 
 // maybeCreateNewTemplate returns true if a new template is created as opposed to
@@ -166,7 +166,7 @@ func (aytf *AsYouTypeFormatter) maybeCreateNewTemplate() bool {
 		if aytf.createFormattingTemplate(numberFormat) {
 			aytf.currentFormattingPattern = pattern
 			aytf.shouldAddSpaceAfterNationalPrefix =
-				NATIONAL_PREFIX_SEPARATORS_PATTERN.MatchString(numberFormat.GetNationalPrefixFormattingRule())
+				nationalPrefixSeparatorsPattern.MatchString(numberFormat.GetNationalPrefixFormattingRule())
 			// With a new formatting template, the matched position using the old template
 			// needs to be reset.
 			aytf.lastMatchPosition = 0
@@ -208,7 +208,7 @@ func (aytf *AsYouTypeFormatter) getAvailableFormats(leadingDigits string) {
 			// requires one, so we discard it.
 			continue
 		}
-		if ELIGIBLE_FORMAT_PATTERN.MatchString(format.GetFormat()) {
+		if eligibleFormatPattern.MatchString(format.GetFormat()) {
 			aytf.possibleFormats = append(aytf.possibleFormats, format)
 		}
 	}
@@ -216,7 +216,7 @@ func (aytf *AsYouTypeFormatter) getAvailableFormats(leadingDigits string) {
 }
 
 func (aytf *AsYouTypeFormatter) narrowDownPossibleFormats(leadingDigits string) {
-	indexOfLeadingDigitsPattern := len(leadingDigits) - MIN_LEADING_DIGITS_LENGTH
+	indexOfLeadingDigitsPattern := len(leadingDigits) - minLeadingDigitsLength
 	i := 0
 	for i < len(aytf.possibleFormats) {
 		format := aytf.possibleFormats[i]
@@ -264,8 +264,8 @@ func (aytf *AsYouTypeFormatter) getFormattingTemplate(numberPattern, numberForma
 	}
 	// Formats the number according to numberFormat.
 	template := m.ReplaceAllString(aPhoneNumber, numberFormat)
-	// Replaces each digit with character DIGIT_PLACEHOLDER.
-	template = strings.ReplaceAll(template, "9", DIGIT_PLACEHOLDER)
+	// Replaces each digit with character digitPlaceholder.
+	template = strings.ReplaceAll(template, "9", digitPlaceholder)
 	return template
 }
 
@@ -342,13 +342,13 @@ func (aytf *AsYouTypeFormatter) inputDigitWithOptionToRememberPosition(nextChar 
 			// Add an additional space to separate long NDD and national significant number for
 			// readability. We don't set shouldAddSpaceAfterNationalPrefix to true, since we don't
 			// want this to change later when we choose formatting templates.
-			aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
+			aytf.prefixBeforeNationalNumber.WriteByte(byte(separatorBeforeNationalNumber))
 			return aytf.attemptToChoosePatternWithPrefixExtracted()
 		}
 		return aytf.accruedInput.String()
 	}
 
-	// We start to attempt to format only when at least MIN_LEADING_DIGITS_LENGTH
+	// We start to attempt to format only when at least minLeadingDigitsLength
 	// digits (the plus sign is counted as a digit as well for this purpose) have been
 	// entered.
 	switch aytf.accruedInputWithoutFormatting.Len() {
@@ -426,7 +426,7 @@ func (aytf *AsYouTypeFormatter) ableToExtractLongerNdd() bool {
 func (aytf *AsYouTypeFormatter) isDigitOrLeadingPlusSign(nextChar rune) bool {
 	return unicode.IsDigit(nextChar) ||
 		(utf8.RuneCount(aytf.accruedInput.Bytes()) == 1 &&
-			PLUS_CHARS_PATTERN.MatchString(string(nextChar)))
+			plusCharsPattern.MatchString(string(nextChar)))
 }
 
 // attemptToFormatAccruedDigits checks to see if there is an exact pattern match
@@ -437,7 +437,7 @@ func (aytf *AsYouTypeFormatter) attemptToFormatAccruedDigits() string {
 		m := regexcache.For("^(?:" + numberFormat.GetPattern() + ")$")
 		if m.MatchString(aytf.nationalNumber.String()) {
 			aytf.shouldAddSpaceAfterNationalPrefix =
-				NATIONAL_PREFIX_SEPARATORS_PATTERN.MatchString(numberFormat.GetNationalPrefixFormattingRule())
+				nationalPrefixSeparatorsPattern.MatchString(numberFormat.GetNationalPrefixFormattingRule())
 			formattedNumber := m.ReplaceAllString(aytf.nationalNumber.String(), numberFormat.GetFormat())
 			// Check that we did not remove nor add any extra digits when we matched this
 			// formatting pattern. This usually happens after we entered the last digit during
@@ -484,11 +484,11 @@ func (aytf *AsYouTypeFormatter) GetRememberedPosition() int {
 func (aytf *AsYouTypeFormatter) appendNationalNumber(nationalNumber string) string {
 	prefixBeforeNationalNumberLength := aytf.prefixBeforeNationalNumber.Len()
 	if aytf.shouldAddSpaceAfterNationalPrefix && prefixBeforeNationalNumberLength > 0 &&
-		aytf.prefixBeforeNationalNumber.CharAt(prefixBeforeNationalNumberLength-1) != byte(SEPARATOR_BEFORE_NATIONAL_NUMBER) {
+		aytf.prefixBeforeNationalNumber.CharAt(prefixBeforeNationalNumberLength-1) != byte(separatorBeforeNationalNumber) {
 		// We want to add a space after the national prefix if the national prefix formatting
 		// rule indicates that this would normally be done, with the exception of the case
 		// where we already appended a space because the NDD was surprisingly long.
-		return aytf.prefixBeforeNationalNumber.String() + string(SEPARATOR_BEFORE_NATIONAL_NUMBER) + nationalNumber
+		return aytf.prefixBeforeNationalNumber.String() + string(separatorBeforeNationalNumber) + nationalNumber
 	}
 	return aytf.prefixBeforeNationalNumber.String() + nationalNumber
 }
@@ -497,9 +497,9 @@ func (aytf *AsYouTypeFormatter) appendNationalNumber(nationalNumber string) stri
 // returns a string which contains the formatted version of the digits entered so
 // far.
 func (aytf *AsYouTypeFormatter) attemptToChooseFormattingPattern() string {
-	// We start to attempt to format only when at least MIN_LEADING_DIGITS_LENGTH
+	// We start to attempt to format only when at least minLeadingDigitsLength
 	// digits of national number (excluding national prefix) have been entered.
-	if aytf.nationalNumber.Len() >= MIN_LEADING_DIGITS_LENGTH {
+	if aytf.nationalNumber.Len() >= minLeadingDigitsLength {
 		aytf.getAvailableFormats(aytf.nationalNumber.String())
 		// See if the accrued digits can be formatted properly already.
 		formattedNumber := aytf.attemptToFormatAccruedDigits()
@@ -550,7 +550,7 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 	if aytf.isNanpaNumberWithNationalPrefix() {
 		startOfNationalNumber = 1
 		aytf.prefixBeforeNationalNumber.WriteByte('1')
-		aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
+		aytf.prefixBeforeNationalNumber.WriteByte(byte(separatorBeforeNationalNumber))
 		aytf.isCompleteNumber = true
 	} else if len(aytf.currentMetadata.GetNationalPrefixForParsing()) > 0 {
 		nationalPrefixForParsing := regexcache.For("^(?:" + aytf.currentMetadata.GetNationalPrefixForParsing() + ")")
@@ -576,7 +576,7 @@ func (aytf *AsYouTypeFormatter) removeNationalPrefixFromNationalNumber() string 
 // returns true when accruedInputWithoutFormatting begins with the plus sign or
 // valid IDD for defaultCountry.
 func (aytf *AsYouTypeFormatter) attemptToExtractIdd() bool {
-	internationalPrefix := regexcache.For("^(?:" + "\\" + string(PLUS_SIGN) + "|" +
+	internationalPrefix := regexcache.For("^(?:" + "\\" + string(plusSign) + "|" +
 		aytf.currentMetadata.GetInternationalPrefix() + ")")
 	accruedInputWithoutFormatting := aytf.accruedInputWithoutFormatting.String()
 	loc := internationalPrefix.FindStringIndex(accruedInputWithoutFormatting)
@@ -587,8 +587,8 @@ func (aytf *AsYouTypeFormatter) attemptToExtractIdd() bool {
 		aytf.nationalNumber.WriteString(accruedInputWithoutFormatting[startOfCountryCallingCode:])
 		aytf.prefixBeforeNationalNumber.Reset()
 		aytf.prefixBeforeNationalNumber.WriteString(accruedInputWithoutFormatting[:startOfCountryCallingCode])
-		if aytf.accruedInputWithoutFormatting.CharAt(0) != byte(PLUS_SIGN) {
-			aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
+		if aytf.accruedInputWithoutFormatting.CharAt(0) != byte(plusSign) {
+			aytf.prefixBeforeNationalNumber.WriteByte(byte(separatorBeforeNationalNumber))
 		}
 		return true
 	}
@@ -618,7 +618,7 @@ func (aytf *AsYouTypeFormatter) attemptToExtractCountryCallingCode() bool {
 	}
 	countryCodeString := strconv.Itoa(countryCode)
 	aytf.prefixBeforeNationalNumber.WriteString(countryCodeString)
-	aytf.prefixBeforeNationalNumber.WriteByte(byte(SEPARATOR_BEFORE_NATIONAL_NUMBER))
+	aytf.prefixBeforeNationalNumber.WriteByte(byte(separatorBeforeNationalNumber))
 	// When we have successfully extracted the IDD, the previously extracted NDD should
 	// be cleared because it is no longer valid.
 	aytf.extractedNationalPrefix = ""
@@ -633,7 +633,7 @@ func (aytf *AsYouTypeFormatter) attemptToExtractCountryCallingCode() bool {
 // assumes its input is either a digit or the plus sign.
 func (aytf *AsYouTypeFormatter) normalizeAndAccrueDigitsAndPlusSign(nextChar rune, rememberPosition bool) rune {
 	var normalizedChar rune
-	if nextChar == PLUS_SIGN {
+	if nextChar == plusSign {
 		normalizedChar = nextChar
 		aytf.accruedInputWithoutFormatting.WriteRune(nextChar)
 	} else {
@@ -654,7 +654,7 @@ func (aytf *AsYouTypeFormatter) normalizeAndAccrueDigitsAndPlusSign(nextChar run
 func (aytf *AsYouTypeFormatter) inputDigitHelper(nextChar rune) string {
 	// Note that formattingTemplate is not guaranteed to have a value, it could be
 	// empty, e.g. when the next digit is entered after extracting an IDD or NDD.
-	// Find the next DIGIT_PLACEHOLDER at or after lastMatchPosition; because every
+	// Find the next digitPlaceholder at or after lastMatchPosition; because every
 	// placeholder before lastMatchPosition has already been filled in with a digit,
 	// this is also the first remaining placeholder overall.
 	idx := -1

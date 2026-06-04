@@ -329,14 +329,14 @@ func matchesPossibleNumberAndNationalNumber(number string, numberDesc *PhoneNumb
 
 // In these countries, if extra digits are added to an emergency number, it no longer connects
 // to the emergency service.
-var REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT = []string{"BR", "CL", "NI"}
+var regionsWhereEmergencyNumbersMustBeExact = []string{"BR", "CL", "NI"}
 
 func matchesEmergencyNumber(number string, regionCode string, allowPrefixMatch bool) bool {
 	possibleNumber := extractPossibleNumber(number)
 	// Returns false if the number starts with a plus sign. We don't believe dialing the country
 	// code before emergency numbers (e.g. +1911) works, but later, if that proves to work, we can
 	// add additional logic here to handle it.
-	if PLUS_CHARS_PATTERN.MatchString(possibleNumber) {
+	if plusCharsPattern.MatchString(possibleNumber) {
 		return false
 	}
 
@@ -347,7 +347,7 @@ func matchesEmergencyNumber(number string, regionCode string, allowPrefixMatch b
 
 	normalizedNumber := NormalizeDigitsOnly(possibleNumber)
 
-	allowPrefixMatchForRegion := allowPrefixMatch && !slices.Contains(REGIONS_WHERE_EMERGENCY_NUMBERS_MUST_BE_EXACT, regionCode)
+	allowPrefixMatchForRegion := allowPrefixMatch && !slices.Contains(regionsWhereEmergencyNumbersMustBeExact, regionCode)
 	return regexbasedmatcher.MatchNationalNumber(normalizedNumber, phoneMetadata.GetEmergency(), allowPrefixMatchForRegion)
 }
 

@@ -88,13 +88,29 @@ const (
 	TOO_LONG
 )
 
-// TODO(ttacon): leniency comments?
+// Leniency when finding potential phone numbers in text segments. The levels
+// here are ordered in increasing strictness.
 type Leniency int
 
 const (
+	// POSSIBLE accepts phone numbers that are possible (see IsPossibleNumber),
+	// but not necessarily valid (see IsValidNumber).
 	POSSIBLE Leniency = iota
+	// VALID accepts phone numbers that are possible and valid. Numbers written
+	// in national format must have their national-prefix present if it is
+	// usually written for a number of this type.
 	VALID
+	// STRICT_GROUPING accepts phone numbers that are valid and are grouped in a
+	// possible way for this locale. For example, a US number written as
+	// "65 02 53 00 00" or "650253 0000" is not accepted at this level, whereas
+	// "650 253 0000", "650 2530000" or "6502530000" are. Numbers with more than
+	// one '/' symbol in the national significant number are also dropped.
 	STRICT_GROUPING
+	// EXACT_GROUPING accepts phone numbers that are valid and are grouped in the
+	// same way that we would have formatted it, or as a single block. For
+	// example, a US number written as "650 2530000" is not accepted at this
+	// level, whereas "650 253 0000" or "6502530000" are. Numbers with more than
+	// one '/' symbol are also dropped.
 	EXACT_GROUPING
 )
 

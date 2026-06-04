@@ -39,7 +39,7 @@ var (
 	matchingBrackets *regexp.Regexp
 
 	// phoneNumberMatcherPattern is the phone number pattern used by find. It is
-	// similar to VALID_PHONE_NUMBER but with bounded captures, no surrounding
+	// similar to validPhoneNumber but with bounded captures, no surrounding
 	// whitespace and no alpha (vanity) digits.
 	phoneNumberMatcherPattern *regexp.Regexp
 
@@ -59,7 +59,7 @@ var (
 		// "12345 - 332-445-1234 is my number."
 		regexp.MustCompile(`(?:\p{Z}-|-\p{Z})\p{Z}*(.+)`),
 		// Various types of wide hyphens, without enforcing a surrounding space.
-		regexp.MustCompile("[‒-―－]\\p{Z}*(.+)"),
+		regexp.MustCompile(`[‒-―－]\p{Z}*(.+)`),
 		// Breaks on a full stop - e.g. "12345. 332-445-1234 is my number."
 		regexp.MustCompile(`\.+\p{Z}*([^.]+)`),
 		// Breaks on space - e.g. "3324451234 8002341234"
@@ -92,27 +92,27 @@ func init() {
 	// The maximum number of digits allowed in a digit-separated block. As we
 	// allow all digits in a single block, set high enough to accommodate the
 	// entire national number and the international country code.
-	digitBlockLimit := MAX_LENGTH_FOR_NSN + MAX_LENGTH_COUNTRY_CODE
+	digitBlockLimit := maxLengthForNSN + maxLengthCountryCode
 	// Limit on the number of blocks separated by punctuation.
 	blockLimit := limit(0, digitBlockLimit)
 
 	// A punctuation sequence allowing white space.
-	punctuation := "[" + VALID_PUNCTUATION + "]" + punctuationLimit
+	punctuation := "[" + validPunctuation + "]" + punctuationLimit
 	// A digits block without punctuation.
-	digitSequence := DIGITS + limit(1, digitBlockLimit)
+	digitSequence := digitsClass + limit(1, digitBlockLimit)
 
-	leadClassChars := openingParens + PLUS_CHARS
+	leadClassChars := openingParens + plusChars
 	leadClass := "[" + leadClassChars + "]"
 	leadClassPattern = regexp.MustCompile("^(?:" + leadClass + ")")
 
 	// Phone number pattern allowing optional punctuation. REGEX_FLAGS in upstream
 	// is UNICODE_CHARACTER_CLASS|CASE_INSENSITIVE; RE2's \p classes are already
 	// Unicode-aware, so we only need the (?i) flag (needed by the extension
-	// labels in EXTN_PATTERNS_FOR_MATCHING).
+	// labels in extnPatternsForMatching).
 	phoneNumberMatcherPattern = regexp.MustCompile(
 		"(?i)(?:" + leadClass + punctuation + ")" + leadLimit +
 			digitSequence + "(?:" + punctuation + digitSequence + ")" + blockLimit +
-			"(?:" + EXTN_PATTERNS_FOR_MATCHING + ")?")
+			"(?:" + extnPatternsForMatching + ")?")
 }
 
 // matcherState is the iteration tristate of a phoneNumberMatcher.
@@ -171,7 +171,7 @@ func (m *phoneNumberMatcher) find(index int) *PhoneNumberMatch {
 		candidate := m.text[start : index+loc[1]]
 
 		// Check for extra numbers at the end.
-		candidate = trimAfterFirstMatch(SECOND_NUMBER_START_PATTERN, candidate)
+		candidate = trimAfterFirstMatch(secondNumberStartPattern, candidate)
 
 		if match := m.extractMatch(candidate, start); match != nil {
 			return match
@@ -246,14 +246,14 @@ func (m *phoneNumberMatcher) extractInnerMatch(candidate string, offset int) *Ph
 			}
 			if isFirstMatch {
 				// Handle any group before this one too.
-				group := trimAfterFirstMatch(UNWANTED_END_CHAR_PATTERN, candidate[:g[0]])
+				group := trimAfterFirstMatch(unwantedEndCharPattern, candidate[:g[0]])
 				if match := m.parseAndVerify(group, offset); match != nil {
 					return match
 				}
 				m.maxTries--
 				isFirstMatch = false
 			}
-			group := trimAfterFirstMatch(UNWANTED_END_CHAR_PATTERN, candidate[g[2]:g[3]])
+			group := trimAfterFirstMatch(unwantedEndCharPattern, candidate[g[2]:g[3]])
 			if match := m.parseAndVerify(group, offset+g[2]); match != nil {
 				return match
 			}
@@ -456,7 +456,7 @@ func allNumberGroupsAreExactlyPresent(
 // String.split(\D+) semantics (leading empty strings are kept, trailing empty
 // strings are dropped).
 func splitNonDigits(s string) []string {
-	groups := NON_DIGITS_PATTERN.Split(s, -1)
+	groups := nonDigitsPattern.Split(s, -1)
 	// Java's String.split with the default limit drops trailing empty strings.
 	for len(groups) > 0 && groups[len(groups)-1] == "" {
 		groups = groups[:len(groups)-1]
