@@ -1,3 +1,7 @@
+v2.0.0-rc1 (2026-06-04)
+-------------------------
+ * Refactor to make this project a stricter port of the upstream library. See UPGRADING.md for details.
+
 v1.8.0 (2026-06-01)
 -------------------------
  * Update metadata (regenerated against upstream libphonenumber 9.0.32-SNAPSHOT)
