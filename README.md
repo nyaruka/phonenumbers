@@ -5,24 +5,24 @@
 Go port of Google's [libphonenumber](https://github.com/google/libphonenumber). Specifically it tracks the **Java** implementation — that library's reference implementation, of which the C++ and JavaScript versions are themselves ports. This library is used daily in production for parsing and validation of numbers worldwide and is well maintained.
 
 > [!IMPORTANT]
-> This project is a strict port and strives to match as closely as possible the functionality in libphonenumber. Please don't submit feature requests for functionality that doesn't exist there.
+> This project is a strict port of libphonenumber. Please do not submit feature requests for functionality that doesn't exist there. It also uses the metadata from libphonenumber, so if you encounter unexpected parsing results, please first verify if the problem affects libphonenumber and report there if so. You can use the [online demo](https://libphonenumber.appspot.com) to quickly check parsing results.
 
-> [!IMPORTANT]
-> This project uses the metadata from libphonenumber, so if you encounter unexpected parsing results, please first verify if the problem affects libphonenumber and report there if so. You can use the [online demo](https://libphonenumber.appspot.com) to quickly check parsing results.
+> [!TIP]
+> See [`UPGRADING.md`](UPGRADING.md) for details on upgrading from 1.x to 2.x.
 
 ## Usage
 
 ```go
+import "github.com/nyaruka/phonenumbers/v2"
+
 // parse our phone number
-num, err := phonenumbers.Parse("6502530000", "US")
+num, err := phonenumbers.Parse("8886418722", "US")
 
 // format it using national format
-formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
+formatted := phonenumbers.Format(num, phonenumbers.NATIONAL)
 ```
 
-## Updating 
-
-As we don't want to bump our major semantic version number in step with the upstream library, we use independent version numbers from the Google libphonenumber repo.
+## Updating
 
 ### Metadata
 
