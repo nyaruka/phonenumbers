@@ -1,6 +1,6 @@
 # ☎️ phonenumbers 
 [![Build Status](https://github.com/nyaruka/phonenumbers/workflows/CI/badge.svg)](https://github.com/nyaruka/phonenumbers/actions?query=workflow%3ACI) 
-[![Go Reference](https://pkg.go.dev/badge/github.com/nyaruka/phonenumbers.svg)](https://pkg.go.dev/github.com/nyaruka/phonenumbers)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nyaruka/phonenumbers/v2.svg)](https://pkg.go.dev/github.com/nyaruka/phonenumbers/v2)
 
 Go port of Google's [libphonenumber](https://github.com/google/libphonenumber). Specifically it tracks the **Java** implementation — that library's reference implementation, of which the C++ and JavaScript versions are themselves ports. This library is used daily in production for parsing and validation of numbers worldwide and is well maintained.
 
