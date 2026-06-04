@@ -132,6 +132,13 @@ For each non-empty diff, translate the relevant change into the Go port. While d
   iterator semantics with no Go equivalent). Don't re-introduce it. If you make a *new*
   intentional divergence, record it.
 - **Keep it a port, not an enhancement.** Match libphonenumber's behaviour; don't add API.
+- **Mirror Java's visibility.** A symbol that is `public` in Java is exported in Go; one that is
+  `private`/package-private/`@VisibleForTesting` stays unexported (lower-case camelCase). Constants
+  especially: `REGION_CODE_FOR_NON_GEO_ENTITY` is the *only* `public static final` upstream, so it
+  is the lone exported constant — every other ported regex/char-class/length-limit/mapping is
+  unexported. The deliberate exceptions are the Go-idiomatic `Err*` vars (standing in for Java's
+  checked exceptions) and the public enum types. Don't export a new internal just because it's a
+  package-level `const`/`var`.
 - **Java overloads → distinct Go names.** Go can't overload, so a set of Java methods sharing a
   name maps to several Go funcs: give one the bare PascalCase name and suffix the rest with the
   parameter(s) that distinguish them. Follow the established pattern — `Parse`/`ParseToNumber`,

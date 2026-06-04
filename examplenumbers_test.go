@@ -165,7 +165,7 @@ func getExampleNumberForTypeAnyRegion(t *testing.T, typ PhoneNumberType) *PhoneN
 		if desc.GetExampleNumber() == "" {
 			continue
 		}
-		exampleNumber, err := Parse("+"+strconv.Itoa(callingCode)+desc.GetExampleNumber(), UNKNOWN_REGION)
+		exampleNumber, err := Parse("+"+strconv.Itoa(callingCode)+desc.GetExampleNumber(), unknownRegion)
 		if err != nil {
 			t.Logf("error parsing non-geo example for calling code %d: %s", callingCode, err)
 			continue
