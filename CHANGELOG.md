@@ -1,3 +1,7 @@
+v2.0.0-rc2 (2026-06-15)
+-------------------------
+ * Update metadata
+
 v2.0.0-rc1 (2026-06-04)
 -------------------------
  * Refactor to make this project a stricter port of the upstream library. See UPGRADING.md for details.
