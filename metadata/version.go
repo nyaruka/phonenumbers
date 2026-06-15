@@ -4,4 +4,4 @@ package metadata
 
 // Version is the upstream libphonenumber release tag that the embedded metadata
 // was built from.
-const Version = "v9.0.31"
+const Version = "v9.0.32"
