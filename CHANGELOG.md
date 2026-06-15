@@ -1,3 +1,8 @@
+v2.0.1 (2026-06-15)
+-------------------------
+ * Update CI actions to latest major versions
+ * Pin golang.org/x/text to v0.34.0 to keep go directive at 1.24
+
 v2.0.0 (2026-06-15)
 -------------------------
  * Update /x/text/ dependency
