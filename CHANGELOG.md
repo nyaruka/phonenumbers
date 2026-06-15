@@ -1,3 +1,8 @@
+v2.0.0 (2026-06-15)
+-------------------------
+ * Update /x/text/ dependency
+ * Update metadata
+
 v2.0.0-rc2 (2026-06-15)
 -------------------------
  * Update metadata
