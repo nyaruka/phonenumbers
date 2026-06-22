@@ -1,3 +1,7 @@
+v2.0.2 (2026-06-22)
+-------------------------
+ * Update metadata
+
 v2.0.1 (2026-06-15)
 -------------------------
  * Update CI actions to latest major versions
