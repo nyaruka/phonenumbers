@@ -1,6 +1,7 @@
 *.cov
 .DS_Store
 .vscode
+.devcontainer
 *~
 deploy
 fabfile.py
@@ -9,5 +10,7 @@ functions/*
 dist/
 _build
 
-# Claude Code agent worktrees
-.claude/worktrees/
+# AI
+.claude/
+CLAUDE.md
+AGENTS.md
