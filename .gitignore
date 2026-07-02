@@ -1,17 +1,19 @@
-*.cov
-.DS_Store
-.vscode
-.devcontainer
+# General
 *~
+.DS_Store
+.vscode/
+.devcontainer
 deploy
 fabfile.py
-fabfile.pyc
-functions/*
-dist/
-_build
 
 # AI
 .claude/
 CLAUDE.md
 CODEX.md
 AGENTS.md
+
+# Go
+coverage.text
+
+# Project specific
+_build
