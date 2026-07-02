@@ -13,4 +13,5 @@ _build
 # AI
 .claude/
 CLAUDE.md
+CODEX.md
 AGENTS.md
