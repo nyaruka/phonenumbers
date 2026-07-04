@@ -10,6 +10,12 @@ Go port of Google's [libphonenumber](https://github.com/google/libphonenumber). 
 > [!TIP]
 > See [`UPGRADING.md`](UPGRADING.md) for details on upgrading from 1.x to 2.x.
 
+## Installation
+
+```bash
+% go get github.com/nyaruka/phonenumbers/v2
+```
+
 ## Usage
 
 ```go
@@ -17,6 +23,9 @@ import "github.com/nyaruka/phonenumbers/v2"
 
 // parse our phone number
 num, err := phonenumbers.Parse("8886418722", "US")
+
+// check if it's a valid number for its region
+valid := phonenumbers.IsValidNumber(num)
 
 // format it using national format
 formatted := phonenumbers.Format(num, phonenumbers.NATIONAL)
