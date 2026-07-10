@@ -25,8 +25,8 @@ Run everything from the repo root (`/Users/rowan/nyaruka/phonenumbers`).
 
 The skill takes one optional argument selecting which operation(s) to run:
 
-- `/sync-upstream data` — Phase 1 only (metadata regen). This is what the scheduled weekly
-  metadata-update task invokes.
+- `/sync-upstream data` — Phase 1 only (metadata regen). An automated metadata update can
+  invoke this mode directly.
 - `/sync-upstream code` — Phase 2 only (code reconciliation, against the metadata version
   already built — see the note at the top of Phase 2).
 - `/sync-upstream` — both phases, in order.
@@ -59,8 +59,9 @@ Review the diff. The only files that may change are the embedded blobs (`data/`,
 `metadata/data/`, `carrier/data/`, `geocoding/data/`, `timezone/data/`) and the generated
 `metadata/version.go`:
 
-- **No changes at all** → the metadata is already up to date; report that and stop (nothing
-  to commit).
+- **No changes at all** → the metadata is already up to date; nothing to commit for Phase 1.
+  In `data` mode report that and stop; in a full sync continue to Phase 2 (the code baseline
+  may still lag the metadata version).
 - **Changes outside that set** → something is wrong; stop and report the unexpected changes
   without committing.
 
