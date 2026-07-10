@@ -1,6 +1,6 @@
 ---
 name: sync-upstream
-description: Sync this Go port with a new upstream google/libphonenumber release — regenerate the embedded metadata and reconcile the ported Java logic. Use when the user says "sync with upstream", "do an upstream sync", "reconcile against libphonenumber", "pull the latest libphonenumber", bump to a new libphonenumber version, or invokes /sync-upstream. SYNC.md holds the state (baseline version + deliberate divergences); this skill is the procedure.
+description: Sync this Go port with a new upstream google/libphonenumber release — regenerate the embedded metadata and reconcile the ported Java logic. Takes an optional argument — `data` (metadata regen only), `code` (code reconciliation only), or empty for both. Use when the user says "sync with upstream", "do an upstream sync", "reconcile against libphonenumber", "pull the latest libphonenumber", bump to a new libphonenumber version, or invokes /sync-upstream. SYNC.md holds the state (baseline version + deliberate divergences); this skill is the procedure.
 ---
 
 # Sync with upstream libphonenumber
@@ -20,6 +20,20 @@ embedded-metadata version is tracked separately in the generated `metadata/versi
 (`metadata.Version`) — never hand-edit that.
 
 Run everything from the repo root (`/Users/rowan/nyaruka/phonenumbers`).
+
+## Argument
+
+The skill takes one optional argument selecting which operation(s) to run:
+
+- `/sync-upstream data` — Phase 1 only (metadata regen). This is what the scheduled weekly
+  metadata-update task invokes.
+- `/sync-upstream code` — Phase 2 only (code reconciliation, against the metadata version
+  already built — see the note at the top of Phase 2).
+- `/sync-upstream` — both phases, in order.
+
+Whichever mode runs, finish with **Finalize** below: commit the changes and stop. This skill
+**never releases** — no tag, no push, no `CHANGELOG.md`. The user cuts releases separately
+with `/release`.
 
 ---
 
@@ -41,10 +55,18 @@ Then:
 go test ./...
 ```
 
-Review the diff in `data/`, `metadata/data/`, the per-package `*/data/` blobs, and
-`metadata/version.go`. A metadata-only release (no Java logic change) can stop here: Phase 1
-has already bumped `metadata/version.go`, and the **`Code reconciled against`** baseline in
-SYNC.md stays where it is (the two versions are tracked separately for exactly this case).
+Review the diff. The only files that may change are the embedded blobs (`data/`,
+`metadata/data/`, `carrier/data/`, `geocoding/data/`, `timezone/data/`) and the generated
+`metadata/version.go`:
+
+- **No changes at all** → the metadata is already up to date; report that and stop (nothing
+  to commit).
+- **Changes outside that set** → something is wrong; stop and report the unexpected changes
+  without committing.
+
+In `data` mode, that's the whole job — skip to **Finalize**. Phase 1 has already bumped
+`metadata/version.go`, and the **`Code reconciled against`** baseline in SYNC.md stays where
+it is (the two versions are tracked separately for exactly this case).
 
 > The target tag you built becomes the new code baseline once Phase 2 reconciles against it.
 
@@ -53,16 +75,25 @@ SYNC.md stays where it is (the two versions are tracked separately for exactly t
 ## Phase 2 — Code reconciliation (judgment)
 
 Goal: apply any upstream Java *logic* changes between the **old baseline** (SYNC.md) and the
-**target** (the tag Phase 1 built) to each Go port.
+**target** to each Go port. The target is the tag Phase 1 built — in `code`-only mode, the
+version already in `metadata/version.go` (`metadata.Version`), i.e. reconcile the code up to
+where the embedded metadata already is.
 
 ### Get both tags side by side for diffing
 
-Phase 1 left `_build/` as a shallow clone at the **target** tag. Fetch the **baseline** tag
-into it so you can diff tree-to-tree (no merge base needed — `git diff A B` compares trees):
+Phase 1 leaves `_build/` as a shallow clone at the **target** tag. In `code`-only mode
+`_build/` may be missing (it's gitignored) — recreate it at the target first:
+
+```sh
+TARGET=v9.0.32    # metadata.Version, from metadata/version.go
+git clone --depth=1 --branch "$TARGET" https://github.com/google/libphonenumber _build
+```
+
+Then fetch the **baseline** tag into it so you can diff tree-to-tree (no merge base needed —
+`git diff A B` compares trees):
 
 ```sh
 BASE=v9.0.31      # from SYNC.md "Code reconciled against"
-TARGET=v9.0.32    # the tag Phase 1 built (see metadata/version.go)
 git -C _build fetch --depth=1 origin tag "$BASE"
 ```
 
@@ -161,13 +192,21 @@ go test ./...
 
 ## Finalize
 
-Update [SYNC.md](../../../SYNC.md) (state only):
+If code was reconciled (Phase 2 ran), update [SYNC.md](../../../SYNC.md) (state only):
 
 1. Bump the **`Code reconciled against`** version to the target tag.
 2. If anything new was intentionally left unported, add it under **Deliberate divergences**.
 
-Record what was reconciled (and the version) in the commit / PR message — git history is the
-sync log, so SYNC.md doesn't keep one. Don't touch `CHANGELOG.md` either; it's maintained by
-the release process.
+Then, with `go test ./...` green, **commit** the changes:
+
+- **Metadata only** (`data` mode): commit the blobs and `metadata/version.go` with the
+  message `Updated metadata to <tag>`, where `<tag>` is the upstream tag it was built from
+  (`metadata.Version` in `metadata/version.go`), e.g. `Updated metadata to v9.0.33`.
+- **Code reconciliation**: record what was reconciled (and the version) in the commit
+  message — git history is the sync log, so SYNC.md doesn't keep one.
+
+**Stop there.** Do not push, tag, or touch `CHANGELOG.md` — those belong to the release
+process. Finish by reporting that the changes are committed and a release can be cut with
+`/release`.
 
 Leave public-facing text (commit messages, comments) describing the software in general terms.
