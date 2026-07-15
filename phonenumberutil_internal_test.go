@@ -291,6 +291,23 @@ func TestParseNoPanicWithTelAfterPhoneContext(t *testing.T) {
 	}
 }
 
+// TestGetNationalSignificantNumberClampsLeadingZeros is a regression test for
+// GHSA-4h7c-rcfg-mqmw: NumberOfLeadingZeros is an attacker-controllable int32
+// when a PhoneNumber crosses a trust boundary (e.g. protobuf from an untrusted
+// source), and it was used unbounded as an allocation size. The count must be
+// clamped to maxLengthForNSN so a hostile value cannot drive a huge allocation.
+func TestGetNationalSignificantNumberClampsLeadingZeros(t *testing.T) {
+	hostile := &PhoneNumber{
+		CountryCode:          proto.Int32(1),
+		NationalNumber:       proto.Uint64(6502530000),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(1 << 30),
+	}
+	nsn := GetNationalSignificantNumber(hostile)
+	// maxLengthForNSN leading zeros plus the 10-digit national number.
+	assert.Len(t, nsn, maxLengthForNSN+len("6502530000"))
+}
+
 func BenchmarkLoadMetadata(b *testing.B) {
 	for i := 0; i <= b.N; i++ {
 		_, _ = metadata.Load()
