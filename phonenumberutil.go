@@ -2940,9 +2940,13 @@ func buildNationalNumberForParsing(
 		// the national number, an optional extension or isdn-subaddress component. Note we also
 		// handle the case when "tel:" is missing, as we have seen in some of the phone number inputs.
 		// In that case, we append everything from the beginning.
+		// Only honor the "tel:" prefix when it actually appears before the
+		// phone-context. A "tel:" occurring after it is part of a trailing
+		// parameter and must be ignored, otherwise the slice below could have a
+		// start index greater than its end index.
 		indexOfRfc3966Prefix := strings.Index(numberToParse, rfc3966Prefix)
 		indexOfNationalNumber := 0
-		if indexOfRfc3966Prefix >= 0 {
+		if indexOfRfc3966Prefix >= 0 && indexOfRfc3966Prefix < indexOfPhoneContext {
 			indexOfNationalNumber = indexOfRfc3966Prefix + len(rfc3966Prefix)
 		}
 		nationalNumber.WriteString(numberToParse[indexOfNationalNumber:indexOfPhoneContext])

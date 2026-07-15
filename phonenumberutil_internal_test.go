@@ -276,6 +276,21 @@ func TestFormattingRuleHasFirstGroupOnly(t *testing.T) {
 	assert.False(t, formattingRuleHasFirstGroupOnly("$1 suffix"))
 }
 
+// TestParseNoPanicWithTelAfterPhoneContext is a regression test for
+// GHSA-374v-j3m9-frpm: when "tel:" appears after a valid ";phone-context=",
+// buildNationalNumberForParsing used to slice with a start index past its end
+// and panic. Parse must return an error instead of crashing.
+func TestParseNoPanicWithTelAfterPhoneContext(t *testing.T) {
+	for _, in := range []string{
+		"5;phone-context=+1;tel:x",
+		"5;phone-context=+49;foo=tel:",
+	} {
+		assert.NotPanics(t, func() {
+			_, _ = Parse(in, "US")
+		}, "input %q", in)
+	}
+}
+
 func BenchmarkLoadMetadata(b *testing.B) {
 	for i := 0; i <= b.N; i++ {
 		_, _ = metadata.Load()

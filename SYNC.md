@@ -27,6 +27,11 @@ Places where this port intentionally differs from upstream:
   `testGetMetadataForRegionForMissingMetadata` and its non-geographical variant (both rely on
   Mockito-style metadata-source injection), and `testRemovalNotSupported` (Go's range-over-func
   iterator has no `remove()`).
+- **Defensive slice bounds in `buildNationalNumberForParsing`** — the national number is taken
+  from the substring between a leading `tel:` and `;phone-context=`; we only treat `tel:` as the
+  start marker when it precedes the phone-context, keeping the substring bounds well-ordered on
+  arbitrary input. This is a robustness guard for Go's slice semantics — preserve it across syncs
+  rather than reconciling it away.
 - **Lookup-subpackage details** — `carrier`, `geocoding`, and `timezone` mirror the upstream
   `Get*` method names and behaviour, with two intentional shape differences:
   `getUnknownTimeZone()` is exposed as the `timezone.Unknown` const rather than a function, and
