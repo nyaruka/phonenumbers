@@ -1,3 +1,8 @@
+v2.0.4 (2026-07-15)
+-------------------------
+ * Fix panic on malformed RFC3966 input where tel: appears after the phone-context
+ * Clamp leading-zero count before allocating to bound memory use on untrusted PhoneNumber values
+
 v2.0.3 (2026-07-10)
 -------------------------
  * Update metadata
