@@ -1498,7 +1498,16 @@ func GetNationalSignificantNumber(number *PhoneNumber) string {
 	// Guard GetNumberOfLeadingZeros() > 0 to match upstream and to avoid a
 	// make([]byte, n) panic on a negative count (an invalid but possible input).
 	if number.GetItalianLeadingZero() && number.GetNumberOfLeadingZeros() > 0 {
-		zeros := make([]byte, number.GetNumberOfLeadingZeros())
+		// Clamp to MAX_LENGTH_FOR_NSN before allocating: a legitimate national
+		// significant number can never have more leading zeros than its maximum
+		// total length. The field is an int32 that can carry an arbitrary
+		// attacker-controlled value when a PhoneNumber is populated from an
+		// untrusted source rather than produced by Parse, so bound it here.
+		numLeadingZeros := int(number.GetNumberOfLeadingZeros())
+		if numLeadingZeros > MAX_LENGTH_FOR_NSN {
+			numLeadingZeros = MAX_LENGTH_FOR_NSN
+		}
+		zeros := make([]byte, numLeadingZeros)
 		for i := range zeros {
 			zeros[i] = '0'
 		}
@@ -2856,9 +2865,13 @@ func buildNationalNumberForParsing(
 		// the national number, an optional extension or isdn-subaddress component. Note we also
 		// handle the case when "tel:" is missing, as we have seen in some of the phone number inputs.
 		// In that case, we append everything from the beginning.
+		// Only honor the "tel:" prefix when it actually appears before the
+		// phone-context. A "tel:" occurring after it is part of a trailing
+		// parameter and must be ignored, otherwise the slice below could have a
+		// start index greater than its end index.
 		indexOfRfc3966Prefix := strings.Index(numberToParse, RFC3966_PREFIX)
 		indexOfNationalNumber := 0
-		if indexOfRfc3966Prefix >= 0 {
+		if indexOfRfc3966Prefix >= 0 && indexOfRfc3966Prefix < indexOfPhoneContext {
 			indexOfNationalNumber = indexOfRfc3966Prefix + len(RFC3966_PREFIX)
 		}
 		nationalNumber.WriteString(numberToParse[indexOfNationalNumber:indexOfPhoneContext])

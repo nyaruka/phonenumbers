@@ -1794,6 +1794,38 @@ func BenchmarkLoadMetadata(b *testing.B) {
 	}
 }
 
+// TestParseNoPanicWithTelAfterPhoneContext is a regression test for
+// GHSA-374v-j3m9-frpm: when "tel:" appears after a valid ";phone-context=",
+// buildNationalNumberForParsing used to slice with a start index past its end
+// and panic. Parse must return an error instead of crashing.
+func TestParseNoPanicWithTelAfterPhoneContext(t *testing.T) {
+	for _, in := range []string{
+		"5;phone-context=+1;tel:x",
+		"5;phone-context=+49;foo=tel:",
+	} {
+		assert.NotPanics(t, func() {
+			_, _ = Parse(in, "US")
+		}, "input %q", in)
+	}
+}
+
+// TestGetNationalSignificantNumberClampsLeadingZeros is a regression test for
+// GHSA-4h7c-rcfg-mqmw: NumberOfLeadingZeros is an attacker-controllable int32
+// when a PhoneNumber crosses a trust boundary (e.g. protobuf from an untrusted
+// source), and it was used unbounded as an allocation size. The count must be
+// clamped to MAX_LENGTH_FOR_NSN so a hostile value cannot drive a huge allocation.
+func TestGetNationalSignificantNumberClampsLeadingZeros(t *testing.T) {
+	hostile := &PhoneNumber{
+		CountryCode:          proto.Int32(1),
+		NationalNumber:       proto.Uint64(6502530000),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(1 << 30),
+	}
+	nsn := GetNationalSignificantNumber(hostile)
+	// MAX_LENGTH_FOR_NSN leading zeros plus the 10-digit national number.
+	assert.Len(t, nsn, MAX_LENGTH_FOR_NSN+len("6502530000"))
+}
+
 func BenchmarkGetCarrierWithPrefixForNumber(b *testing.B) {
 	number, _ := Parse("+8613702032331", "ZZ")
 
