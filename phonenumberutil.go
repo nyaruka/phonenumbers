@@ -1503,7 +1503,16 @@ func GetNationalSignificantNumber(number *PhoneNumber) string {
 	// Guard GetNumberOfLeadingZeros() > 0 to match upstream and to avoid a
 	// make([]byte, n) panic on a negative count (an invalid but possible input).
 	if number.GetItalianLeadingZero() && number.GetNumberOfLeadingZeros() > 0 {
-		zeros := make([]byte, number.GetNumberOfLeadingZeros())
+		// Clamp to maxLengthForNSN before allocating: a legitimate national
+		// significant number can never have more leading zeros than its maximum
+		// total length. The field is an int32 that can carry an arbitrary
+		// attacker-controlled value when a PhoneNumber is populated from an
+		// untrusted source rather than produced by Parse, so bound it here.
+		numLeadingZeros := int(number.GetNumberOfLeadingZeros())
+		if numLeadingZeros > maxLengthForNSN {
+			numLeadingZeros = maxLengthForNSN
+		}
+		zeros := make([]byte, numLeadingZeros)
 		for i := range zeros {
 			zeros[i] = '0'
 		}

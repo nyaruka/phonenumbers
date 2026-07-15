@@ -32,6 +32,11 @@ Places where this port intentionally differs from upstream:
   start marker when it precedes the phone-context, keeping the substring bounds well-ordered on
   arbitrary input. This is a robustness guard for Go's slice semantics — preserve it across syncs
   rather than reconciling it away.
+- **Clamped leading-zero allocation in `GetNationalSignificantNumber`** — the leading-zero count
+  is taken from the `PhoneNumber.NumberOfLeadingZeros` field, which is an unbounded `int32` when a
+  message is populated from outside `Parse`. We clamp it to `maxLengthForNSN` before allocating,
+  since a national significant number cannot have more leading zeros than its maximum length. This
+  is a robustness guard on the allocation size — preserve it across syncs.
 - **Lookup-subpackage details** — `carrier`, `geocoding`, and `timezone` mirror the upstream
   `Get*` method names and behaviour, with two intentional shape differences:
   `getUnknownTimeZone()` is exposed as the `timezone.Unknown` const rather than a function, and
