@@ -1,3 +1,7 @@
+v2.0.5 (2026-07-20)
+-------------------------
+ * Update metadata
+
 v2.0.4 (2026-07-15)
 -------------------------
  * Fix panic on malformed RFC3966 input where tel: appears after the phone-context
