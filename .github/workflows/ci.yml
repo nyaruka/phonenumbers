@@ -18,3 +18,13 @@ jobs:
 
       - name: Run tests
         run: go test -p=1 -coverprofile=coverage.text -covermode=atomic ./...
+
+
+  test-all:
+    name: Test
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all matrix legs passed
+        run: test "${{ needs.test.result }}" = "success"
