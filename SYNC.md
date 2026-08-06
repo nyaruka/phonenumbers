@@ -37,6 +37,11 @@ Places where this port intentionally differs from upstream:
   message is populated from outside `Parse`. We clamp it to `maxLengthForNSN` before allocating,
   since a national significant number cannot have more leading zeros than its maximum length. This
   is a robustness guard on the allocation size — preserve it across syncs.
+- **Supplementary-plane digit normalization** — `internal/character.Digit` stands in for Java's
+  `Character.digit(c, 10)` and matches it exactly across the BMP, but also converts
+  supplementary-plane decimal digits (e.g. Adlam, Osmanya, mathematical digits), which Java's
+  per-`char` UTF-16 iteration can never accept. This follows the C++ and Python ports — preserve
+  it across syncs. Details in the `internal/character` package doc.
 - **Lookup-subpackage details** — `carrier`, `geocoding`, and `timezone` mirror the upstream
   `Get*` method names and behaviour, with two intentional shape differences:
   `getUnknownTimeZone()` is exposed as the `timezone.Unknown` const rather than a function, and

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/character"
 	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
 	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 	"github.com/nyaruka/phonenumbers/v2/metadata"
@@ -514,39 +515,11 @@ func NormalizeDigitsOnly(number string) string {
 	return normalizeDigits(number, false /* strip non-digits */)
 }
 
-// digitValue returns the ASCII digit for the Unicode decimal digit c, standing
-// in for Java's Character.digit(c, 10). Every Nd block is ten consecutive code
-// points in ascending value order, so a code point's offset within its block is
-// its value. unicode.Nd is the table unicode.IsDigit itself consults, so this
-// stays complete as Go's Unicode version moves.
-func digitValue(c rune) (rune, bool) {
-	if '0' <= c && c <= '9' {
-		return c, true
-	}
-	for _, r := range unicode.Nd.R16 {
-		if c < rune(r.Lo) {
-			return 0, false
-		}
-		if c <= rune(r.Hi) {
-			return '0' + (c-rune(r.Lo))%10, true
-		}
-	}
-	for _, r := range unicode.Nd.R32 {
-		if c < rune(r.Lo) {
-			break
-		}
-		if c <= rune(r.Hi) {
-			return '0' + (c-rune(r.Lo))%10, true
-		}
-	}
-	return 0, false
-}
-
 func normalizeDigits(number string, keepNonDigits bool) string {
 	buf := number
 	var normalizedDigits = stringbuilder.New(nil)
 	for _, c := range buf {
-		if v, ok := digitValue(c); ok {
+		if v, ok := character.Digit(c); ok {
 			normalizedDigits.WriteRune(v)
 		} else if keepNonDigits {
 			normalizedDigits.WriteRune(c)

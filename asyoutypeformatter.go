@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/nyaruka/phonenumbers/v2/internal/character"
 	"github.com/nyaruka/phonenumbers/v2/internal/regexcache"
 	"github.com/nyaruka/phonenumbers/v2/internal/stringbuilder"
 	"google.golang.org/protobuf/proto"
@@ -637,7 +638,7 @@ func (aytf *AsYouTypeFormatter) normalizeAndAccrueDigitsAndPlusSign(nextChar run
 		normalizedChar = nextChar
 		aytf.accruedInputWithoutFormatting.WriteRune(nextChar)
 	} else {
-		if v, ok := digitValue(nextChar); ok {
+		if v, ok := character.Digit(nextChar); ok {
 			normalizedChar = v
 		} else {
 			normalizedChar = nextChar
