@@ -1,3 +1,7 @@
+v2.0.7 (2026-08-06)
+-------------------------
+ * Normalize every Unicode decimal digit, not just Arabic-Indic and fullwidth
+
 v2.0.6 (2026-08-03)
 -------------------------
  * Update metadata
