@@ -1,15 +1,17 @@
 package phonenumbers
 
 // Go-specific unit tests with no standalone counterpart in upstream's
-// PhoneNumberUtilTest: direct tests of internal helpers (normalizeDigits's
-// keep-non-digits branch, setItalianLeadingZerosForPhoneNumber,
+// PhoneNumberUtilTest: direct tests of internal helpers (digitValue,
+// normalizeDigits's keep-non-digits branch, setItalianLeadingZerosForPhoneNumber,
 // maybeStripExtension, mergeLengths, formattingRuleHasFirstGroupOnly) and the
 // RegexCache strictness behaviour (which upstream tests in its own internal/
 // module).
 
 import (
 	"reflect"
+	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/nyaruka/phonenumbers/v2/metadata"
 	"github.com/stretchr/testify/assert"
@@ -26,11 +28,111 @@ func TestNormalizeDigits(t *testing.T) {
 		{input: "(444)5556666", keepNonDigits: false, expected: []byte("4445556666")},
 		{input: "(444)555a6666", keepNonDigits: false, expected: []byte("4445556666")},
 		{input: "(444)555a6666", keepNonDigits: true, expected: []byte("(444)555a6666")},
+		// Every Unicode decimal digit normalizes, not just Arabic-Indic and
+		// fullwidth: Devanagari, Thai, Mongolian, Bengali, N'Ko and the
+		// supplementary-plane Osmanya and mathematical monospace digits.
+		{input: "\u0967\u096c\u096b\u0966", keepNonDigits: false, expected: []byte("1650")},
+		{input: "\u0e51\u0e56\u0e55\u0e50", keepNonDigits: false, expected: []byte("1650")},
+		{input: "\u1811\u1816\u1815\u1810", keepNonDigits: false, expected: []byte("1650")},
+		{input: "\u09e7\u09ec\u09eb\u09e6", keepNonDigits: false, expected: []byte("1650")},
+		{input: "\u07c1\u07c6\u07c5\u07c0", keepNonDigits: false, expected: []byte("1650")},
+		{input: "\U000104a1\U000104a6\U000104a5\U000104a0", keepNonDigits: false, expected: []byte("1650")},
+		{input: "\U0001d7f7\U0001d7fc\U0001d7fb\U0001d7f6", keepNonDigits: false, expected: []byte("1650")},
+		{input: "(\u0967)\u096c-a", keepNonDigits: true, expected: []byte("(1)6-a")},
+		// Non-decimal numerics keep their raw rune: superscript two and one
+		// half are Unicode No, not Nd, and Java's Character.digit rejects them.
+		{input: "\u00b2\u00bd", keepNonDigits: true, expected: []byte("\u00b2\u00bd")},
+		{input: "\u00b2\u00bd", keepNonDigits: false, expected: []byte("")},
 	}
 
 	for _, tc := range tests {
 		actual := normalizeDigits(tc.input, tc.keepNonDigits)
 		assert.Equal(t, string(tc.expected), string(actual), "mismatch for input %s", tc.input)
+	}
+}
+
+// ndDecadStarts returns the first code point of every ten-code-point run in
+// unicode.Nd, and asserts the block structure digitValue relies on: each range
+// is a whole number of decads, has stride 1, and is a maximal run (so its first
+// code point really is a zero). A future Unicode version that broke this would
+// fail here rather than silently mis-decoding a script.
+func ndDecadStarts(t *testing.T) []rune {
+	t.Helper()
+
+	var starts []rune
+	add := func(lo, hi rune, stride uint32) {
+		assert.EqualValues(t, 1, stride, "unicode.Nd range U+%04X-U+%04X is not contiguous", lo, hi)
+		assert.Zero(t, (hi-lo+1)%10, "unicode.Nd range U+%04X-U+%04X is not a whole number of decads", lo, hi)
+		assert.False(t, unicode.IsDigit(lo-1), "unicode.Nd range U+%04X-U+%04X is not maximal at its start", lo, hi)
+		assert.False(t, unicode.IsDigit(hi+1), "unicode.Nd range U+%04X-U+%04X is not maximal at its end", lo, hi)
+		for c := lo; c <= hi; c += 10 {
+			starts = append(starts, c)
+		}
+	}
+	for _, r := range unicode.Nd.R16 {
+		add(rune(r.Lo), rune(r.Hi), uint32(r.Stride))
+	}
+	for _, r := range unicode.Nd.R32 {
+		add(rune(r.Lo), rune(r.Hi), r.Stride)
+	}
+	return starts
+}
+
+// TestDigitValue sweeps the whole rune space rather than a sample: digitValue
+// must accept exactly what unicode.IsDigit accepts (the predicate upstream Java
+// spells Character.digit(c, 10) != -1) and yield the right value for all ten
+// code points of every decad.
+func TestDigitValue(t *testing.T) {
+	for _, start := range ndDecadStarts(t) {
+		for i := rune(0); i < 10; i++ {
+			v, ok := digitValue(start + i)
+			assert.True(t, ok, "U+%04X not recognized as a digit", start+i)
+			assert.Equal(t, '0'+i, v, "wrong value for U+%04X", start+i)
+		}
+	}
+	for c := rune(0); c <= unicode.MaxRune; c++ {
+		_, ok := digitValue(c)
+		assert.Equal(t, unicode.IsDigit(c), ok, "digitValue disagrees with unicode.IsDigit at U+%04X", c)
+	}
+}
+
+// TestNonAsciiDigitsAcrossEntryPoints drives every public API that normalizes
+// digits with the US example number written in each Unicode script in turn.
+func TestNonAsciiDigitsAcrossEntryPoints(t *testing.T) {
+	render := func(start rune, pattern string) string {
+		var b strings.Builder
+		for _, c := range pattern {
+			if c >= '0' && c <= '9' {
+				b.WriteRune(start + (c - '0'))
+			} else {
+				b.WriteRune(c)
+			}
+		}
+		return b.String()
+	}
+
+	for _, start := range ndDecadStarts(t) {
+		national := render(start, "1 650 253 0000")
+
+		assert.Equal(t, "16502530000", NormalizeDigitsOnly(national), "NormalizeDigitsOnly U+%04X", start)
+
+		num, err := Parse(national, regionCode.US)
+		if assert.NoError(t, err, "Parse U+%04X", start) {
+			assert.True(t, proto.Equal(usNumber(), num), "Parse U+%04X gave %v", start, num)
+		}
+
+		f := GetAsYouTypeFormatter(regionCode.US)
+		var formatted string
+		for _, c := range render(start, "6502530000") {
+			formatted = f.InputDigit(c)
+		}
+		assert.Equal(t, "(650) 253-0000", formatted, "AsYouTypeFormatter U+%04X", start)
+
+		matches := 0
+		for range FindNumbers("call "+national+" today", regionCode.US) {
+			matches++
+		}
+		assert.Equal(t, 1, matches, "FindNumbers U+%04X", start)
 	}
 }
 

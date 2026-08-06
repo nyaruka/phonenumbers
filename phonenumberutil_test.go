@@ -2033,15 +2033,11 @@ func TestParseNonAscii(t *testing.T) {
 	assert.True(t, proto.Equal(usNumber(), got))
 
 	// Using a very strange decimal digit range (Mongolian digits).
-	// DIVERGENCE(upstream): our normalizeDigits only maps ASCII and Arabic-Indic
-	// numerals to ASCII digits; it leaves other unicode.IsDigit runes (e.g.
-	// Mongolian U+1810-U+1819) as the raw multi-byte rune rather than converting
-	// to '0'-'9' as Java's Character.digit does. The number therefore fails to
-	// parse (reported as too long) instead of yielding US_NUMBER. — TODO reconcile
-	_, err = Parse("᠑ ᠖᠕᠐ "+
+	got, err = Parse("᠑ ᠖᠕᠐ "+
 		"᠒᠕᠓ ᠐᠐᠐᠐",
 		regionCode.US)
-	assert.ErrorIs(t, err, ErrNumTooLong)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usNumber(), got))
 }
 
 func TestParseWithLeadingZero(t *testing.T) {

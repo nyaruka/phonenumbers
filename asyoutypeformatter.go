@@ -637,7 +637,7 @@ func (aytf *AsYouTypeFormatter) normalizeAndAccrueDigitsAndPlusSign(nextChar run
 		normalizedChar = nextChar
 		aytf.accruedInputWithoutFormatting.WriteRune(nextChar)
 	} else {
-		if v, ok := arabicIndicNumberals[nextChar]; ok {
+		if v, ok := digitValue(nextChar); ok {
 			normalizedChar = v
 		} else {
 			normalizedChar = nextChar

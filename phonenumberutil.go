@@ -514,51 +514,40 @@ func NormalizeDigitsOnly(number string) string {
 	return normalizeDigits(number, false /* strip non-digits */)
 }
 
-// arabicIndicNumberals maps the various Unicode Arabic-Indic digit code points
-// to their ASCII equivalents, used when normalizing digits.
-var arabicIndicNumberals = map[rune]rune{
-	'٠':      '0',
-	'۰':      '0',
-	'١':      '1',
-	'۱':      '1',
-	'٢':      '2',
-	'۲':      '2',
-	'٣':      '3',
-	'۳':      '3',
-	'٤':      '4',
-	'۴':      '4',
-	'٥':      '5',
-	'۵':      '5',
-	'٦':      '6',
-	'۶':      '6',
-	'٧':      '7',
-	'۷':      '7',
-	'٨':      '8',
-	'۸':      '8',
-	'٩':      '9',
-	'۹':      '9',
-	'\uFF10': '0',
-	'\uFF11': '1',
-	'\uFF12': '2',
-	'\uFF13': '3',
-	'\uFF14': '4',
-	'\uFF15': '5',
-	'\uFF16': '6',
-	'\uFF17': '7',
-	'\uFF18': '8',
-	'\uFF19': '9',
+// digitValue returns the ASCII digit for the Unicode decimal digit c, standing
+// in for Java's Character.digit(c, 10). Every Nd block is ten consecutive code
+// points in ascending value order, so a code point's offset within its block is
+// its value. unicode.Nd is the table unicode.IsDigit itself consults, so this
+// stays complete as Go's Unicode version moves.
+func digitValue(c rune) (rune, bool) {
+	if '0' <= c && c <= '9' {
+		return c, true
+	}
+	for _, r := range unicode.Nd.R16 {
+		if c < rune(r.Lo) {
+			return 0, false
+		}
+		if c <= rune(r.Hi) {
+			return '0' + (c-rune(r.Lo))%10, true
+		}
+	}
+	for _, r := range unicode.Nd.R32 {
+		if c < rune(r.Lo) {
+			break
+		}
+		if c <= rune(r.Hi) {
+			return '0' + (c-rune(r.Lo))%10, true
+		}
+	}
+	return 0, false
 }
 
 func normalizeDigits(number string, keepNonDigits bool) string {
 	buf := number
 	var normalizedDigits = stringbuilder.New(nil)
 	for _, c := range buf {
-		if unicode.IsDigit(c) {
-			if v, ok := arabicIndicNumberals[c]; ok {
-				normalizedDigits.WriteRune(v)
-			} else {
-				normalizedDigits.WriteRune(c)
-			}
+		if v, ok := digitValue(c); ok {
+			normalizedDigits.WriteRune(v)
 		} else if keepNonDigits {
 			normalizedDigits.WriteRune(c)
 		}
