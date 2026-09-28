@@ -1,3 +1,7 @@
+v2.0.13 (2026-09-28)
+-------------------------
+ * Updated metadata to v9.0.40
+
 v2.0.12 (2026-09-10)
 -------------------------
  * Only reject a leading plus sign when matching emergency numbers
