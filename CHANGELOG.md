@@ -1,252 +1,195 @@
-v2.0.13 (2026-09-28)
--------------------------
+## v2.0.13 (2026-09-28)
  * Updated metadata to v9.0.40
 
-v2.0.12 (2026-09-10)
--------------------------
+## v2.0.12 (2026-09-10)
  * Only reject a leading plus sign when matching emergency numbers
 
-v2.0.11 (2026-08-31)
--------------------------
+## v2.0.11 (2026-08-31)
  * Bump supported go versions
  * Unpin golang.org/x/text now that the go directive is 1.25
 
-v2.0.10 (2026-08-31)
--------------------------
+## v2.0.10 (2026-08-31)
  * Prepend country calling code when formatting unparseable numbers as E164 from default country
  * Align national significant number leading zero cap with upstream
  * Use character counting instead of regex for alpha number detection
 
-v2.0.9 (2026-08-31)
--------------------------
+## v2.0.9 (2026-08-31)
  * Update metadata
 
-v2.0.8 (2026-08-24)
--------------------------
+## v2.0.8 (2026-08-24)
  * Update metadata
 
-v2.0.7 (2026-08-06)
--------------------------
+## v2.0.7 (2026-08-06)
  * Normalize every Unicode decimal digit, not just Arabic-Indic and fullwidth
 
-v2.0.6 (2026-08-03)
--------------------------
+## v2.0.6 (2026-08-03)
  * Update metadata
 
-v2.0.5 (2026-07-20)
--------------------------
+## v2.0.5 (2026-07-20)
  * Update metadata
 
-v2.0.4 (2026-07-15)
--------------------------
+## v2.0.4 (2026-07-15)
  * Fix panic on malformed RFC3966 input where tel: appears after the phone-context
  * Clamp leading-zero count before allocating to bound memory use on untrusted PhoneNumber values
 
-v2.0.3 (2026-07-10)
--------------------------
+## v2.0.3 (2026-07-10)
  * Update metadata
 
-v2.0.2 (2026-06-22)
--------------------------
+## v2.0.2 (2026-06-22)
  * Update metadata
 
-v2.0.1 (2026-06-15)
--------------------------
+## v2.0.1 (2026-06-15)
  * Update CI actions to latest major versions
  * Pin golang.org/x/text to v0.34.0 to keep go directive at 1.24
 
-v2.0.0 (2026-06-15)
--------------------------
+## v2.0.0 (2026-06-15)
  * Update /x/text/ dependency
  * Update metadata
 
-v2.0.0-rc2 (2026-06-15)
--------------------------
+## v2.0.0-rc2 (2026-06-15)
  * Update metadata
 
-v2.0.0-rc1 (2026-06-04)
--------------------------
+## v2.0.0-rc1 (2026-06-04)
  * Refactor to make this project a stricter port of the upstream library. See UPGRADING.md for details.
 
-v1.8.0 (2026-06-01)
--------------------------
+## v1.8.0 (2026-06-01)
  * Update metadata (regenerated against upstream libphonenumber 9.0.32-SNAPSHOT)
  * Refactoring to allow easier syncing with upstream code
 
-v1.7.5 (2026-05-25)
--------------------------
+## v1.7.5 (2026-05-25)
  * Update metadata
 
-v1.7.4 (2026-05-11)
--------------------------
+## v1.7.4 (2026-05-11)
  * Fix stale Ahmedabad geocoding test after upstream data update
  * Updated metadata
 
-v1.7.3 (2026-05-11)
--------------------------
+## v1.7.3 (2026-05-11)
  * Update metadata
 
-v1.7.2 (2026-04-27)
--------------------------
+## v1.7.2 (2026-04-27)
  * Update metadata
 
-v1.7.1 (2026-04-01)
--------------------------
+## v1.7.1 (2026-04-01)
  * Fix four logic differences with upstream libphonenumber
 
-v1.7.0 (2026-03-31)
--------------------------
+## v1.7.0 (2026-03-31)
  * Fix behavioral differences with upstream libphonenumber
 
-v1.6.13 (2026-03-31)
--------------------------
+## v1.6.13 (2026-03-31)
  * Update metadata
  * Change to use slices instead of exp/slices
 
-v1.6.12 (2026-03-17)
--------------------------
+## v1.6.12 (2026-03-17)
  * Update metadata
 
-v1.6.11 (2026-03-06)
--------------------------
+## v1.6.11 (2026-03-06)
  * Update metadata
 
-v1.6.10 (2026-02-18)
--------------------------
+## v1.6.10 (2026-02-18)
  * Update metadata
 
-v1.6.9 (2026-02-09)
--------------------------
+## v1.6.9 (2026-02-09)
  * Update metadata
 
-v1.6.8 (2026-01-08)
--------------------------
+## v1.6.8 (2026-01-08)
  * Update metadata
 
-v1.6.7 (2025-11-12)
--------------------------
+## v1.6.7 (2025-11-12)
  * Update metadata
 
-v1.6.6 (2025-10-10)
--------------------------
+## v1.6.6 (2025-10-10)
  * Merge pull request #211 from nyaruka/update_metadata
  * Update test for DE format number size
  * Update metadata
 
-v1.6.5 (2025-08-11)
--------------------------
+## v1.6.5 (2025-08-11)
  * Update metadata
 
-v1.6.4 (2025-07-22)
--------------------------
+## v1.6.4 (2025-07-22)
  * Update metadata
 
-v1.6.3 (2025-05-22)
--------------------------
+## v1.6.3 (2025-05-22)
  * Update metadata
 
-v1.6.2 (2025-05-22)
--------------------------
+## v1.6.2 (2025-05-22)
  * Update isNumberGeographical to consider GEO_MOBILE_COUNTRIES
 
-v1.6.1 (2025-04-23)
--------------------------
+## v1.6.1 (2025-04-23)
  * Update metadata
 
-v1.6.0 (2025-03-20)
--------------------------
+## v1.6.0 (2025-03-20)
  * Fix copying mutex in number desc
  * Update dependencies
  * Bump supported go versions
  * Optimize package initialization
 
-v1.5.0 (2025-01-18)
--------------------------
+## v1.5.0 (2025-01-18)
  * Add shortnumber emergency functions
 
-v1.4.4 (2024-12-20)
--------------------------
+## v1.4.4 (2024-12-20)
  * Update metadata
 
-v1.4.3 (2024-11-29)
--------------------------
+## v1.4.3 (2024-11-29)
  * Update metadata
 
-v1.4.2 (2024-11-15)
--------------------------
+## v1.4.2 (2024-11-15)
  * Update metadata
 
-v1.4.1 (2024-10-16)
--------------------------
+## v1.4.1 (2024-10-16)
  * Update metadata
 
-v1.4.0 (2024-07-15)
--------------------------
+## v1.4.0 (2024-07-15)
  * Update GetLengthOfGeographicalAreaCode to match recent libphonenumber changes
  * Update metadata
  * Update deps
 
-v1.3.6 (2024-05-27)
--------------------------
+## v1.3.6 (2024-05-27)
  * Update metadata
  * Use https for git fetch
 
-v1.3.5 (2024-05-08)
--------------------------
+## v1.3.5 (2024-05-08)
  * Update metadata
 
-v1.3.4 (2024-03-14)
--------------------------
+## v1.3.4 (2024-03-14)
  * Update metadata
 
-v1.3.3 (2024-03-13)
--------------------------
+## v1.3.3 (2024-03-13)
  * Bump google.golang.org/protobuf from 1.31.0 to 1.33.0
 
-v1.3.2 (2024-02-18)
--------------------------
+## v1.3.2 (2024-02-18)
  * Update metadata
 
-v1.3.1 (2024-01-26)
--------------------------
+## v1.3.1 (2024-01-26)
  * Update metadata
 
-v1.3.0 (2023-12-14)
--------------------------
+## v1.3.0 (2023-12-14)
  * Refactor buildmetadata, no longer requires SVN
  * Update metadata
 
-v1.2.3 (2023-12-12)
--------------------------
+## v1.2.3 (2023-12-12)
  * Update metadata
  * Update dependencies and go version to 1.19
 
-v1.2.2 (2023-11-24)
--------------------------
+## v1.2.2 (2023-11-24)
  * Update metadata
  * Update support for phone-context
 
-v1.2.1 (2023-11-20)
--------------------------
+## v1.2.1 (2023-11-20)
  * Update metadata
  * Replace github.com/golang/protobuf with google.golang.org/protobuf
 
-v1.2.0 (2023-11-17)
--------------------------
+## v1.2.0 (2023-11-17)
  * Update metadata
  * Fix regex matching in GetLengthOfNationalDestinationCode
  * Implement carrier GetSafeDisplayName
 
-v1.1.9 (2023-11-08)
--------------------------
+## v1.1.9 (2023-11-08)
  * Update metadata
 
-v1.1.8 (2023-08-09)
--------------------------
+## v1.1.8 (2023-08-09)
  * Update metadata
 
-v1.1.7 (2023-05-10)
--------------------------
+## v1.1.7 (2023-05-10)
  * Merge pull request #137 from nyaruka/updates
  * Add isValid display to phoneparser
  * Update metadata
@@ -257,183 +200,142 @@ v1.1.7 (2023-05-10)
  * Bump golang.org/x/text from 0.3.7 to 0.3.8 in /cmd/phoneparser
  * Bump golang.org/x/text from 0.3.7 to 0.3.8
 
-v1.1.6 (2023-02-13)
--------------------------
+## v1.1.6 (2023-02-13)
  * Update metadata
 
-v1.1.5 (2023-01-27)
--------------------------
+## v1.1.5 (2023-01-27)
  * Update metadata
 
-v1.1.4 (2022-11-28)
--------------------------
+## v1.1.4 (2022-11-28)
  * Bump required go version to 1.18
 
-v1.1.3 (2022-11-28)
--------------------------
+## v1.1.3 (2022-11-28)
  * Update metadata
 
-v1.1.2
-----------
+## v1.1.2 (2022-10-27)
  * Update metadata
  * Fix slice out of bounds in GetTimezonesForPrefix
 
-v1.1.1
-----------
+## v1.1.1 (2022-08-26)
  * Update metadata
 
-v1.1.0
-----------
+## v1.1.0 (2022-06-22)
  * Update to latest metadata
  * Port initial short number support
 
-v1.0.75
-----------
+## v1.0.75 (2022-05-02)
  * Cleanup some of the unit tests using testify library
  * Update metadata and add test for new 0326 PK numbers
 
-v1.0.74
-----------
+## v1.0.74 (2022-01-03)
  * Update to latest metadata
 
-v1.0.73
-----------
+## v1.0.73 (2021-10-25)
  * Added fallback to region for GetGeocodingForNumber
 
-v1.0.72
-----------
+## v1.0.72 (2021-10-05)
  * Update metadata to v8.12.33
 
-v1.0.71
-----------
+## v1.0.71 (2021-08-26)
  * Update metadata to v8.12.31
 
-v1.0.70
-----------
+## v1.0.70 (2021-06-09)
  * Update metadata to v8.12.24
 
-v1.0.69
-----------
+## v1.0.69 (2021-05-05)
  * update metadata to 8.12.22
  * update test case for AR formatting
 
-v1.0.68
-----------
+## v1.0.68 (2021-03-17)
  * Add GetCarrierWithPrefixForNumber (thanks @RaMin0)
 
-v1.0.67
-----------
+## v1.0.67 (2021-03-15)
  * Update metadata (tracking 8.12.19 upstream)
 
-v1.0.66
-----------
+## v1.0.66 (2021-02-08)
  * Updated metadata
 
-v1.0.65
-----------
+## v1.0.65 (2021-01-29)
  * Add exported IsNumberMatchWithNumbers and IsNumberMatchWithOneNumber (thanks @akurth)
 
-v1.0.64
-----------
+## v1.0.64 (2021-01-28)
  * test goreleaser config
 
-v1.0.63
-----------
+## v1.0.63 (2021-01-28)
  * test goreleaser
 
-v1.0.62
-----------
+## v1.0.62 (2021-01-28)
  * Fix country code parsing
  * Update metadata
 
-v1.0.61
-----------
+## v1.0.61 (2021-01-15)
  * Update metadata
  * Add MaybeSeparatePhoneFromExtension helper function (thanks @richard-rance)
 
-v1.0.60
-----------
+## v1.0.60 (2020-12-02)
  * update metadata
  * better error logging in buildmetadata
  * update CI worflow (thanks @cristaloleg)
  * fix maybeExtractCountryCode regexp func (thanks @cristaloleg)
 
-v1.0.59
-----------
+## v1.0.59 (2020-10-19)
  * update to latest metadata
 
-v1.0.58
-----------
+## v1.0.58 (2020-10-12)
  * Update metadata to version v8.12.11
 
-v1.0.57
-----------
+## v1.0.57 (2020-08-03)
  * fix panic in IsNumberMatch() 
 
-v1.0.56
-----------
+## v1.0.56 (2020-06-12)
  * Update to metadata v8.12.5
  * Update test for Sydney tz (validated against source data)
 
-v1.0.55
-----------
+## v1.0.55 (2020-04-13)
  * Update metadata to v8.12.1 for upstream project
 
-v1.0.54
-----------
+## v1.0.54 (2019-12-10)
  * update metadata for v8.11.0
 
-v1.0.53
-----------
+## v1.0.53 (2019-11-18)
  * Metadata update for upstream v8.10.23
 
-v1.0.52
-----------
+## v1.0.52 (2019-10-23)
  * Reset italian leading zero when false, fixed bug when phonenumber struct is reused
 
-v1.0.51
-----------
+## v1.0.51 (2019-10-17)
  * Update metadata to upstream 8.10.21
 
-v1.0.50
-----------
+## v1.0.50 (2019-10-06)
  * Fix formatting of country code in out-of-country format (thanks @janh)
  * Fix FormatInOriginalFormat for numbers with national prefix (thanks @janh)
  * Fix panic due to calling proto.Merge on nil destination (thanks @janh)
 
-v1.0.49
-----------
+## v1.0.49 (2019-09-18)
  * fix Makefile for phoneserver
 
-v1.0.48
-----------
+## v1.0.48 (2019-09-18)
  * another test travis rev, ignore
 
-v1.0.47
-----------
+## v1.0.47 (2019-09-18)
  * test tag for travis deploy
 
-v1.0.46
-----------
+## v1.0.46 (2019-09-18)
  * update metadata for v8.10.19
  * remove aws-lambda-go as dependency (thanks @shaxbee)
 
-v1.0.45
-----------
+## v1.0.45 (2019-09-02)
  * Update metadata to fix Mexican formatting (thanks @bvisness)
  * Add tests specifically for Mexico (thanks @bvisness)
 
-v1.0.44
-----------
+## v1.0.44 (2019-08-06)
  * update metadata for v8.10.16
  * upgrade to the latest release of protobuf
 
-v1.0.43
-----------
+## v1.0.43 (2019-06-20)
  * Update metadata for v8.10.14
 
-v1.0.42
-----------
+## v1.0.42 (2019-05-31)
  * Update for metadata changes in v8.10.13
  * fix yoda expressions
  * fix slice operations
@@ -441,111 +343,86 @@ v1.0.42
  * fix make calls
  * fix error strings
 
-v1.0.41
-----------
+## v1.0.41 (2019-05-15)
  * update metadata for v8.10.12
 
-v1.0.40
-----------
+## v1.0.40 (2019-04-30)
  * add unit test for valid/possible US/CA number, include commit in netlify version, lastest metadata
  * update readme to add svn dependency
 
-v1.0.39
-----------
+## v1.0.39 (2019-04-01)
  * add dist to gitignore
  * tweak goreleaser
 
-v1.0.38
-----------
+## v1.0.38 (2019-04-01)
  * update travis env to always enable modules
 
-v1.0.37
-----------
+## v1.0.37 (2019-04-01)
  * plug in goreleaser and add it to travis
 
-v1.0.36
-----------
+## v1.0.36 (2019-03-11)
  * Update for upstream metadata v8.10.7
 
-v1.0.35
-----------
+## v1.0.35 (2019-01-28)
  * update metadata for v8.10.4 release
  * update AR test number to valid AR fixed line
 
-v1.0.34
-----------
+## v1.0.34 (2018-12-05)
  * update travis file
 
-v1.0.33
-----------
+## v1.0.33 (2018-12-05)
  * remove goreleaser since we no longer use docker for test deploys
  * latest google metadata
 
-v1.0.32
-----------
+## v1.0.32 (2018-12-05)
  * add /functions to gitignore
  * update to latest google metadata
 
-v1.0.31
-----------
+## v1.0.31 (2018-12-05)
  * update to latest metadata v8.10.1, test case changes validated against google lib
  * add link in readme to test function
 
-v1.0.30
-----------
+## v1.0.30 (2018-10-19)
  * fix FormatByPattern with user defined pattern. Fixes: #16
 
-v1.0.29
-----------
+## v1.0.29 (2018-10-19)
  * update metadata v8.9.16 (test diff validated against python lib)
 
-v1.0.28
-----------
+## v1.0.28 (2018-09-21)
  * update metadata to v8.9.14, fix go.mod dependency
 
-v1.0.27
-----------
+## v1.0.27 (2018-09-07)
  * update to metadata v8.9.13, remove must dependency
 
-v1.0.26
-----------
+## v1.0.26 (2018-09-03)
  * Fix cache strict look up bug and unify cache management, thanks @eugene-gurevich
 
-v1.0.25
-----------
+## v1.0.25 (2018-08-31)
  * save possible lengths to metadata, change implementation to use, add IS_POSSIBLE_LOCAL_ONLY and INVALID_LENGTH as possible return values to IsPossibleNumberWithReason
  * update metadata to version v8.9.12
 
-v1.0.24
-----------
+## v1.0.24 (2018-07-16)
  * update to metadata for v8.9.10
 
-v1.0.23
-----------
+## v1.0.23 (2018-06-21)
  * add GetSupportedCallingCodes
  * return sets as map[int]bool instead of map[int]struct{}
 
-v1.0.22
-----------
+## v1.0.22 (2018-06-20)
 * add GetCarrierForNumber and GetGeocodingForNumber
 
-v1.0.21
-----------
+## v1.0.21 (2018-06-15)
  * Update for libphonenumber v8.9.8
 
-v1.0.20
-----------
+## v1.0.20 (2018-05-30)
  * updated metadata for v8.9.7
 
-v1.0.19
-----------
+## v1.0.19 (2018-05-17)
  * update metadata for v8.9.6
 
-v1.0.18
-----------
+## v1.0.18 (2018-05-04)
  * update metadata for v8.9.5
 
-v1.0.17
-----------
+## v1.0.17 (2018-04-20)
  * Fix maybe strip extension, thanks @vlastv
 
