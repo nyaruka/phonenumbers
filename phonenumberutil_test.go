@@ -708,6 +708,12 @@ func TestFormatOutOfCountryKeepingAlphaChars(t *testing.T) {
 	// No country-code stripping can be done.
 	assert.Equal(t, "00 1 180-SIX", FormatOutOfCountryKeepingAlphaChars(alphaNumericNumber, regionCode.DE))
 
+	// Plus and star signs are not grouping symbols, so they are dropped from the raw input.
+	alphaNumericNumber.RawInput = proto.String("+1 180-SIX")
+	assert.Equal(t, "00 1 1 180-SIX", FormatOutOfCountryKeepingAlphaChars(alphaNumericNumber, regionCode.DE))
+	alphaNumericNumber.RawInput = proto.String("*1 180-SIX")
+	assert.Equal(t, "00 1 1 180-SIX", FormatOutOfCountryKeepingAlphaChars(alphaNumericNumber, regionCode.DE))
+
 	// Testing the case of calling from a non-supported region.
 	alphaNumericNumber.CountryCode = proto.Int32(1)
 	alphaNumericNumber.NationalNumber = proto.Uint64(80749)
