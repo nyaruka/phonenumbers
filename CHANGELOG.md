@@ -1,3 +1,6 @@
+## v2.0.14 (2026-10-02)
+ * Drop + and * from the grouping symbols kept in raw input
+
 ## v2.0.13 (2026-09-28)
  * Updated metadata to v9.0.40
 
