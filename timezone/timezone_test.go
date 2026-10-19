@@ -29,7 +29,7 @@ func TestGetTimeZonesForNumber(t *testing.T) {
 		// UTC +5:45
 		{num: "+97714240520", expectedTimeZones: []string{"Asia/Katmandu"}},
 		// UTC -3:30
-		{num: "+17097264534", expectedTimeZones: []string{"America/St_Johns"}},
+		{num: "+17097264534", expectedTimeZones: []string{"America/Halifax", "America/St_Johns"}},
 		{num: "+6837000", expectedTimeZones: []string{"Pacific/Niue"}},
 		// A mobile number in a country where mobile numbers aren't geographically
 		// assigned is non-geographical, so it resolves at the country-calling-code
