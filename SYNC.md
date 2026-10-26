@@ -12,7 +12,7 @@ procedure is not duplicated here.
 
 ## Code reconciled against
 
-- **v9.0.38**
+- **v9.0.42**
 
 This is the upstream release whose **Java logic** the Go code is reconciled against. It is
 tracked separately from the embedded **metadata** version — recorded in the generated
