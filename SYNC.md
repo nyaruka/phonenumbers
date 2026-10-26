@@ -10,14 +10,13 @@ For *how* to perform a sync, see the **Updating Metadata** / **Updating Code** s
 ([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md)). The
 procedure is not duplicated here.
 
-## Code reconciled against
+## Synced against
 
 - **v9.0.42**
 
-This is the upstream release whose **Java logic** the Go code is reconciled against. It is
-tracked separately from the embedded **metadata** version — recorded in the generated
-[`metadata/version.go`](metadata/version.go) (`metadata.Version`) — which can move ahead of
-this when metadata is regenerated without a code change.
+The upstream release that both the embedded metadata and the ported Java logic are reconciled
+against. The same version is recorded in the generated
+[`metadata/version.go`](metadata/version.go) (`metadata.Version`).
 
 ## Deliberate divergences
 

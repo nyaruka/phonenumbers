@@ -61,4 +61,4 @@ If you use [Claude Code](https://claude.com/claude-code), the **`sync-upstream`*
 ([`.claude/skills/sync-upstream/SKILL.md`](.claude/skills/sync-upstream/SKILL.md)) walks
 through the whole process — metadata regen plus the per-file code reconciliation. Invoke it
 with `/sync-upstream` or by asking it to sync with upstream. [SYNC.md](SYNC.md) records the
-upstream version the code is reconciled against and the deliberate divergences from upstream.
+upstream version the port is synced against and the deliberate divergences from upstream.
