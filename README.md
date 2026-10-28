@@ -66,9 +66,9 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for common problems inclu
 
 ## Ownership
 
-- **Team:** orion
-- **Slack:** #eng-backend
-- **CODEOWNERS:** `@Accompany-Health/orion`
+- **Team:** ninjas
+- **Slack:** #eng-backend <!-- TODO: confirm actual Slack channel for ninjas -->
+- **CODEOWNERS:** `@Accompany-Health/ninjas`
 
 ---
 

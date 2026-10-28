@@ -3,9 +3,9 @@ type: library
 language:
   - go
 owner:
-  team: "orion"
-  slack: "#eng-backend"
-  github: "@Accompany-Health/orion"
+  team: "ninjas"
+  slack: "#eng-backend"  # TODO: confirm actual Slack channel for ninjas
+  github: "@Accompany-Health/ninjas"
 tier: "tier2"
 lifecycle: production
 domain:

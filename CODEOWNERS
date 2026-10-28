@@ -1,8 +1,8 @@
 # Default owners for everything in the repo
-* @Accompany-Health/orion
+* @Accompany-Health/ninjas
 
 # Documentation
-/docs/ @Accompany-Health/orion
+/docs/ @Accompany-Health/ninjas
 
 # GitHub Actions / CI
-/.github/ @Accompany-Health/orion @Accompany-Health/platform
+/.github/ @Accompany-Health/ninjas @Accompany-Health/platform
