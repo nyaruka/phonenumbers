@@ -1,3 +1,7 @@
+## v2.0.17 (2026-11-09)
+ * Fix parsing of phone-context at start of input
+ * Fix timezone results aliasing
+
 ## v2.0.16 (2026-10-26)
  * Always sync both metadata and code together
  * Add missing Kazakh carrier data
