@@ -2210,6 +2210,8 @@ func TestFailedParseOnInvalidNumbers(t *testing.T) {
 		{"domainRfcPhoneContextZZ", "tel:555-1234;phone-context=www.google.com", regionCode.ZZ, ErrInvalidCountryCode},
 		{"rfcPhoneContextNoPlus", "tel:555-1234;phone-context=1-331", regionCode.ZZ, ErrNotANumber},
 		{"rfcPhoneContextEmpty", ";phone-context=", regionCode.ZZ, ErrNotANumber},
+		{"rfcPhoneContextAtStartDomain", ";phone-context=abc123.com", regionCode.US, ErrNotANumber},
+		{"rfcPhoneContextAtStartGlobal", ";phone-context=+1", regionCode.US, ErrNotANumber},
 	}
 
 	for _, tc := range tests {

@@ -91,3 +91,23 @@ func TestGetTimeZonesForGeographicalNumber(t *testing.T) {
 		t.Errorf("Expected '%v', got '%v'", []string{"Australia/Sydney"}, timeZones)
 	}
 }
+
+func TestGetTimeZonesForNumberResultIsNotShared(t *testing.T) {
+	num, err := phonenumbers.Parse("+442073238299", "")
+	if err != nil {
+		t.Fatalf("Failed to parse number: %s", err)
+	}
+	timeZones, err := GetTimeZonesForNumber(num)
+	if err != nil {
+		t.Fatalf("Failed to get timezones: %s", err)
+	}
+	timeZones[0] = "Mutated/Zone"
+
+	timeZones, err = GetTimeZonesForNumber(num)
+	if err != nil {
+		t.Fatalf("Failed to get timezones: %s", err)
+	}
+	if !reflect.DeepEqual(timeZones, []string{"Europe/London"}) {
+		t.Errorf("Expected '%v', got '%v'", []string{"Europe/London"}, timeZones)
+	}
+}

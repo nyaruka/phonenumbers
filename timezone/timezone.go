@@ -4,6 +4,7 @@ package timezone
 import (
 	_ "embed"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -79,7 +80,8 @@ func lookupTimeZones(number string) ([]string, error) {
 		}
 		tzs, found := timezoneMap.Map[index]
 		if found {
-			return tzs, nil
+			// copy so callers can't mutate the shared map
+			return slices.Clone(tzs), nil
 		}
 	}
 	return []string{Unknown}, nil
