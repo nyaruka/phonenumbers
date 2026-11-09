@@ -2910,7 +2910,7 @@ func buildNationalNumberForParsing(
 	if indexOfPhoneContext >= 0 && !isPhoneContextValid(phoneContext) {
 		return ErrNotANumber
 	}
-	if indexOfPhoneContext > 0 {
+	if indexOfPhoneContext >= 0 {
 		// If the phone context contains a phone number prefix, we need to capture it, whereas domains
 		// will be ignored.
 		if phoneContext[0] == plusSign {
