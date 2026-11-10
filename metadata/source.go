@@ -4,6 +4,7 @@ package metadata
 import (
 	_ "embed"
 	"errors"
+	"sync"
 
 	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
 	"google.golang.org/protobuf/proto"
@@ -59,20 +60,32 @@ type Container struct {
 }
 
 // current is the active metadata container. It is populated from the embedded
-// metadata by init during package initialization. Tests may swap it via Use to
-// exercise the library against alternate metadata.
-var current *Container
+// metadata on first use (see active). Tests may swap it via Use to exercise the
+// library against alternate metadata.
+var (
+	current  *Container
+	loadOnce sync.Once
+)
 
-func init() {
-	c, err := Load()
-	if err != nil {
-		panic(err)
-	}
-	current = c
+// active returns the active container, building it from the embedded metadata
+// on first use. Loading lazily keeps programs that link this package without
+// using it from holding the parsed metadata in memory.
+func active() *Container {
+	loadOnce.Do(func() {
+		if current != nil {
+			return
+		}
+		c, err := Load()
+		if err != nil {
+			panic(err)
+		}
+		current = c
+	})
+	return current
 }
 
 // Load reads the embedded metadata and builds a fresh container from it without
-// changing the active container. It follows the same path used at package init.
+// changing the active container. It follows the same path used on first use.
 func Load() (*Container, error) {
 	// load our regions
 	regionMap, err := serialize.LoadIntArrayMap(regionData)
@@ -157,69 +170,69 @@ func NewContainer(coll *PhoneMetadataCollection, countryCodeToRegion map[int][]s
 // restore function (typically via t.Cleanup) and must not run such tests in
 // parallel, since the active container is process-global.
 func Use(c *Container) (restore func()) {
-	prev := current
+	prev := active()
 	current = c
 	return func() { current = prev }
 }
 
 // RegionMetadata returns the metadata for the given region code, if supported.
 func RegionMetadata(region string) (*PhoneMetadata, bool) {
-	v, ok := current.regionToMetadataMap[region]
+	v, ok := active().regionToMetadataMap[region]
 	return v, ok
 }
 
 // NonGeoMetadata returns the metadata for the given non-geographical country
 // calling code, if any.
 func NonGeoMetadata(countryCode int) (*PhoneMetadata, bool) {
-	v, ok := current.countryCodeToNonGeographicalMetadataMap[countryCode]
+	v, ok := active().countryCodeToNonGeographicalMetadataMap[countryCode]
 	return v, ok
 }
 
 // IsNANPARegion reports whether region shares country calling code 1.
 func IsNANPARegion(region string) bool {
-	_, ok := current.nanpaRegions[region]
+	_, ok := active().nanpaRegions[region]
 	return ok
 }
 
 // SupportedRegions returns the set of regions the library supports.
-func SupportedRegions() map[string]bool { return current.supportedRegions }
+func SupportedRegions() map[string]bool { return active().supportedRegions }
 
 // SupportedCallingCodes returns the set of calling codes the library supports.
-func SupportedCallingCodes() map[int]bool { return current.supportedCallingCodes }
+func SupportedCallingCodes() map[int]bool { return active().supportedCallingCodes }
 
 // CountryCodesForNonGeographicalRegion returns the set of calling codes that map
 // to the non-geo entity region ("001").
 func CountryCodesForNonGeographicalRegion() map[int]bool {
-	return current.countryCodesForNonGeographicalRegion
+	return active().countryCodesForNonGeographicalRegion
 }
 
 // CountryCodeToRegion returns the map from country calling code to its region
 // codes.
-func CountryCodeToRegion() map[int][]string { return current.countryCodeToRegion }
+func CountryCodeToRegion() map[int][]string { return active().countryCodeToRegion }
 
 var (
-	currCollection *PhoneMetadataCollection
-	reloadMetadata = true
+	currCollection    *PhoneMetadataCollection
+	currCollectionErr error
+	collectionOnce    sync.Once
 )
 
 // Collection returns the embedded territory metadata collection. The result is
 // parsed once and cached; it always reflects the embedded data and is
 // independent of any container swapped in via Use.
 func Collection() (*PhoneMetadataCollection, error) {
-	if !reloadMetadata {
-		return currCollection, nil
-	}
+	collectionOnce.Do(func() {
+		rawBytes, err := serialize.DecodeUnzip(numberData)
+		if err != nil {
+			currCollectionErr = err
+			return
+		}
 
-	rawBytes, err := serialize.DecodeUnzip(numberData)
-	if err != nil {
-		return nil, err
-	}
-
-	c := &PhoneMetadataCollection{}
-	if err = proto.Unmarshal(rawBytes, c); err != nil {
-		return nil, err
-	}
-	currCollection = c
-	reloadMetadata = false
-	return c, nil
+		c := &PhoneMetadataCollection{}
+		if err = proto.Unmarshal(rawBytes, c); err != nil {
+			currCollectionErr = err
+			return
+		}
+		currCollection = c
+	})
+	return currCollection, currCollectionErr
 }
