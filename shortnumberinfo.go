@@ -3,6 +3,7 @@ package phonenumbers
 
 import (
 	"slices"
+	"sync"
 
 	"github.com/nyaruka/phonenumbers/v2/internal/regexbasedmatcher"
 	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
@@ -11,10 +12,22 @@ import (
 
 var (
 	shortNumberRegionToMetadataMap = make(map[string]*PhoneMetadata)
+	shortNumberMetadataLoadOnce    sync.Once
 )
 
+// shortNumberMetadata returns the short number metadata keyed by region,
+// building it from the embedded data on first use.
+func shortNumberMetadata() map[string]*PhoneMetadata {
+	shortNumberMetadataLoadOnce.Do(func() {
+		if err := loadShortNumberMetadataFromFile(); err != nil {
+			panic(err)
+		}
+	})
+	return shortNumberRegionToMetadataMap
+}
+
 func readFromShortNumberRegionToMetadataMap(key string) (*PhoneMetadata, bool) {
-	v, ok := shortNumberRegionToMetadataMap[key]
+	v, ok := shortNumberMetadata()[key]
 	return v, ok
 }
 
@@ -22,40 +35,36 @@ func writeToShortNumberRegionToMetadataMap(key string, val *PhoneMetadata) {
 	shortNumberRegionToMetadataMap[key] = val
 }
 
-func init() {
-	err := loadShortNumberMetadataFromFile()
-	if err != nil {
-		panic(err)
-	}
-}
-
 var (
-	currShortNumberMetadataColl *PhoneMetadataCollection
-	shortNumberReloadMetadata   = true
+	currShortNumberMetadataColl    *PhoneMetadataCollection
+	currShortNumberMetadataCollErr error
+	shortNumberMetadataCollOnce    sync.Once
 )
 
+// ShortNumberMetadataCollection returns the embedded short number metadata
+// collection. The result is parsed once and cached.
 func ShortNumberMetadataCollection() (*PhoneMetadataCollection, error) {
-	if !shortNumberReloadMetadata {
-		return currShortNumberMetadataColl, nil
-	}
+	shortNumberMetadataCollOnce.Do(func() {
+		rawBytes, err := serialize.DecodeUnzip(shortNumberData)
+		if err != nil {
+			currShortNumberMetadataCollErr = err
+			return
+		}
 
-	rawBytes, err := serialize.DecodeUnzip(shortNumberData)
-	if err != nil {
-		return nil, err
-	}
-
-	metadataCollection := &PhoneMetadataCollection{}
-	err = proto.Unmarshal(rawBytes, metadataCollection)
-	shortNumberReloadMetadata = false
-	return metadataCollection, err
+		c := &PhoneMetadataCollection{}
+		if err = proto.Unmarshal(rawBytes, c); err != nil {
+			currShortNumberMetadataCollErr = err
+			return
+		}
+		currShortNumberMetadataColl = c
+	})
+	return currShortNumberMetadataColl, currShortNumberMetadataCollErr
 }
 
 func loadShortNumberMetadataFromFile() error {
 	metadataCollection, err := ShortNumberMetadataCollection()
 	if err != nil {
 		return err
-	} else if currShortNumberMetadataColl == nil {
-		currShortNumberMetadataColl = metadataCollection
 	}
 
 	metadataList := metadataCollection.GetMetadata()
