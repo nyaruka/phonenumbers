@@ -178,7 +178,7 @@ func getExampleNumberForTypeAnyRegion(t *testing.T, typ PhoneNumberType) *PhoneN
 func TestShortNumbersValidAndCorrectCost(t *testing.T) {
 	var invalidStringCases []string
 	var invalidCases, wrongTypeCases []*PhoneNumber
-	for regionCode := range shortNumberRegionToMetadataMap {
+	for regionCode := range shortNumberMetadata() {
 		exampleShortNumber := getExampleShortNumber(regionCode)
 		number, err := Parse(exampleShortNumber, regionCode)
 		require.NoErrorf(t, err, "parsing example short number %q for %s", exampleShortNumber, regionCode)
@@ -208,7 +208,7 @@ func TestShortNumbersValidAndCorrectCost(t *testing.T) {
 
 func TestEmergency(t *testing.T) {
 	wrongTypeCounter := 0
-	for regionCode := range shortNumberRegionToMetadataMap {
+	for regionCode := range shortNumberMetadata() {
 		desc := getShortNumberMetadataForRegion(regionCode).GetEmergency()
 		if desc.GetExampleNumber() == "" {
 			continue
@@ -227,7 +227,7 @@ func TestEmergency(t *testing.T) {
 
 func TestCarrierSpecificShortNumbers(t *testing.T) {
 	wrongTagCounter := 0
-	for regionCode := range shortNumberRegionToMetadataMap {
+	for regionCode := range shortNumberMetadata() {
 		desc := getShortNumberMetadataForRegion(regionCode).GetCarrierSpecific()
 		if desc.GetExampleNumber() == "" {
 			continue
@@ -244,7 +244,7 @@ func TestCarrierSpecificShortNumbers(t *testing.T) {
 
 func TestSmsServiceShortNumbers(t *testing.T) {
 	wrongTagCounter := 0
-	for regionCode := range shortNumberRegionToMetadataMap {
+	for regionCode := range shortNumberMetadata() {
 		desc := getShortNumberMetadataForRegion(regionCode).GetSmsServices()
 		if desc.GetExampleNumber() == "" {
 			continue
