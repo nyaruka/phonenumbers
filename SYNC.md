@@ -12,7 +12,7 @@ procedure is not duplicated here.
 
 ## Synced against
 
-- **v9.0.43**
+- **v9.0.44**
 
 The upstream release that both the embedded metadata and the ported Java logic are reconciled
 against. The same version is recorded in the generated

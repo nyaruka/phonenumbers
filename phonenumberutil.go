@@ -404,8 +404,8 @@ var (
 	// Regular expression of valid domainname for the phone-context parameter, following the syntax
 	// defined in RFC3966.
 	alphanum                 = validAlpha + digitsClass
-	rfc3966Domainlabel       = "[" + alphanum + "]+((\\-)*[" + alphanum + "])*"
-	rfc3966Toplabel          = "[" + validAlpha + "]+((\\-)*[" + alphanum + "])*"
+	rfc3966Domainlabel       = "[" + alphanum + "]+(\\-+[" + alphanum + "]+)*"
+	rfc3966Toplabel          = "[" + validAlpha + "][" + alphanum + "]*(\\-+[" + alphanum + "]+)*"
 	rfc3966Domainname        = "^(" + rfc3966Domainlabel + "\\.)*" + rfc3966Toplabel + "\\.?$"
 	rfc3966DomainnamePattern = regexp.MustCompile(rfc3966Domainname)
 
