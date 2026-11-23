@@ -1994,6 +1994,70 @@ func TestParseMaliciousInput(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNumTooLong)
 }
 
+func TestParseRFC3966PhoneContextDomainname(t *testing.T) {
+	useTestMetadata(t)
+
+	// Domain phone-contexts keep parsing, including labels with single or repeated hyphens.
+	got, err := Parse("tel:253-0000;phone-context=www.google.com", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	got, err = Parse("tel:253-0000;phone-context=ex--ample.domain.com", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+
+	// A long ambiguous domain is rejected. The old label pattern ([alnum]+((\-)*[alnum])*)
+	// made backtracking engines spend minutes on this input; the rewritten pattern avoids that.
+	var evilContext strings.Builder
+	for i := 0; i < 25; i++ {
+		evilContext.WriteString("aa.")
+	}
+	evilContext.WriteString("aa!")
+	_, err = Parse("tel:253-0000;phone-context="+evilContext.String(), regionCode.US)
+	assert.ErrorIs(t, err, ErrNotANumber)
+
+	// The rewritten label matches alnum runs separated by one or more hyphens, but not labels
+	// with leading/trailing hyphens or empty labels.
+	domainname := rfc3966DomainnamePattern
+	assert.True(t, domainname.MatchString("a.b.c"))
+	assert.True(t, domainname.MatchString("ab-cd.ef"))
+	assert.True(t, domainname.MatchString("a--b.c"))
+	assert.True(t, domainname.MatchString("example.com."))
+	assert.False(t, domainname.MatchString("aa.bb-"))
+	assert.False(t, domainname.MatchString("aa..bb"))
+	assert.False(t, domainname.MatchString("-aa.bb"))
+	assert.False(t, domainname.MatchString("a-.b"))
+
+	// Valid top-level labels containing digits and hyphens (including Punycode TLDs).
+	got, err = Parse("tel:253-0000;phone-context=example.c1", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	got, err = Parse("tel:253-0000;phone-context=example.b2b", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	got, err = Parse("tel:253-0000;phone-context=sub.example.a1-b2", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	got, err = Parse("tel:253-0000;phone-context=example.xn--p1ai", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	got, err = Parse("tel:253-0000;phone-context=a.b", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	got, err = Parse("tel:253-0000;phone-context=www.google.com.", regionCode.US)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(usLocalNumber(), got))
+	// Top-level labels starting with or consisting solely of digits must be rejected.
+	for _, in := range []string{
+		"tel:253-0000;phone-context=example.123",
+		"tel:253-0000;phone-context=example.1a",
+		"tel:253-0000;phone-context=example.-c1",
+		"tel:253-0000;phone-context=example.c1-",
+	} {
+		_, err := Parse(in, regionCode.US)
+		assert.ErrorIs(t, err, ErrNotANumber, "input %q", in)
+	}
+}
+
 func TestParseWithInternationalPrefixes(t *testing.T) {
 	useTestMetadata(t)
 

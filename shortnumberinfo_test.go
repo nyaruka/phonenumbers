@@ -1,6 +1,7 @@
 package phonenumbers
 
 import (
+	"math"
 	"strconv"
 	"testing"
 
@@ -336,6 +337,26 @@ func TestCountryCallingCodeIsNotIgnored(t *testing.T) {
 	assert.False(t, IsPossibleShortNumberForRegion(parse(t, "+4640404", "SE"), "US"))
 	assert.False(t, IsValidShortNumberForRegion(parse(t, "+4640404", "SE"), "US"))
 	assert.Equal(t, UNKNOWN_COST, GetExpectedCostForRegion(parse(t, "+4640404", "SE"), "US"))
+}
+
+func TestOutOfRangeNumberOfLeadingZeros(t *testing.T) {
+	negative := &PhoneNumber{
+		CountryCode:          proto.Int32(33),
+		NationalNumber:       proto.Uint64(1010),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(-1),
+	}
+	assert.True(t, IsPossibleShortNumber(negative))
+	assert.True(t, IsValidShortNumber(negative))
+
+	huge := &PhoneNumber{
+		CountryCode:          proto.Int32(33),
+		NationalNumber:       proto.Uint64(1010),
+		ItalianLeadingZero:   proto.Bool(true),
+		NumberOfLeadingZeros: proto.Int32(math.MaxInt32),
+	}
+	assert.False(t, IsPossibleShortNumber(huge))
+	assert.False(t, IsValidShortNumber(huge))
 }
 
 // atoui parses a decimal string into a uint64, failing the test on error. Mirrors upstream's
