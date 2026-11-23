@@ -3,6 +3,7 @@ package phonenumbers
 
 import (
 	"slices"
+	"sync"
 
 	"github.com/nyaruka/phonenumbers/v2/internal/regexbasedmatcher"
 	"github.com/nyaruka/phonenumbers/v2/internal/serialize"
@@ -11,22 +12,21 @@ import (
 
 var (
 	shortNumberRegionToMetadataMap = make(map[string]*PhoneMetadata)
+	shortNumberMetadataLoadOnce    sync.Once
 )
 
 func readFromShortNumberRegionToMetadataMap(key string) (*PhoneMetadata, bool) {
+	shortNumberMetadataLoadOnce.Do(func() {
+		if err := loadShortNumberMetadataFromFile(); err != nil {
+			panic(err)
+		}
+	})
 	v, ok := shortNumberRegionToMetadataMap[key]
 	return v, ok
 }
 
 func writeToShortNumberRegionToMetadataMap(key string, val *PhoneMetadata) {
 	shortNumberRegionToMetadataMap[key] = val
-}
-
-func init() {
-	err := loadShortNumberMetadataFromFile()
-	if err != nil {
-		panic(err)
-	}
 }
 
 var (
