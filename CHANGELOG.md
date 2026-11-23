@@ -1,3 +1,9 @@
+## v2.1.0 (2026-11-23)
+ * Load metadata lazily on first use
+ * Cache short number metadata collection so lazy loading can't see an empty one
+ * Update metadata to v9.0.44
+ * Reconcile code with upstream v9.0.44
+
 ## v2.0.17 (2026-11-09)
  * Fix parsing of phone-context at start of input
  * Fix timezone results aliasing
